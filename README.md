@@ -14,5 +14,12 @@ libraries have been implemented or published yet.
 Use Node 26; `.node-version` pins 26.11.1. Runtime packages will live under
 `packages/`. The repository root is private and cannot be published.
 
-No build, test or release tooling is configured yet. Choose supported upstream
-tooling when implementing the first concrete package.
+No shared build, test or release tooling is configured yet. Choose supported
+upstream tooling when implementing the first concrete package.
+
+## Examples
+
+[Declarative effects with XState Store](examples/xstate-api-effect/README.md)
+shows a pure action returning `{ state, effect }`, a small adapter and tested
+asynchronous completion handling. It is an independent private example, run
+with its own npm commands; it does not add a runtime package to the workspace.
