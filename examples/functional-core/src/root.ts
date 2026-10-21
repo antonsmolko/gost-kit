@@ -1,7 +1,8 @@
 import { createContext } from 'svelte';
 import { createModule } from './shell/module.svelte.ts';
 import { createEffector } from './effector.ts';
-import { initialState, reducer } from './reducer.ts';
+import { reducer } from './reducer.ts';
+import { initialState } from './state.ts';
 import type { ApiClient } from './types.ts';
 
 export const createRootStore = (api: ApiClient) => createModule({

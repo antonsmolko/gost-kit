@@ -1,25 +1,28 @@
-import type { Effector } from './shell/types.ts';
-import type { ApiClient, RootAction, RootEffect, User } from './types.ts';
+import { define, effecting } from './shell/handlers.ts';
+import type { ApiClient, ApiEffect, DispatchActionEffect, RootAction, RootEffect, User } from './types.ts';
 
-export const createEffector = (api: ApiClient): Effector<RootAction, RootEffect> =>
-  async (effect, dispatch) => {
-    switch (effect.type) {
-      case 'DispatchActionEffect':
-        await dispatch(effect.action);
-        return;
-      case 'ApiEffect': {
-        let response: User;
-        try {
-          response = await api({ url: effect.url, body: effect.body });
-        } catch (error) {
-          if (effect.receiverError) {
-            const errors = [{ message: error instanceof Error ? error.message : 'Request failed' }];
-            await dispatch(effect.receiverError(errors));
-          }
-          return;
-        }
-        // Only request failures are caught. Receiver/dispatch exceptions propagate.
-        await dispatch(effect.receiverSuccess(response));
+const apiEffector = (api: ApiClient) => define.effector<RootAction, ApiEffect>({
+  ApiEffect: async ({ effect, dispatch }) => {
+    let response: User;
+    try {
+      response = await api({ url: effect.url, body: effect.body });
+    } catch (error) {
+      if (effect.receiverError) {
+        const errors = [{ message: error instanceof Error ? error.message : 'Request failed' }];
+        await dispatch(effect.receiverError(errors));
       }
+      return;
     }
-  };
+    // Only request failures are caught. Receiver/dispatch exceptions propagate.
+    await dispatch(effect.receiverSuccess(response));
+  },
+});
+
+const shellEffector = define.effector<RootAction, DispatchActionEffect>({
+  DispatchActionEffect: async ({ effect, dispatch }) => {
+    await dispatch(effect.action);
+  },
+});
+
+export const createEffector = (api: ApiClient) =>
+  effecting<RootAction, RootEffect>(apiEffector(api), shellEffector);

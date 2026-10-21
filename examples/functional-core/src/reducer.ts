@@ -1,56 +1,40 @@
-import type { Commit, Reducer } from './shell/types.ts';
-import type { RootAction, RootEffect, RootState, UserAction } from './types.ts';
+import { define, reducing } from './shell/handlers.ts';
+import type { GlobalAction, RootAction, RootEffect, RootState, UserAction } from './types.ts';
 
-export const initialState = (): RootState => ({
-  user: { email: '', status: 'idle', data: null, errors: [] },
-  alert: null,
+export const userReducer = define.reducer<RootState, UserAction, RootEffect>({
+  UserSetEmailAction: ({ state, action }) => ({
+    state: { ...state, user: { ...state.user, email: action.email } },
+  }),
+  UserLoadAction: ({ state }) => ({
+    state: { ...state, user: { ...state.user, status: 'loading', errors: [] } },
+    effects: {
+      type: 'ApiEffect',
+      url: '/user',
+      body: { email: state.user.email },
+      receiverSuccess: (response) => ({ type: 'UserSuccessReceiveAction', response }),
+      receiverError: (errors) => ({ type: 'UserErrorReceiveAction', errors }),
+    },
+  }),
+  UserSuccessReceiveAction: ({ state, action }) => ({
+    state: { ...state, user: { ...state.user, status: 'ready', data: action.response, errors: [] } },
+  }),
+  UserErrorReceiveAction: ({ state, action }) => ({
+    state: { ...state, user: { ...state.user, status: 'error', errors: action.errors } },
+    effects: {
+      type: 'DispatchActionEffect',
+      action: {
+        type: 'ShowAlertAction', status: 'error',
+        message: action.errors.map((error) => error.message).join('; ') || 'Request failed',
+      },
+    },
+  }),
 });
 
-// Feature-owned transitions return a complete state and descriptions of work.
-const userReducer = (state: RootState, action: UserAction): Commit<RootState, RootEffect> => {
-  switch (action.type) {
-    case 'UserSetEmailAction':
-      return {
-        state: { ...state, user: { ...state.user, email: action.email } },
-        effects: [],
-      };
-    case 'UserLoadAction':
-      return {
-        state: { ...state, user: { ...state.user, status: 'loading', errors: [] } },
-        effects: [{
-          type: 'ApiEffect',
-          url: '/user',
-          body: { email: state.user.email },
-          receiverSuccess: (response) => ({ type: 'UserSuccessReceiveAction', response }),
-          receiverError: (errors) => ({ type: 'UserErrorReceiveAction', errors }),
-        }],
-      };
-    case 'UserSuccessReceiveAction':
-      return {
-        state: { ...state, user: { ...state.user, status: 'ready', data: action.response, errors: [] } },
-        effects: [],
-      };
-    case 'UserErrorReceiveAction':
-      return {
-        state: { ...state, user: { ...state.user, status: 'error', errors: action.errors } },
-        effects: [{
-          type: 'DispatchActionEffect',
-          action: {
-            type: 'ShowAlertAction', status: 'error',
-            message: action.errors.map((error) => error.message).join('; ') || 'Request failed',
-          },
-        }],
-      };
-  }
-};
+const appReducer = define.reducer<RootState, GlobalAction, RootEffect>({
+  ShowAlertAction: ({ state, action }) => ({
+    state: { ...state, alert: { status: action.status, message: action.message } },
+  }),
+  DismissAlertAction: ({ state }) => ({ state: { ...state, alert: null } }),
+});
 
-export const reducer: Reducer<RootState, RootAction, RootEffect> = (state, action) => {
-  switch (action.type) {
-    case 'ShowAlertAction':
-      return { state: { ...state, alert: { status: action.status, message: action.message } }, effects: [] };
-    case 'DismissAlertAction':
-      return { state: { ...state, alert: null }, effects: [] };
-    default:
-      return userReducer(state, action);
-  }
-};
+export const reducer = reducing<RootState, RootAction, RootEffect>(userReducer, appReducer);

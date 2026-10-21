@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
-import { initialState, reducer } from './reducer.ts';
+import { reducer } from './reducer.ts';
+import { initialState } from './state.ts';
 import type { User } from './types.ts';
 
 const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };

@@ -45,12 +45,52 @@ component: await dispatch(UserLoadAction)
 - `src/types.ts`: feature and global actions/state, effect descriptions and the
   one concrete request's API dependency. All actions/effects are objects.
 - `src/reducer.ts`: pure feature transitions and application-level alert handling.
-  Every transition returns the full state and an array of effect descriptions.
+  Handlers are keyed by action type; `reducing` normalizes their results into
+  full state and an array of effect descriptions.
 - `src/shell/module.svelte.ts`: the small imperative shell. It replaces state,
   then runs the commit's effects using `Promise.all`.
 - `src/effector.ts`: request execution and forwarding actions. API dependencies
   are injected; reducers never execute a request.
-- `src/root.ts`: composition and typed Svelte context access.
+- `src/state.ts`: feature state factory and root state composition.
+- `src/shell/handlers.ts`: typed handler definitions and table composition.
+- `src/root.ts`: module assembly and typed Svelte context access.
+
+## Handler tables and root composition
+
+`define.reducer<RootState, UserAction, RootEffect>({...})` defines a feature table.
+Its keys are action type names, and each handler receives `{ state, action }`
+with that action's specific payload type. `define.effector<RootAction, ApiEffect>`
+defines an effect table with handlers receiving `{ effect, dispatch }`.
+Each definition must cover its declared action/effect union; compile-only tests
+also verify that invalid payload fields and missing handlers are rejected.
+
+The root assembles feature and application tables:
+
+```ts
+const reducer = reducing<RootState, RootAction, RootEffect>(
+  userReducer,
+  appReducer,
+);
+
+const effector = effecting<RootAction, RootEffect>(
+  apiEffector(api),
+  shellEffector,
+);
+```
+
+See `src/reducer.ts` and `src/effector.ts` for the complete definitions. The
+builders return typed tables; the composition functions return the ordinary
+reducer/effector functions consumed by the module.
+
+A reducer handler may return `{ state }`, `{ effects }`, both, or no result.
+When present, `state` must be complete; there is no partial-state merge.
+Missing/undefined state retains the current state. An effect can be a single
+object or an array; omitted effects become `[]`. The module always receives a
+complete `{ state, effects: [] }` commit after normalization. An unregistered
+action keeps the same state with no effects; an unregistered effect is ignored.
+Composition is static: tables are copied in argument order, and later handlers
+replace earlier ones for the same key. These APIs expect trusted typed application
+objects; they do not validate external input at runtime.
 
 ## Applying functional core in a feature
 
