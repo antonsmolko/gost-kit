@@ -19,7 +19,7 @@ upstream tooling when implementing the first concrete package.
 
 ## Examples
 
-[Declarative effects with XState Store](examples/xstate-api-effect/README.md)
-shows a pure action returning `{ state, effect }`, a small adapter and tested
-asynchronous completion handling. It is an independent private example, run
-with its own npm commands; it does not add a runtime package to the workspace.
+[Functional core with a Svelte 5 root store](examples/functional-core/README.md)
+shows a component dispatching typed actions, pure state transitions, API effects
+and global notifications. It is an independent private example, run with its own
+npm commands; it does not add a runtime package to the workspace.
