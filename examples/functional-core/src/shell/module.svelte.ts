@@ -11,7 +11,13 @@ export const createModule = <S, A extends Trigger, E extends Trigger>(config: {
   const dispatch: Dispatch<A> = async (action) => {
     const commit = config.reducer(state, action);
     state = commit.state;
-    await Promise.all(commit.effects.map((effect) => config.effector(effect, dispatch)));
+    const results = await Promise.allSettled(
+      commit.effects.map(async (effect) => config.effector(effect, dispatch)),
+    );
+    const errors: unknown[] = results.flatMap((result) =>
+      result.status === 'rejected' ? [result.reason] : [],
+    );
+    if (errors.length) throw new AggregateError(errors, 'Effects failed');
   };
 
   return {

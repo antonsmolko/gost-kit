@@ -29,7 +29,8 @@ test('request rejection reaches a global alert through nested dispatch', async (
   const root = createRootStore(() => Promise.reject(new Error('Offline')));
   await root.dispatch({ type: 'UserLoadAction' });
   expect(root.state.user.status).toBe('error');
-  expect(root.state.alert).toEqual({ status: 'error', message: 'Offline' });
+  expect(root.state.alert).toEqual({ status: 'error', message: 'Could not load user' });
+  expect(root.state.user.errors).toEqual([{ code: 'USER_LOAD_FAILED', message: 'Could not load user', path: [] }]);
 });
 
 test('retry clears the feature error and can succeed', async () => {

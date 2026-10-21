@@ -1,5 +1,9 @@
 export type User = { readonly id: string; readonly name: string; readonly email: string };
-export type AppError = { readonly message: string };
+export type AppError = {
+  readonly code: string;
+  readonly message: string;
+  readonly path: readonly string[];
+};
 
 export type UserAction =
   | { type: 'UserSetEmailAction'; email: string }
@@ -29,7 +33,8 @@ export type ApiEffect = {
   url: '/user';
   body: { email: string };
   receiverSuccess: (response: User) => RootAction;
-  receiverError?: (errors: AppError[]) => RootAction;
+  defaultError: AppError;
+  receiverError: (errors: AppError[]) => RootAction;
 };
 export type DispatchActionEffect = { type: 'DispatchActionEffect'; action: RootAction };
 export type RootEffect = ApiEffect | DispatchActionEffect;

@@ -27,15 +27,15 @@ test('loading only describes a request and its success/error receivers', () => {
   if (effect.type !== 'ApiEffect') throw new Error('Expected API description');
   expect(effect.body).toEqual({ email: '' });
   expect(effect.receiverSuccess(user)).toEqual({ type: 'UserSuccessReceiveAction', response: user });
-  expect(effect.receiverError?.([{ message: 'Offline' }])).toEqual({
-    type: 'UserErrorReceiveAction', errors: [{ message: 'Offline' }],
+  expect(effect.receiverError([{ code: 'OFFLINE', message: 'Offline', path: [] }])).toEqual({
+    type: 'UserErrorReceiveAction', errors: [{ code: 'OFFLINE', message: 'Offline', path: [] }],
   });
 });
 
 test('API error describes a global alert action through an effect', () => {
   const state = initialState();
   const commit = reducer(state, {
-    type: 'UserErrorReceiveAction', errors: [{ message: 'Offline' }],
+    type: 'UserErrorReceiveAction', errors: [{ code: 'OFFLINE', message: 'Offline', path: [] }],
   });
   expect(commit.state.user.status).toBe('error');
   expect(commit.state.alert).toBeNull();

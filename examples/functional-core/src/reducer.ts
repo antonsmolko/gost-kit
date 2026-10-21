@@ -11,6 +11,7 @@ export const userReducer = define.reducer<RootState, UserAction, RootEffect>({
       type: 'ApiEffect',
       url: '/user',
       body: { email: state.user.email },
+      defaultError: { code: 'USER_LOAD_FAILED', message: 'Could not load user', path: [] },
       receiverSuccess: (response) => ({ type: 'UserSuccessReceiveAction', response }),
       receiverError: (errors) => ({ type: 'UserErrorReceiveAction', errors }),
     },

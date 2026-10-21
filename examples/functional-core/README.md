@@ -2,8 +2,8 @@
 
 An executable private example for [gost-kit#2](https://github.com/antonsmolko/gost-kit/issues/2),
 supporting the functional-core investigation in [#1](https://github.com/antonsmolko/gost-kit/issues/1).
-This replaces the earlier XState adapter demo with the agreed component-to-store
-flow. It demonstrates a possible design, not a published package API.
+It demonstrates the component-to-store flow with a small Svelte shell.
+The example is private and does not define a published package API.
 
 ## Run
 
@@ -48,7 +48,7 @@ component: await dispatch(UserLoadAction)
   Handlers are keyed by action type; `reducing` normalizes their results into
   full state and an array of effect descriptions.
 - `src/shell/module.svelte.ts`: the small imperative shell. It replaces state,
-  then runs the commit's effects using `Promise.all`.
+  then waits for the commit's parallel effects using `Promise.allSettled`.
 - `src/effector.ts`: request execution and forwarding actions. API dependencies
   are injected; reducers never execute a request.
 - `src/state.ts`: feature state factory and root state composition.
@@ -155,14 +155,26 @@ paint; callers must handle rejected promises if they fire and forget.
 
 Effects from one commit start in parallel. A dependent step can be described by
 an action produced by the first effect's receiver. There is no separate scheduler.
-`Promise.all` rejects when an effect rejects; other started effects are not cancelled.
+`Promise.allSettled` waits for every started effect, even after another effect
+fails. Once all effects settle, dispatch rejects with an `AggregateError` if any
+failed; its `errors` array contains their rejection reasons in effect order.
+Synchronous effect throws are collected too, and do not prevent sibling effects
+from starting. Awaited nested dispatch failures may appear as nested aggregate
+errors. Reducer exceptions occur before effects start and reject directly.
+Effects are not cancelled or rolled back; a never-settling effect keeps dispatch
+pending. Unrelated dispatches and unawaited work are outside this completion boundary.
 
-`ApiEffect.receiverSuccess` is required; `receiverError` is optional. Request
-throws/rejections become `AppError[]`, using `Request failed` for non-Error values.
-With no error receiver, the effect completes without an action or rejection.
-The client owns state recovery in that case, including any lingering `loading`.
-Receiver and reducer exceptions reject the dispatch promise without a retry or
-recursive error handling. There is no logging/fallback receiver pipeline.
+`ApiEffect.receiverSuccess`, `receiverError` and `defaultError` are required.
+`AppError` contains `code: string`, `message: string` and `path: readonly string[]`;
+an empty path describes a request-level error. In this synthetic API example,
+request throws/rejections send `[effect.defaultError]` to `receiverError`, whose
+action lets the feature leave `loading` and display its configured error message.
+The feature reducer remains responsible for its status transitions. The raw
+exception is not shown to the user. The fake API returns only a trusted `User`
+or rejects; server validation/result envelopes are outside this example.
+Receiver and dispatch exceptions are not converted into request errors or retried;
+they propagate to the module's aggregate error handling. There is no recursive
+logging/fallback receiver pipeline.
 
 The API dependency returns trusted typed data. This example defines only `/user`
 and does not implement HTTP, response validation or True Myth integration.
@@ -199,5 +211,5 @@ Reactivity and instance access use supported Svelte
 [`$derived`](https://svelte.dev/docs/svelte/$derived) and
 [context](https://svelte.dev/docs/svelte/context).
 Tests follow [Svelte's Vitest/Playwright guidance](https://svelte.dev/docs/svelte/testing).
-The small custom shell demonstrates the agreed awaited-dispatch contract; it is
-not an additional state engine layered over XState Store.
+The small shell demonstrates the awaited-dispatch contract and keeps effect
+execution outside the pure reducers.

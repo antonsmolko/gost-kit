@@ -5,10 +5,12 @@ import type { ApiClient, ApiEffect, RootAction, User } from './types.ts';
 const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };
 const effect: ApiEffect = {
   type: 'ApiEffect', url: '/user', body: { email: user.email },
+  defaultError: { code: 'USER_LOAD_FAILED', message: 'Could not load user', path: [] },
   receiverSuccess: (response) => ({ type: 'UserSuccessReceiveAction', response }),
+  receiverError: (errors) => ({ type: 'UserErrorReceiveAction', errors }),
 };
 
-test('missing error receiver silently completes without dispatch', async () => {
+test('request failure dispatches the configured default error', async () => {
   const actions: RootAction[] = [];
   const requests: Parameters<ApiClient>[0][] = [];
   const effector = createEffector(async (request) => {
@@ -17,7 +19,7 @@ test('missing error receiver silently completes without dispatch', async () => {
   });
   await effector(effect, async (action) => { actions.push(action); });
   expect(requests).toEqual([{ url: '/user', body: { email: user.email } }]);
-  expect(actions).toEqual([]);
+  expect(actions).toEqual([{ type: 'UserErrorReceiveAction', errors: [effect.defaultError] }]);
 });
 
 test('unknown request failures are normalized for the error receiver', async () => {
@@ -28,7 +30,7 @@ test('unknown request failures are normalized for the error receiver', async () 
     receiverError: (errors) => ({ type: 'UserErrorReceiveAction', errors }),
   }, async (action) => { actions.push(action); });
   expect(actions).toEqual([{
-    type: 'UserErrorReceiveAction', errors: [{ message: 'Request failed' }],
+    type: 'UserErrorReceiveAction', errors: [effect.defaultError],
   }]);
 });
 

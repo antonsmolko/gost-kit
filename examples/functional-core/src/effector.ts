@@ -6,11 +6,8 @@ const apiEffector = (api: ApiClient) => define.effector<RootAction, ApiEffect>({
     let response: User;
     try {
       response = await api({ url: effect.url, body: effect.body });
-    } catch (error) {
-      if (effect.receiverError) {
-        const errors = [{ message: error instanceof Error ? error.message : 'Request failed' }];
-        await dispatch(effect.receiverError(errors));
-      }
+    } catch {
+      await dispatch(effect.receiverError([effect.defaultError]));
       return;
     }
     // Only request failures are caught. Receiver/dispatch exceptions propagate.
