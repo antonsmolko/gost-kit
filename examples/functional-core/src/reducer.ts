@@ -1,4 +1,5 @@
 import { define, reducing } from './shell/handlers.ts';
+import type { Reducer } from './shell/types.ts';
 import type { GlobalAction, RootAction, RootEffect, RootState, UserAction } from './types.ts';
 
 export const userReducer = define.reducer<RootState, UserAction, RootEffect>({
@@ -38,4 +39,4 @@ const appReducer = define.reducer<RootState, GlobalAction, RootEffect>({
   DismissAlertAction: ({ state }) => ({ state: { ...state, alert: null } }),
 });
 
-export const reducer = reducing<RootState, RootAction, RootEffect>(userReducer, appReducer);
+export const reducer: Reducer<RootState, RootAction, RootEffect> = reducing(userReducer, appReducer);

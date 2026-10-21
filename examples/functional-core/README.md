@@ -67,12 +67,12 @@ also verify that invalid payload fields and missing handlers are rejected.
 The root assembles feature and application tables:
 
 ```ts
-const reducer = reducing<RootState, RootAction, RootEffect>(
+const reducer: Reducer<RootState, RootAction, RootEffect> = reducing(
   userReducer,
   appReducer,
 );
 
-const effector = effecting<RootAction, RootEffect>(
+const effector: Effector<RootAction, RootEffect> = effecting(
   apiEffector(api),
   shellEffector,
 );
@@ -88,9 +88,11 @@ Missing/undefined state retains the current state. An effect can be a single
 object or an array; omitted effects become `[]`. The module always receives a
 complete `{ state, effects: [] }` commit after normalization. An unregistered
 action keeps the same state with no effects; an unregistered effect is ignored.
-Composition is static: tables are copied in argument order, and later handlers
-replace earlier ones for the same key. These APIs expect trusted typed application
-objects; they do not validate external input at runtime.
+Each registered action/effect has one owner: composition rejects duplicate
+table keys at compile time. Supply statically known tables or tuples; widened dynamic arrays
+are rejected because unique ownership cannot be proven. Result annotations
+provide the state/action/effect types while preserving inline handler inference.
+These APIs expect trusted typed application objects; they do not validate external input at runtime.
 
 ## Applying functional core in a feature
 
@@ -147,22 +149,35 @@ flow when an actual API boundary is introduced.
 
 ## Execution rules
 
-`dispatch` returns `Promise<void>`. State is committed synchronously before any
-await or effect execution. Awaiting dispatch waits for that commit's effects,
-including any nested dispatch awaited by those effects. Without await the caller
-continues immediately. It does not wait for unrelated dispatches or a browser
-paint; callers must handle rejected promises if they fire and forget.
+`dispatch` returns a successful `Promise<void>` even when reducer/effect code
+fails: errors are caught and reported inside dispatch. Components do not need
+try/catch or promise rejection handlers. State is committed synchronously before
+any await or effect execution. Awaiting dispatch waits for that commit's effects,
+including any nested dispatch awaited by those effects, and error reporting.
+Without await the caller continues immediately. It does not wait for unrelated
+dispatches or a browser paint. Completion means processing finished, not that
+the business operation succeeded; feature state carries the API outcome.
 
 Effects from one commit start in parallel. A dependent step can be described by
 an action produced by the first effect's receiver. There is no separate scheduler.
 `Promise.allSettled` waits for every started effect, even after another effect
-fails. Once all effects settle, dispatch rejects with an `AggregateError` if any
-failed; its `errors` array contains their rejection reasons in effect order.
-Synchronous effect throws are collected too, and do not prevent sibling effects
-from starting. Awaited nested dispatch failures may appear as nested aggregate
-errors. Reducer exceptions occur before effects start and reject directly.
+fails. Once all effects settle, failures are sent to `onError` in effect order.
+Synchronous effect throws are captured too, and do not prevent sibling effects
+from starting. A reducer exception is reported before effects start; a pure
+reducer's previous state is retained. Errors in processing an invalid reducer
+commit are also caught by dispatch and reported as reducer failures.
 Effects are not cancelled or rolled back; a never-settling effect keeps dispatch
 pending. Unrelated dispatches and unawaited work are outside this completion boundary.
+
+Configure the module's optional `onError` callback for centralized reporting.
+It receives a `ModuleError`: `{ kind: 'reducer', action, error }` or
+`{ kind: 'effect', action, effect, error }`. The default handler calls
+`console.error` with this context. An async callback is awaited; if the callback
+throws/rejects, a console fallback records the original failure and reporting
+error without rejecting dispatch. Console fallback is best effort if the logging
+sink itself is broken. Reporters should complete; a pending reporter keeps
+its dispatch pending. A nested dispatch reports its own failures and resolves,
+so the parent does not report the same failure again.
 
 `ApiEffect.receiverSuccess`, `receiverError` and `defaultError` are required.
 `AppError` contains `code: string`, `message: string` and `path: readonly string[]`;
@@ -172,9 +187,11 @@ action lets the feature leave `loading` and display its configured error message
 The feature reducer remains responsible for its status transitions. The raw
 exception is not shown to the user. The fake API returns only a trusted `User`
 or rejects; server validation/result envelopes are outside this example.
-Receiver and dispatch exceptions are not converted into request errors or retried;
-they propagate to the module's aggregate error handling. There is no recursive
-logging/fallback receiver pipeline.
+Receiver exceptions go to the module's `onError` instead of being converted
+into request errors or retried. Reducer failures in receiver-generated actions
+are reported by that nested dispatch. Expected API failures stay in the domain
+receiver flow; `onError` handles unexpected execution failures. There is no
+recursive receiver retry pipeline.
 
 The API dependency returns trusted typed data. This example defines only `/user`
 and does not implement HTTP, response validation or True Myth integration.

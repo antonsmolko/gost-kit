@@ -1,4 +1,5 @@
 import { define, effecting } from './shell/handlers.ts';
+import type { Effector } from './shell/types.ts';
 import type { ApiClient, ApiEffect, DispatchActionEffect, RootAction, RootEffect, User } from './types.ts';
 
 const apiEffector = (api: ApiClient) => define.effector<RootAction, ApiEffect>({
@@ -21,5 +22,5 @@ const shellEffector = define.effector<RootAction, DispatchActionEffect>({
   },
 });
 
-export const createEffector = (api: ApiClient) =>
-  effecting<RootAction, RootEffect>(apiEffector(api), shellEffector);
+export const createEffector = (api: ApiClient): Effector<RootAction, RootEffect> =>
+  effecting(apiEffector(api), shellEffector);
