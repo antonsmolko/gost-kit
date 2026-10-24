@@ -17,8 +17,8 @@
     }
   },
   "scripts": {
-    "build": "npm run clean && tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
-    "check": "tsc -p tsconfig.check.json",
+    "build": "npm run clean && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.json",
     "test": "vitest run",
     "prepack": "npm run build",
     "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\""

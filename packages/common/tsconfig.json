@@ -10,6 +10,7 @@
     ],
     "strict": true,
     "verbatimModuleSyntax": true,
+    "noEmit": true,
     "declaration": true,
     "rootDir": "src",
     "outDir": "dist",
@@ -21,8 +22,5 @@
   "tsc-alias": {
     "resolveFullPaths": true,
     "resolveFullExtension": ".js"
-  },
-  "exclude": [
-    "src/**/*.test.ts"
-  ]
+  }
 }
