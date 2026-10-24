@@ -11,6 +11,7 @@ export type {
   AsyncTap,
   Compare,
   DeepPartial,
+  DeepReadonly,
   FileType,
   Fn,
   Impossible,

@@ -2,8 +2,11 @@ export { createDispatch } from './lib/dispatch';
 export { define } from './lib/define';
 export { effecting } from './lib/effecting';
 export { reducing } from './lib/reducing';
+export { scope } from './lib/scope';
 
 export type { Commit } from './types/commit';
+export type { CheckedReducerHandlers } from './types/checked-reducer-handlers';
+export type { ExactState } from './types/exact-state';
 export type { Complete } from './types/complete';
 export type { Dispatch } from './types/dispatch';
 export type { DispatchConfig } from './types/dispatch-config';

@@ -9,10 +9,10 @@ type Action = { type: 'SetAction'; count: number } | { type: 'IdleAction' };
 type Effect = { type: 'RecordEffect'; value: number } | { type: 'OtherEffect' };
 
 test('reducing composes feature tables and routes the narrowed action payload', () => {
-  const feature = define.reducer<State, Extract<Action, { type: 'SetAction' }>, Effect>({
+  const feature = define.reducer<State, Extract<Action, { type: 'SetAction' }>, Effect>()({
     SetAction: ({ action }) => ({ state: { count: action.count } }),
   });
-  const other = define.reducer<State, Extract<Action, { type: 'IdleAction' }>, Effect>({
+  const other = define.reducer<State, Extract<Action, { type: 'IdleAction' }>, Effect>()({
     IdleAction: ({ state }) => ({ state }),
   });
   const reducer: Reducer<State, Action, Effect> = reducing(feature, other);
@@ -29,6 +29,16 @@ test('an empty handler result keeps state and yields no effects', () => {
   expect(reducer(state, { type: 'IdleAction' })).toEqual({ state, effects: [] });
 });
 
+test('a handler can return the readonly input unchanged, including mutable array fields', () => {
+  type ListState = { items: string[] };
+  const handlers = define.reducer<ListState, Extract<Action, { type: 'IdleAction' }>>()({
+    IdleAction: ({ state }) => ({ state }),
+  });
+  const reducer: Reducer<ListState, Extract<Action, { type: 'IdleAction' }>, never> = reducing(handlers);
+  const state: ListState = { items: ['first'] };
+  expect(reducer(state, { type: 'IdleAction' }).state).toBe(state);
+});
+
 test('effects-only results preserve state and normalize a single effect to an array', () => {
   const reducer: Reducer<State, Extract<Action, { type: 'SetAction' }>, Effect> = reducing({
     SetAction: ({ action }) => ({ effects: { type: 'RecordEffect', value: action.count } }),
@@ -40,7 +50,7 @@ test('effects-only results preserve state and normalize a single effect to an ar
 });
 
 test('requires coverage of every declared action', () => {
-  const handlers = define.reducer<State, Extract<Action, { type: 'SetAction' }>, Effect>({
+  const handlers = define.reducer<State, Extract<Action, { type: 'SetAction' }>, Effect>()({
     SetAction: ({ state }) => ({ state }),
   });
   // @ts-expect-error IdleAction has no handler.

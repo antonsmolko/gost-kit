@@ -1,5 +1,5 @@
 import { guard } from '../../sharred';
-import type { Ulx } from '../../types';
+import type { DeepReadonly, Ulx } from '../../types';
 import type { Reducer } from '../types/reducer';
 import type { Trigger } from '../types/trigger';
 import type { Draft } from '../types/draft';
@@ -23,12 +23,14 @@ export const reducing = <
   );
   return (state, action) => {
     const handler = handlers[action.type as TAction['type']] as
-      Ulx<(params: { state: TState; action: TAction }) => Draft<TState, TEffect>>;
-    const draft = handler?.({ state, action });
+      Ulx<(params: { state: DeepReadonly<TState>; action: TAction }, rootState: DeepReadonly<TState>) => Draft<TState, TEffect>>;
+    const readonlyState = state as DeepReadonly<TState>;
+    const draft = handler?.({ state: readonlyState, action }, readonlyState);
     const effects = draft?.effects;
 
     return {
-      state: guard.ulx(draft?.state) ? state : draft.state,
+      // DeepReadonly is a handler input/output view; it does not change the stored value.
+      state: guard.ulx(draft?.state) ? state : draft.state as TState,
       effects: guard.ulx(effects) ? [] : guard.array<TEffect>(effects) ? effects : [effects],
     };
   };

@@ -14,7 +14,41 @@ const reducer: Reducer<number, Action, never> = reducing({
 });
 ```
 
-`define.reducer` and `define.effector` define narrowed handler tables.
+`define.reducer<TState, TAction, TEffect, TRootState>()({...})` and
+`define.effector<TAction, TEffect>({...})` define narrowed handler tables.
+The reducer's first call sets the contracts; the second infers each handler's
+result and rejects extra state keys, including nested keys, without return
+annotations. Handlers receive `({ state, action }, rootState)`. Both state inputs
+are deeply readonly views of objects and arrays at compile time; no runtime
+freezing is performed. `TRootState` defaults to `TState` for root handlers.
+Returning the readonly feature state unchanged is supported, including arrays;
+handlers do not have to clone unchanged values.
+
+Feature handlers receive and return their own complete state. Adapt them to a
+root property with `scope` before composing:
+
+```ts
+import { define, reducing, scope, type Reducer } from '@gost/common';
+
+type UserState = { name: string };
+type RootState = { user: UserState; auth: { user: { name: string } } };
+type LoadAction = { type: 'LoadAction' };
+
+const userHandlers = define.reducer<UserState, LoadAction, never, RootState>()({
+  LoadAction: ({ state }, rootState) => ({
+    state: { ...state, name: rootState.auth.user.name },
+  }),
+});
+const rootReducer: Reducer<RootState, LoadAction, never> = reducing(
+  scope('user', userHandlers),
+);
+```
+
+`scope` supplies the current complete root state to feature handlers and replaces
+only the selected root property. Effects pass through unchanged; omitted state
+preserves the root state reference. It keeps the action keys so composition can
+check coverage and ownership across scoped and root tables.
+
 `reducing` and `effecting` compose them, requiring exactly one handler for every
 declared action/effect at compile time. Missing and optional-only handlers are
 rejected, as are duplicate owners. Empty composition is allowed for `never`

@@ -65,9 +65,14 @@ component: await dispatch(UserLoadAction)
 
 ## Handler tables and root composition
 
-`define.reducer<RootState, UserAction, RootEffect>({...})` defines a feature table.
-Its keys are action type names, and each handler receives `{ state, action }`
-with that action's specific payload type. `define.effector<RootAction, ApiEffect>`
+`define.reducer<UserState, UserAction, RootEffect, RootState>()({...})` defines a feature table.
+Its keys are action type names, and each handler receives `({ state, action }, rootState)`
+with feature state and that action's specific payload type. The second argument
+provides the entire current root state, including other features, auth and global
+configuration when present. Both state inputs are deeply readonly at compile time.
+The handler returns complete `UserState`, not `RootState`. Its inferred result is
+checked for extra state keys without a return annotation.
+`define.effector<RootAction, ApiEffect>`
 defines an effect table with handlers receiving `{ effect, dispatch }`.
 Each definition must cover its declared action/effect union.
 
@@ -75,7 +80,7 @@ The root assembles feature and application tables:
 
 ```ts
 const reducer: Reducer<RootState, RootAction, RootEffect> = reducing(
-  userReducer,
+  scope('user', userReducer),
   appReducer,
 );
 
@@ -93,6 +98,8 @@ reducer/effector functions consumed by the store.
 
 A reducer handler may return `{ state }`, `{ effects }`, both, or no result.
 When present, `state` must be complete; there is no partial-state merge.
+`scope('user', userReducer)` adapts feature state back to `RootState.user`,
+preserving all other root properties and forwarding effects unchanged.
 Missing/undefined state retains the current state. An effect can be a single
 object or an array; omitted effects become `[]`. The store always receives a
 complete `{ state, effects: [] }` commit after normalization. An unregistered

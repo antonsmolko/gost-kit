@@ -1,4 +1,4 @@
-import type { Vdx } from '../../types/vdx';
+import type { DeepReadonly, Vdx } from '../../types';
 import type { Trigger } from './trigger';
 
-export type Draft<TState, TEffect extends Trigger> = Vdx<{ state?: TState; effects?: TEffect | TEffect[] }>;
+export type Draft<TState, TEffect extends Trigger> = Vdx<{ state?: DeepReadonly<TState>; effects?: TEffect | TEffect[] }>;

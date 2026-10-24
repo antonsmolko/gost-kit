@@ -6,6 +6,7 @@ export type { AsyncReturnType } from './async-return-type';
 export type { AsyncTap } from './async-tap';
 export type { Compare } from './compare';
 export type { DeepPartial } from './deep-partial';
+export type { DeepReadonly } from './deep-readonly';
 export type { FileType } from './file-type';
 export type { Fn } from './fn';
 export type { Impossible } from './impossible';

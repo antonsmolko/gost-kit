@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { reducing, type Reducer } from '@gost/common';
+import { reducing, scope, type Reducer } from '@gost/common';
 import { userReducer } from './reducer';
 import { initialState } from '../../../../store/fc/state';
 import type { RootState } from '../../../../store/types/state';
@@ -7,8 +7,19 @@ import type { RootEffect } from '../../../../store/types/effect';
 import type { UserAction } from './action';
 import type { User } from '../entities/user';
 
-const reducer: Reducer<RootState, UserAction, RootEffect> = reducing(userReducer);
+const reducer: Reducer<RootState, UserAction, RootEffect> = reducing(scope('user', userReducer));
 const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };
+
+test('feature handlers receive and return feature state separately from root state', () => {
+  const rootState = initialState();
+  const draft = userReducer.UserSetEmailAction({
+    state: rootState.user,
+    action: { type: 'UserSetEmailAction', email: user.email },
+  }, rootState);
+
+  expect(draft).toEqual({ state: { ...rootState.user, email: user.email } });
+  expect(rootState.user.email).toBe('');
+});
 
 test('setting email returns full state without mutating the previous state', () => {
   const state = initialState();
