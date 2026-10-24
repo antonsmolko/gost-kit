@@ -1,17 +1,16 @@
 <script lang="ts">
-  import { useDispatch, useRootStore } from './root.ts';
+  import { rootStore } from './store/root.ts';
 
-  const root = useRootStore();
-  const dispatch = useDispatch();
+  const root = rootStore();
   const user = $derived(root.state.user);
 
   const handleInput = (email: string) => {
-    void dispatch({ type: 'UserSetEmailAction', email });
+    void root.dispatch({ type: 'UserSetEmailAction', email });
   };
 
   const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault();
-    await dispatch({ type: 'UserLoadAction' });
+    await root.dispatch({ type: 'UserLoadAction' });
   };
 </script>
 

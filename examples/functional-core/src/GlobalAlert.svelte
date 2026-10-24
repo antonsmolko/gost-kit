@@ -1,17 +1,13 @@
 <script lang="ts">
-  import { useDispatch, useRootStore } from './root.ts';
+  import { rootStore } from './store/root.ts';
 
-  const root = useRootStore();
-  const dispatch = useDispatch();
+  const root = rootStore();
   const alert = $derived(root.state.alert);
 </script>
 
 {#if alert}
   <aside role="alert">
     <p>{alert.message}</p>
-    <button type="button" onclick={() => dispatch({ type: 'DismissAlertAction' })}>
-      Dismiss notification
-    </button>
   </aside>
 {/if}
 

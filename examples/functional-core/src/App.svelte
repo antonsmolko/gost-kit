@@ -1,10 +1,6 @@
 <script lang="ts">
-  import { createRootStore, provideRootStore } from './root.ts';
-  import { fakeApi } from './fake-api.ts';
   import UserForm from './UserForm.svelte';
   import GlobalAlert from './GlobalAlert.svelte';
-
-  provideRootStore(createRootStore(fakeApi));
 </script>
 
 <main>

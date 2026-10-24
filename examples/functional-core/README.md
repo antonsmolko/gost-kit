@@ -10,20 +10,24 @@ The example is private and does not define a published package API.
 Use Node 26. From the repository root:
 
 ```sh
+npm ci
+npm run build --workspace @gost/common
+npm run build --workspace @gost/svelte
 npm --prefix examples/functional-core ci
 npm --prefix examples/functional-core run dev
 ```
 
 Open the localhost URL printed by Vite. Enter an email and click **Load user**.
 The synthetic API returns Ada Lovelace after a short delay. Use
-`error@example.test` to get an error and a global notification. Dismiss it,
-change the email and retry. There are no API network requests.
+`error@example.test` to get an error and a global notification. Change the email
+and retry. There are no API network requests.
 
 ## Read the example
 
-Start with `src/UserForm.svelte`. It gets the root store from context, reads
-`$derived(root.state.user)` and sends plain action objects through `useDispatch()`.
-`src/App.svelte` creates one root store for that application tree. Global
+Start with `src/UserForm.svelte`. It imports `rootStore` from `src/store/root.ts`,
+gets the shared instance with `const root = rootStore()`, reads
+`$derived(root.state.user)` and sends plain action objects through
+`root.dispatch()`. Global
 notifications are rendered by `src/GlobalAlert.svelte`, outside the user feature.
 
 ```text
@@ -42,18 +46,22 @@ component: await dispatch(UserLoadAction)
 → the original dispatch completes after the nested actions/effects complete
 ```
 
-- `src/types.ts`: feature and global actions/state, effect descriptions and the
-  one concrete request's API dependency. All actions/effects are objects.
-- `src/reducer.ts`: pure feature transitions and application-level alert handling.
+- `src/store/types/`: root action/effect unions, state/store types, global actions, API contracts and effect payloads.
+- `src/features/user/domain/entities/`: user entity.
+- `src/features/user/domain/fc/`: user actions, reducer handlers, state type and initializer.
+  All actions/effects are objects.
+- `src/store/fc/reducer.ts`: composes user handlers with application-level alert handling.
   Handlers are keyed by action type; `reducing` normalizes their results into
   full state and an array of effect descriptions.
-- `src/shell/module.svelte.ts`: the small imperative shell. It replaces state,
-  then waits for the commit's parallel effects using `Promise.allSettled`.
-- `src/effector.ts`: request execution and forwarding actions. API dependencies
+- `@gost/svelte`: `createStore` stores reactive state with `$state.raw` and
+  connects it to framework-independent dispatch from `@gost/common`.
+- `src/store/fc/effector.ts`: request execution and forwarding actions. API dependencies
   are injected; reducers never execute a request.
-- `src/state.ts`: feature state factory and root state composition.
-- `src/shell/handlers.ts`: typed handler definitions and table composition.
-- `src/root.ts`: module assembly and typed Svelte context access.
+- `src/store/fc/state.ts`: composes user initial state with application-level state.
+- `@gost/common`: handler definitions, table composition, dispatch execution,
+  shared types and guards, built from `../../packages/common`. Dispatch commits
+  state before waiting for parallel effects through `Promise.allSettled`.
+- `src/store/root.ts`: store factory and access to the shared application store instance.
 
 ## Handler tables and root composition
 
@@ -61,8 +69,7 @@ component: await dispatch(UserLoadAction)
 Its keys are action type names, and each handler receives `{ state, action }`
 with that action's specific payload type. `define.effector<RootAction, ApiEffect>`
 defines an effect table with handlers receiving `{ effect, dispatch }`.
-Each definition must cover its declared action/effect union; compile-only tests
-also verify that invalid payload fields and missing handlers are rejected.
+Each definition must cover its declared action/effect union.
 
 The root assembles feature and application tables:
 
@@ -78,14 +85,16 @@ const effector: Effector<RootAction, RootEffect> = effecting(
 );
 ```
 
-See `src/reducer.ts` and `src/effector.ts` for the complete definitions. The
+See `src/features/user/domain/fc/reducer.ts` for user handlers,
+`src/store/fc/reducer.ts` for root composition, and `src/store/fc/effector.ts`
+for effect execution. The
 builders return typed tables; the composition functions return the ordinary
-reducer/effector functions consumed by the module.
+reducer/effector functions consumed by the store.
 
 A reducer handler may return `{ state }`, `{ effects }`, both, or no result.
 When present, `state` must be complete; there is no partial-state merge.
 Missing/undefined state retains the current state. An effect can be a single
-object or an array; omitted effects become `[]`. The module always receives a
+object or an array; omitted effects become `[]`. The store always receives a
 complete `{ state, effects: [] }` commit after normalization. An unregistered
 action keeps the same state with no effects; an unregistered effect is ignored.
 Each registered action/effect has one owner: composition rejects duplicate
@@ -141,9 +150,9 @@ A root store composes feature state/actions/reducers with application-level
 state/actions, including global notifications. Features may emit an effect
 containing an action handled by another feature or the application level.
 
-The runnable example below stays compact: `src/types.ts` groups the example's
-state/actions/entities, `src/reducer.ts` groups feature and root transitions, and
-the injected fake API already returns trusted `User` data. It therefore has no
+The runnable example separates root composition in `src/store/` from user
+logic in `src/features/user/domain/`. The injected fake API already returns
+trusted `User` data. It therefore has no
 DTO mappers or real HTTP layer. The tree above explains how to apply the same
 flow when an actual API boundary is introduced.
 
@@ -169,13 +178,12 @@ commit are also caught by dispatch and reported as reducer failures.
 Effects are not cancelled or rolled back; a never-settling effect keeps dispatch
 pending. Unrelated dispatches and unawaited work are outside this completion boundary.
 
-Configure the module's optional `onError` callback for centralized reporting.
-It receives a `ModuleError`: `{ kind: 'reducer', action, error }` or
+Configure the store's optional `onError` callback for centralized reporting.
+It receives a `StoreError`: `{ kind: 'reducer', action, error }` or
 `{ kind: 'effect', action, effect, error }`. The default handler calls
 `console.error` with this context. An async callback is awaited; if the callback
 throws/rejects, a console fallback records the original failure and reporting
-error without rejecting dispatch. Console fallback is best effort if the logging
-sink itself is broken. Reporters should complete; a pending reporter keeps
+error. Reporters should complete; a pending reporter keeps
 its dispatch pending. A nested dispatch reports its own failures and resolves,
 so the parent does not report the same failure again.
 
@@ -187,7 +195,7 @@ action lets the feature leave `loading` and display its configured error message
 The feature reducer remains responsible for its status transitions. The raw
 exception is not shown to the user. The fake API returns only a trusted `User`
 or rejects; server validation/result envelopes are outside this example.
-Receiver exceptions go to the module's `onError` instead of being converted
+Receiver exceptions go to the store's `onError` instead of being converted
 into request errors or retried. Reducer failures in receiver-generated actions
 are reported by that nested dispatch. Expected API failures stay in the domain
 receiver flow; `onError` handles unexpected execution failures. There is no
@@ -197,10 +205,10 @@ The API dependency returns trusted typed data. This example defines only `/user`
 and does not implement HTTP, response validation or True Myth integration.
 State is immutable by convention and TypeScript readonly fields; it is not frozen
 at runtime. Components send actions instead of mutating state directly. Previous
-loaded data is retained during loading/error. Global alerts persist until dismissed.
+loaded data is retained during loading/error. Global alerts remain in state.
 
-No reset, pipes, hooks, persistence, SSR demo, cancellation, stale-response
-protection or general package API is included. Separate root instances are isolated.
+No reset, pipes, hooks, persistence, SSR demo, cancellation or stale-response
+protection is included. Separate root instances are isolated.
 The form disables loading while a request is pending; programmatic overlapping
 requests have no ordering guarantees beyond their completion order.
 
@@ -225,8 +233,7 @@ The browser setup follows the maintained
 [Vite Svelte TypeScript template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-svelte-ts).
 Reactivity and instance access use supported Svelte
 [`$state.raw`](https://svelte.dev/docs/svelte/$state#state.raw),
-[`$derived`](https://svelte.dev/docs/svelte/$derived) and
-[context](https://svelte.dev/docs/svelte/context).
+[`$derived`](https://svelte.dev/docs/svelte/$derived).
 Tests follow [Svelte's Vitest/Playwright guidance](https://svelte.dev/docs/svelte/testing).
 The small shell demonstrates the awaited-dispatch contract and keeps effect
 execution outside the pure reducers.

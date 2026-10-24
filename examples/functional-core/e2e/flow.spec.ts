@@ -24,8 +24,6 @@ test('request failure shows a global alert and retry can succeed', async ({ page
   await expect(page.getByRole('status')).toHaveText('Status: error');
   await expect(page.getByLabel('Email')).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Load user' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Dismiss notification' }).click();
-  await expect(page.getByRole('alert')).toHaveCount(0);
   await page.getByLabel('Email').fill('ada@example.test');
   await page.getByRole('button', { name: 'Load user' }).click();
   await expect(page.getByRole('heading', { name: 'Ada Lovelace' })).toBeVisible();

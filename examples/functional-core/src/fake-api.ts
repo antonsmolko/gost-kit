@@ -1,4 +1,4 @@
-import type { ApiClient } from './types.ts';
+import type { ApiClient } from './store/types/effect.ts';
 
 export const fakeApi: ApiClient = async ({ body }) => {
   await new Promise<void>((resolve) => setTimeout(resolve, 400));
