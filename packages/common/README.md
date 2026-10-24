@@ -46,7 +46,8 @@ const rootReducer: Reducer<RootState, LoadAction, never> = reducing(
 
 `scope` supplies the current complete root state to feature handlers and replaces
 only the selected root property. Effects pass through unchanged; omitted state
-preserves the root state reference. It keeps the action keys so composition can
+or returning the same feature state reference preserves the root state reference.
+It keeps the action keys so composition can
 check coverage and ownership across scoped and root tables.
 
 `reducing` and `effecting` compose them, requiring exactly one handler for every

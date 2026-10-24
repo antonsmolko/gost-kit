@@ -9,6 +9,20 @@ type RootState = { user: UserState; auth: { user: { name: string } }; config: { 
 type Action = { type: 'LoadAction' } | { type: 'IdleAction' } | { type: 'ReportAction' };
 type Effect = { type: 'ReportEffect'; name: string };
 
+test('scope preserves root identity when the handler returns the same feature state with effects', () => {
+  const handlers = define.reducer<UserState, Extract<Action, { type: 'ReportAction' }>, Effect, RootState>()({
+    ReportAction: ({ state }) => ({ state, effects: { type: 'ReportEffect', name: state.name } }),
+  });
+  const reducer: Reducer<RootState, Extract<Action, { type: 'ReportAction' }>, Effect> = reducing(scope('user', handlers));
+  const state: RootState = { user: { name: 'Ada' }, auth: { user: { name: 'Ada' } }, config: { enabled: true } };
+
+  const commit = reducer(state, { type: 'ReportAction' });
+
+  expect(commit.state).toBe(state);
+  expect(commit.state.user).toBe(state.user);
+  expect(commit.effects).toEqual([{ type: 'ReportEffect', name: 'Ada' }]);
+});
+
 test('scope updates only feature state and supplies the complete current root state', () => {
   const handlers = define.reducer<UserState, Action, Effect, RootState>()({
     LoadAction: ({ state }, rootState) => ({
