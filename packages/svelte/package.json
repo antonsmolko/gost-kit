@@ -17,7 +17,7 @@
     }
   },
   "scripts": {
-    "build": "svelte-package -i src && tsc-alias -p tsconfig.json --outDir dist && node --input-type=module -e \"import { globSync, rmSync } from 'node:fs'; for (const path of globSync(['dist/**/*.test.*', 'dist/**/__tests__', '.svelte-kit/__package__'])) rmSync(path, { recursive: true, force: true });\"",
+    "build": "svelte-package -i src && tsc-alias -p tsconfig.json --outDir dist && node scripts/clean-build.ts",
     "check": "tsc --noEmit",
     "test": "vitest run",
     "prepack": "npm run build"
