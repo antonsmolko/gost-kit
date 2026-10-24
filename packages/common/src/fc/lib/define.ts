@@ -1,6 +1,5 @@
-import { guard } from '../../sharred/lib/guard';
-import type { Fn } from '../../types/fn';
-import type { Rec } from '../../types/rec';
+import { guard } from '../../sharred';
+import type { Fn, Rec } from '../../types';
 import type { Trigger } from '../types/trigger';
 import type { ReducerHandlers } from '../types/reducer-handlers';
 import type { EffectorHandlers } from '../types/effector-handlers';
