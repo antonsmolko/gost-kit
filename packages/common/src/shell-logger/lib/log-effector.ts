@@ -4,12 +4,10 @@ import type { LogConfig } from '../types/log-config';
 
 export const logEffector = <Action extends Trigger, Effect extends Trigger>(effector: Effector<Action, Effect>, config?: LogConfig): Effector<Action, Effect> => {
   return async (effect, dispatch) => {
-    await effector(effect, dispatch);
-
-    if (!config?.isEnabled) {
-      return;
+    if (config?.isEnabled) {
+      logInfoAsync({ trigger: effect });
     }
 
-    logInfoAsync({ trigger: effect })
+    await effector(effect, dispatch);
   };
 };
