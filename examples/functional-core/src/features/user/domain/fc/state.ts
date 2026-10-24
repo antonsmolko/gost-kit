@@ -1,6 +1,4 @@
-import { define } from '@gost/common';
-
-import type { AppError, Nlx } from '@gost/common';
+import { define, type AppError, type Nlx } from '@gost/common';
 import type { User } from '../entities/user';
 
 export type UserState = {
