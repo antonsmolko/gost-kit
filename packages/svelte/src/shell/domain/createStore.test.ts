@@ -153,6 +153,26 @@ describe('createStore', () => {
     expect(effects).toEqual(['replacement']);
   });
 
+  test('сохраняет исходную конфигурацию как this обработчиков', async () => {
+    const receivers: unknown[] = [];
+    const config: StoreConfig<State, Action, Effect> = {
+      initState: STATE,
+      reducer(_state, action) {
+        receivers.push(this);
+        return { state: { counter: action.counter }, effects: [{ type: 'WorkEffect' }] };
+      },
+      async effector() {
+        receivers.push(this);
+      },
+    };
+    const store = createStore(config);
+    await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+    expect(store.state.counter).toBe(7);
+    expect(receivers).toHaveLength(2);
+    expect(receivers[0]).toBe(config);
+    expect(receivers[1]).toBe(config);
+  });
+
   test('изолирует состояние разных экземпляров', async () => {
     const config: StoreConfig<State, Action, Effect> = {
       initState: STATE,
