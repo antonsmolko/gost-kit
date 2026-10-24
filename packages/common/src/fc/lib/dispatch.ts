@@ -1,4 +1,4 @@
-import { report } from '../../sharred/lib/report';
+import { report } from '../../sharred';
 import type { Dispatch } from '../types/dispatch';
 import type { DispatchConfig } from '../types/dispatch-config';
 import type { Trigger } from '../types/trigger';
@@ -9,10 +9,24 @@ export const createDispatch = <TState, TAction extends Trigger, TEffect extends 
   const onError = config.onError;
 
   const dispatch: Dispatch<TAction> = async (action) => {
-    try {
-      const commit = config.reducer(config.readState(), action);
+    let state: TState;
 
-      config.writeState(commit.state);
+    try {
+      state = config.readState();
+    } catch (error) {
+      await report({ kind: 'readState', action, error }, onError);
+      return;
+    }
+
+    try {
+      const commit = config.reducer(state, action);
+
+      try {
+        config.writeState(commit.state);
+      } catch (error) {
+        await report({ kind: 'writeState', action, error }, onError);
+        return;
+      }
 
       const results = await Promise.allSettled(
         commit.effects.map(async (effect) => config.effector(effect, dispatch)),

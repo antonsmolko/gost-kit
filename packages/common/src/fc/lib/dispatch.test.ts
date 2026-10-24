@@ -3,6 +3,9 @@ import { createDispatch } from './dispatch';
 import type { StoreConfig } from '../types/store-config';
 import type { Store } from '../types/store';
 import type { Trigger } from '../types/trigger';
+import type { DispatchConfig } from '../types/dispatch-config';
+import type { Commit } from '../types/commit';
+import type { StoreError } from '../types/store-error';
 
 const createTestStore = <TState, TAction extends Trigger, TEffect extends Trigger>(config: StoreConfig<TState, TAction, TEffect>): Store<TState, TAction> => {
   let state = config.initState;
@@ -13,11 +16,60 @@ const createTestStore = <TState, TAction extends Trigger, TEffect extends Trigge
   });
   return { get state() { return state; }, dispatch };
 };
-import type { Commit } from '../types/commit';
-import type { StoreError } from '../types/store-error';
 
 type Action = { type: 'RunAction' };
 type Effect = { type: 'WorkEffect'; id: number };
+type TestDispatchConfig = DispatchConfig<number, Action, Effect>;
+
+test('a readState failure is reported before reducer, writeState or effects run', async () => {
+  const failure = new Error('Cannot read state');
+  const onError = vi.fn<NonNullable<TestDispatchConfig['onError']>>();
+  const reducer = vi.fn<TestDispatchConfig['reducer']>(() => ({
+    state: 1, effects: [{ type: 'WorkEffect', id: 0 }],
+  }));
+  const writeState = vi.fn<TestDispatchConfig['writeState']>();
+  const effector = vi.fn<TestDispatchConfig['effector']>(async () => {});
+  const dispatch = createDispatch<number, Action, Effect>({
+    readState: () => { throw failure; },
+    reducer,
+    writeState,
+    effector,
+    onError,
+  });
+  const action: Action = { type: 'RunAction' };
+
+  await expect(dispatch(action)).resolves.toBeUndefined();
+
+  expect(onError).toHaveBeenCalledExactlyOnceWith({ kind: 'readState', action, error: failure });
+  expect(reducer).not.toHaveBeenCalled();
+  expect(writeState).not.toHaveBeenCalled();
+  expect(effector).not.toHaveBeenCalled();
+});
+
+test('a writeState failure is reported after reducer and prevents effects', async () => {
+  const failure = new Error('Cannot write state');
+  const onError = vi.fn<NonNullable<TestDispatchConfig['onError']>>();
+  const reducer = vi.fn<TestDispatchConfig['reducer']>(() => ({
+    state: 1, effects: [{ type: 'WorkEffect', id: 0 }],
+  }));
+  const writeState = vi.fn<TestDispatchConfig['writeState']>(() => { throw failure; });
+  const effector = vi.fn<TestDispatchConfig['effector']>(async () => {});
+  const dispatch = createDispatch<number, Action, Effect>({
+    readState: () => 0,
+    reducer,
+    writeState,
+    effector,
+    onError,
+  });
+  const action: Action = { type: 'RunAction' };
+
+  await expect(dispatch(action)).resolves.toBeUndefined();
+
+  expect(onError).toHaveBeenCalledExactlyOnceWith({ kind: 'writeState', action, error: failure });
+  expect(reducer).toHaveBeenCalledExactlyOnceWith(0, action);
+  expect(writeState).toHaveBeenCalledExactlyOnceWith(1);
+  expect(effector).not.toHaveBeenCalled();
+});
 
 test('effects start in parallel after state commit and dispatch waits for all', async () => {
   const requests = [Promise.withResolvers<void>(), Promise.withResolvers<void>()];
