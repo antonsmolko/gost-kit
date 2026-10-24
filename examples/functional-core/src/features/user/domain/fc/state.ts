@@ -8,13 +8,10 @@ export type UserState = {
   readonly errors: readonly AppError[];
 };
 
-export const userState = (options: Partial<UserState> = {}): UserState => {
-  const createState = define.state<UserState>({
-    email: '',
-    status: 'idle',
-    data: null,
-    errors: [],
-  });
-
-  return createState(options);
-};
+export const userState = define.state<UserState>((options = {}) => ({
+  email: '',
+  status: 'idle',
+  data: null,
+  errors: [],
+  ...options,
+}));
