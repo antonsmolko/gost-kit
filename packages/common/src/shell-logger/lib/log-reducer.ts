@@ -2,7 +2,7 @@ import type { Reducer, Trigger } from '../../fc';
 import type { LogConfig } from '../types/log-config';
 import { logInfoAsync } from './log-info-async';
 
-export const logReducer = <State, Action extends Trigger, Effect extends Trigger>(reducer: Reducer<State, Action, Effect>, config?: LogConfig): Reducer<State, Action, Effect> => {
+export const logReducer = <TState, TAction extends Trigger, TEffect extends Trigger>(reducer: Reducer<TState, TAction, TEffect>, config?: LogConfig): Reducer<TState, TAction, TEffect> => {
   return (state, action) => {
     const commit = reducer(state, action);
 
