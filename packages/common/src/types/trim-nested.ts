@@ -1,5 +1,5 @@
-import type { AnyFn } from './any-fn.ts';
-import type { Trim } from './trim.ts';
+import type { AnyFn } from './any-fn';
+import type { Trim } from './trim';
 
 export type TrimNested<T> = T extends string
   ? Trim<T>

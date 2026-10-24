@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { userState } from './state.ts';
+import { userState } from './state';
 
 test('feature state accepts initial data', () => {
   expect(userState({ email: 'ada@example.test' })).toEqual({

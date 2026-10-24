@@ -1,14 +1,21 @@
 import { define } from '@gost/common';
-import type { RootState } from '../../../../store/types/state.ts';
-import type { RootEffect } from '../../../../store/types/effect.ts';
-import type { UserAction } from './action.ts';
+import type { RootState } from '../../../../store/types/state';
+import type { RootEffect } from '../../../../store/types/effect';
+import type { UserAction } from './action';
 
 export const userReducer = define.reducer<RootState, UserAction, RootEffect>({
   UserSetEmailAction: ({ state, action }) => ({
     state: { ...state, user: { ...state.user, email: action.email } },
   }),
   UserLoadAction: ({ state }) => ({
-    state: { ...state, user: { ...state.user, status: 'loading', errors: [] } },
+    state: {
+      ...state,
+      user: {
+        ...state.user,
+        status: 'loading',
+        errors: [],
+      },
+    },
     effects: {
       type: 'ApiEffect',
       url: '/user',

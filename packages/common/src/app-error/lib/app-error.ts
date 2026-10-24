@@ -1,4 +1,4 @@
-import type { AppError } from '../types/app-error.ts';
+import type { AppError } from '../types/app-error';
 
 export const appError = (data: Partial<AppError> = {}): AppError => {
   return {

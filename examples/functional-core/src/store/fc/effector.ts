@@ -1,7 +1,7 @@
 import { define, effecting, type Effector } from '@gost/common';
-import type { RootAction } from '../types/action.ts';
-import type { ApiClient, ApiEffect, DispatchActionEffect, RootEffect } from '../types/effect.ts';
-import type { User } from '../../features/user/domain/entities/user.ts';
+import type { RootAction } from '../types/action';
+import type { ApiClient, ApiEffect, DispatchActionEffect, RootEffect } from '../types/effect';
+import type { User } from '../../features/user/domain/entities/user';
 
 const apiEffector = (api: ApiClient) => define.effector<RootAction, ApiEffect>({
   ApiEffect: async ({ effect, dispatch }) => {
@@ -24,4 +24,7 @@ const shellEffector = define.effector<RootAction, DispatchActionEffect>({
 });
 
 export const createEffector = (api: ApiClient): Effector<RootAction, RootEffect> =>
-  effecting(apiEffector(api), shellEffector);
+  effecting(
+    apiEffector(api),
+    shellEffector,
+  );

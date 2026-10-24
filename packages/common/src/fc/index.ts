@@ -4,6 +4,7 @@ export { effecting } from './lib/effecting';
 export { reducing } from './lib/reducing';
 
 export type { Commit } from './types/commit';
+export type { Complete } from './types/complete';
 export type { Dispatch } from './types/dispatch';
 export type { DispatchConfig } from './types/dispatch-config';
 export type { Draft } from './types/draft';

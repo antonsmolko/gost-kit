@@ -1,3 +1,3 @@
-export { type AppError } from './types/app-error.ts'
+export { type AppError } from './types/app-error'
 
-export { appError } from './lib/app-error.ts'
+export { appError } from './lib/app-error'

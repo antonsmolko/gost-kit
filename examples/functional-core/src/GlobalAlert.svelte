@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { rootStore } from './store/root.ts';
+  import { rootStore } from './store/root';
 
   const root = rootStore();
   const alert = $derived(root.state.alert);

@@ -1,4 +1,4 @@
-import type { AnyFn, Nil, Rec } from '../../types/index.ts';
+import type { AnyFn, Nil, Rec } from '../../types';
 
 const MAX_SAFE_INTEGER_DIGITS = 19;
 

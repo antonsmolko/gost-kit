@@ -6,7 +6,6 @@
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "strict": true,
     "noEmit": true,
-    "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "types": ["svelte", "vite/client", "node"]

@@ -1,6 +1,6 @@
 import type { Reducer, Trigger } from '../../fc';
 import type { LogConfig } from '../types/log-config';
-import { logInfoAsync } from './log-info-async.ts';
+import { logInfoAsync } from './log-info-async';
 
 export const logReducer = <State, Action extends Trigger, Effect extends Trigger>(reducer: Reducer<State, Action, Effect>, config?: LogConfig): Reducer<State, Action, Effect> => {
   return (state, action) => {

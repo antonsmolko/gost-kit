@@ -1,6 +1,6 @@
-import { logInfoAsync } from './log-info-async.ts';
+import { logInfoAsync } from './log-info-async';
 import type { Effector, Trigger } from '../../fc';
-import type { LogConfig } from '../types/log-config.ts';
+import type { LogConfig } from '../types/log-config';
 
 export const logEffector = <Action extends Trigger, Effect extends Trigger>(effector: Effector<Action, Effect>, config?: LogConfig): Effector<Action, Effect> => {
   return async (effect, dispatch) => {

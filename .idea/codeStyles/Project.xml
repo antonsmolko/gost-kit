@@ -1,0 +1,10 @@
+<code_scheme name="Project" version="173">
+  <JSCodeStyleSettings>
+    <option name="USE_EXPLICIT_JS_EXTENSION" value="NEVER" />
+    <option name="IMPORT_USE_NODE_RESOLUTION" value="true" />
+  </JSCodeStyleSettings>
+  <TypeScriptCodeStyleSettings>
+    <option name="USE_EXPLICIT_JS_EXTENSION" value="NEVER" />
+    <option name="IMPORT_USE_NODE_RESOLUTION" value="true" />
+  </TypeScriptCodeStyleSettings>
+</code_scheme>

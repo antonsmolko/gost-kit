@@ -1,5 +1,5 @@
-import type { AnyFn } from '../../types/any-fn.ts';
-import type { Vdx } from '../../types/vdx.ts';
+import type { AnyFn } from '../../types/any-fn';
+import type { Vdx } from '../../types/vdx';
 
 export const report = async <TFailure>(
   failure: TFailure,

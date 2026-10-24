@@ -1,4 +1,4 @@
-import type { Ulx } from './ulx.ts';
+import type { Ulx } from './ulx';
 
 type ObjectToEntries<ObjectType extends object> = {
   [Key in keyof ObjectType]: [Key, ObjectType[Key]];

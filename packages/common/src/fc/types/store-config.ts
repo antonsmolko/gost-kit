@@ -1,8 +1,8 @@
-import type { Vdx } from '../../types/vdx.ts';
-import type { Effector } from './effector.ts';
-import type { StoreError } from './store-error.ts';
-import type { Reducer } from './reducer.ts';
-import type { Trigger } from './trigger.ts';
+import type { Vdx } from '../../types/vdx';
+import type { Effector } from './effector';
+import type { StoreError } from './store-error';
+import type { Reducer } from './reducer';
+import type { Trigger } from './trigger';
 
 export type StoreConfig<TState, TAction extends Trigger, TEffect extends Trigger> = {
   initState: TState;

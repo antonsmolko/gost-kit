@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { initialState } from './state.ts';
+import { initialState } from './state';
 
 test('root initialization creates separate instances', () => {
   const first = initialState();

@@ -1,6 +1,6 @@
 import type { AppError, AsyncFn } from '@gost/common';
-import type { User } from '../../features/user/domain/entities/user.ts';
-import type { RootAction } from './action.ts';
+import type { User } from '../../features/user/domain/entities/user';
+import type { RootAction } from './action';
 
 export type DispatchActionEffect = { type: 'DispatchActionEffect'; action: RootAction };
 

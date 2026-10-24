@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
-import { reducer } from './reducer.ts';
-import { initialState } from './state.ts';
+import { reducer } from './reducer';
+import { initialState } from './state';
 
 test('global alert actions update application state outside user state', () => {
   const state = initialState();

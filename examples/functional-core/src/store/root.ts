@@ -1,10 +1,10 @@
-import type { RootStore } from './types/store.ts';
+import type { RootStore } from './types/store';
 import { createStore } from '@gost/svelte';
-import { createEffector } from './fc/effector.ts';
-import { reducer } from './fc/reducer.ts';
-import { initialState } from './fc/state.ts';
-import type { ApiClient } from './types/effect.ts';
-import { fakeApi } from '../fake-api.ts';
+import { createEffector } from './fc/effector';
+import { reducer } from './fc/reducer';
+import { initialState } from './fc/state';
+import type { ApiClient } from './types/effect';
+import { fakeApi } from '../fake-api';
 import { logReducer, logEffector } from '@gost/common';
 
 export const createRootStore = (api: ApiClient) => createStore({

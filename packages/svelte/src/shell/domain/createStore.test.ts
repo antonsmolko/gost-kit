@@ -1,8 +1,8 @@
 import { flushSync } from 'svelte';
 import type { StoreConfig, StoreError } from '@gost/common';
 import { describe, expect, test } from 'vitest';
-import { createStore } from './createStore.svelte.ts';
-import { observe } from './__tests__/observe.svelte.ts';
+import { createStore } from './createStore.svelte';
+import { observe } from './__tests__/observe.svelte';
 
 type State = { counter: number; previous?: boolean };
 type Action = { type: 'SetCounterAction'; counter: number };

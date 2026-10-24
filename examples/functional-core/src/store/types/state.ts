@@ -1,5 +1,5 @@
 import type { Nlx } from '@gost/common';
-import type { UserState } from '../../features/user/domain/fc/state.ts';
+import type { UserState } from '../../features/user/domain/fc/state';
 
 export type RootState = {
   readonly user: UserState;

@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
-import { createRootStore } from './root.ts';
-import type { User } from '../features/user/domain/entities/user.ts';
+import { createRootStore } from './root';
+import type { User } from '../features/user/domain/entities/user';
 
 const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };
 

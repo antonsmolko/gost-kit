@@ -15,8 +15,10 @@ const reducer: Reducer<number, Action, never> = reducing({
 ```
 
 `define.reducer` and `define.effector` define narrowed handler tables.
-`reducing` and `effecting` compose them, rejecting duplicate owners at compile
-time. Reducers normalize omitted state/effects into a complete commit.
+`reducing` and `effecting` compose them, requiring exactly one handler for every
+declared action/effect at compile time. Missing and optional-only handlers are
+rejected, as are duplicate owners. Empty composition is allowed for `never`
+actions/effects. Reducers normalize omitted state/effects into a complete commit.
 
 `define.state` accepts a ready-made plain state object or a factory receiving
 one optional options object. Options are constrained to `Partial<TState>` so

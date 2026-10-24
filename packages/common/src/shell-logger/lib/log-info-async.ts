@@ -1,5 +1,5 @@
 import { safeRun } from '../../sharred';
-import { getTriggerName } from './get-trigger-name.ts';
+import { getTriggerName } from './get-trigger-name';
 import { logger } from '../../logger';
 import type { Trigger } from '../../fc';
 

@@ -1,8 +1,8 @@
 import { expect, test } from 'vitest';
-import { createEffector } from './effector.ts';
-import type { ApiClient, ApiEffect } from '../types/effect.ts';
-import type { RootAction } from '../types/action.ts';
-import type { User } from '../../features/user/domain/entities/user.ts';
+import { createEffector } from './effector';
+import type { ApiClient, ApiEffect } from '../types/effect';
+import type { RootAction } from '../types/action';
+import type { User } from '../../features/user/domain/entities/user';
 
 const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };
 const effect: ApiEffect = {

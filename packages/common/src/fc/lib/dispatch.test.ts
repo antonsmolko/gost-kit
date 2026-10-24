@@ -1,8 +1,8 @@
 import { expect, test, vi } from 'vitest';
-import { createDispatch } from './dispatch.ts';
-import type { StoreConfig } from '../types/store-config.ts';
-import type { Store } from '../types/store.ts';
-import type { Trigger } from '../types/trigger.ts';
+import { createDispatch } from './dispatch';
+import type { StoreConfig } from '../types/store-config';
+import type { Store } from '../types/store';
+import type { Trigger } from '../types/trigger';
 
 const createTestStore = <TState, TAction extends Trigger, TEffect extends Trigger>(config: StoreConfig<TState, TAction, TEffect>): Store<TState, TAction> => {
   let state = config.initState;
@@ -13,8 +13,8 @@ const createTestStore = <TState, TAction extends Trigger, TEffect extends Trigge
   });
   return { get state() { return state; }, dispatch };
 };
-import type { Commit } from '../types/commit.ts';
-import type { StoreError } from '../types/store-error.ts';
+import type { Commit } from '../types/commit';
+import type { StoreError } from '../types/store-error';
 
 type Action = { type: 'RunAction' };
 type Effect = { type: 'WorkEffect'; id: number };

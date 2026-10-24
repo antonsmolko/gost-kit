@@ -1,9 +1,9 @@
-import { guard } from '../../sharred/lib/guard.ts';
-import type { Fn } from '../../types/fn.ts';
-import type { Rec } from '../../types/rec.ts';
-import type { Trigger } from '../types/trigger.ts';
-import type { ReducerHandlers } from '../types/reducer-handlers.ts';
-import type { EffectorHandlers } from '../types/effector-handlers.ts';
+import { guard } from '../../sharred/lib/guard';
+import type { Fn } from '../../types/fn';
+import type { Rec } from '../../types/rec';
+import type { Trigger } from '../types/trigger';
+import type { ReducerHandlers } from '../types/reducer-handlers';
+import type { EffectorHandlers } from '../types/effector-handlers';
 
 export const define = {
   state: <

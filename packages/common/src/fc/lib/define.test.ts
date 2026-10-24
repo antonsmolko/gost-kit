@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, test } from 'vitest';
-import type { Nlx } from '../../types/nlx.ts';
-import type { Ulx } from '../../types/ulx.ts';
-import { define } from './define.ts';
+import type { Nlx } from '../../types/nlx';
+import type { Ulx } from '../../types/ulx';
+import { define } from './define';
 
 type State = { counter: number; name: string; items: string[] };
 

@@ -1,11 +1,11 @@
 import { expect, test } from 'vitest';
 import { reducing, type Reducer } from '@gost/common';
-import { userReducer } from './reducer.ts';
-import { initialState } from '../../../../store/fc/state.ts';
-import type { RootState } from '../../../../store/types/state.ts';
-import type { RootEffect } from '../../../../store/types/effect.ts';
-import type { UserAction } from './action.ts';
-import type { User } from '../entities/user.ts';
+import { userReducer } from './reducer';
+import { initialState } from '../../../../store/fc/state';
+import type { RootState } from '../../../../store/types/state';
+import type { RootEffect } from '../../../../store/types/effect';
+import type { UserAction } from './action';
+import type { User } from '../entities/user';
 
 const reducer: Reducer<RootState, UserAction, RootEffect> = reducing(userReducer);
 const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };

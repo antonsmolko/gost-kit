@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { guard } from '../../index.ts';
+import { guard } from '../..';
 
 describe('guard', () => {
   it('distinguishes missing and boolean values', () => {

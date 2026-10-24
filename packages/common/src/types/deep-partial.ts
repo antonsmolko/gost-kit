@@ -1,4 +1,4 @@
-import type { AnyFn } from './any-fn.ts';
+import type { AnyFn } from './any-fn';
 
 export type DeepPartial<T> = T extends AnyFn
   ? T

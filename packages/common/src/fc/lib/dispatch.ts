@@ -1,7 +1,7 @@
-import { report } from '../../sharred/lib/report.ts';
-import type { Dispatch } from '../types/dispatch.ts';
-import type { DispatchConfig } from '../types/dispatch-config.ts';
-import type { Trigger } from '../types/trigger.ts';
+import { report } from '../../sharred/lib/report';
+import type { Dispatch } from '../types/dispatch';
+import type { DispatchConfig } from '../types/dispatch-config';
+import type { Trigger } from '../types/trigger';
 
 export const createDispatch = <TState, TAction extends Trigger, TEffect extends Trigger>(
   config: DispatchConfig<TState, TAction, TEffect>,

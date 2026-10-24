@@ -29,3 +29,6 @@ repository root. Packaging follows the official
 `@sveltejs/package`. The `svelte` export condition points to JavaScript containing
 runes; consumers compile it with their Svelte tooling. Declarations are shipped
 alongside it. Svelte is a peer dependency, and is not bundled into the library.
+
+Source imports omit `.ts` and `.js`, retaining `.svelte` for components and rune
+modules. The build resolves emitted paths to `.js` with `tsc-alias`.

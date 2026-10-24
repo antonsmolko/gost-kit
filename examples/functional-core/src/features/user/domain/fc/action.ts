@@ -1,4 +1,4 @@
-import type { User } from '../entities/user.ts';
+import type { User } from '../entities/user';
 import type { AppError } from '@gost/common';
 
 export type UserAction =

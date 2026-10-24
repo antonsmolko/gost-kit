@@ -1,5 +1,5 @@
 import { expect, test, vi } from 'vitest';
-import { report } from './report.ts';
+import { report } from './report';
 
 test('report waits for the error handler', async () => {
   const pending = Promise.withResolvers<void>();

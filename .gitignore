@@ -1,5 +1,6 @@
 node_modules/
 dist/
 .svelte-kit/
-.idea/
+.idea/*
+!.idea/codeStyles/
 .DS_Store

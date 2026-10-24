@@ -1,9 +1,9 @@
 import { define, reducing, type Reducer } from '@gost/common';
-import type { RootAction } from '../types/action.ts';
-import type { RootEffect } from '../types/effect.ts';
-import type { RootState } from '../types/state.ts';
-import { userReducer } from '../../features/user/domain/fc/reducer.ts';
-import type { UserAction } from '../../features/user/domain/fc/action.ts';
+import type { RootAction } from '../types/action';
+import type { RootEffect } from '../types/effect';
+import type { RootState } from '../types/state';
+import { userReducer } from '../../features/user/domain/fc/reducer';
+import type { UserAction } from '../../features/user/domain/fc/action';
 
 const appReducer = define.reducer<RootState, Exclude<RootAction, UserAction>, RootEffect>({
   ShowAlertAction: ({ state, action }) => ({
@@ -11,4 +11,7 @@ const appReducer = define.reducer<RootState, Exclude<RootAction, UserAction>, Ro
   }),
 });
 
-export const reducer: Reducer<RootState, RootAction, RootEffect> = reducing(userReducer, appReducer);
+export const reducer: Reducer<RootState, RootAction, RootEffect> = reducing(
+  userReducer,
+  appReducer
+);

@@ -1,4 +1,4 @@
-import type { Vdx } from '../../types/vdx.ts';
-import type { Trigger } from './trigger.ts';
+import type { Vdx } from '../../types/vdx';
+import type { Trigger } from './trigger';
 
 export type Draft<TState, TEffect extends Trigger> = Vdx<{ state?: TState; effects?: TEffect | TEffect[] }>;

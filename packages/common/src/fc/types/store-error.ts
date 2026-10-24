@@ -1,4 +1,4 @@
-import type { Trigger } from './trigger.ts';
+import type { Trigger } from './trigger';
 
 export type StoreError<TAction extends Trigger, TEffect extends Trigger> =
   | { kind: 'reducer'; action: TAction; error: unknown }

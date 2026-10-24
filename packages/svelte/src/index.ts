@@ -1,1 +1,1 @@
-export { createStore } from './shell/domain/createStore.svelte.js';
+export { createStore } from './shell/domain/createStore.svelte';

@@ -10,13 +10,16 @@
     ],
     "strict": true,
     "noEmit": true,
-    "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "types": [
       "svelte",
       "node"
     ]
+  },
+  "tsc-alias": {
+    "resolveFullPaths": true,
+    "resolveFullExtension": ".js"
   },
   "include": [
     "src/**/*.ts",

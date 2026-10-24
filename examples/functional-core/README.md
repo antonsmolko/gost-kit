@@ -97,8 +97,10 @@ Missing/undefined state retains the current state. An effect can be a single
 object or an array; omitted effects become `[]`. The store always receives a
 complete `{ state, effects: [] }` commit after normalization. An unregistered
 action keeps the same state with no effects; an unregistered effect is ignored.
-Each registered action/effect has one owner: composition rejects duplicate
-table keys at compile time. Supply statically known tables or tuples; widened dynamic arrays
+Every declared action/effect must have exactly one owner: composition rejects
+missing handlers, optional-only coverage and duplicate table keys at compile time.
+Empty composition is allowed when the action/effect type is `never`.
+Supply statically known tables or tuples; widened dynamic arrays
 are rejected because unique ownership cannot be proven. Result annotations
 provide the state/action/effect types while preserving inline handler inference.
 These APIs expect trusted typed application objects; they do not validate external input at runtime.

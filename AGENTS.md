@@ -10,6 +10,10 @@ and `AnyFn`, `AsyncFn`, `AsyncTap`, `Rec` and other exported helpers where appli
 Keep standard TypeScript utility types when no common helper adds meaning.
 Do not change a domain contract to fit a helper.
 
+Omit TypeScript/JavaScript extensions and directory `index` names in source
+imports. Keep the `.svelte` suffix for Svelte components and rune modules.
+Package builds must resolve emitted imports to explicit `.js` paths.
+
 Use `guard` methods instead of equivalent direct runtime checks. Preserve exact
 semantics: `guard.number` rejects NaN/Infinity, and `guard.record` excludes null
 and arrays. Keep defensive `typeof` checks for potentially undeclared globals,
