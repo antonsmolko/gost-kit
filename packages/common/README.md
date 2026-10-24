@@ -17,12 +17,23 @@ const reducer: Reducer<number, Action, never> = reducing({
 `define.reducer<TState, TAction, TEffect, TRootState>()({...})` and
 `define.effector<TAction, TEffect>({...})` define narrowed handler tables.
 The reducer's first call sets the contracts; the second infers each handler's
-result and rejects extra state keys, including nested keys, without return
-annotations. Handlers receive `({ state, action }, rootState)`. Both state inputs
+result and checks its state shape with `ExactState` without return annotations.
+Handlers receive `({ state, action }, rootState)`. Both state inputs
 are deeply readonly views of objects and arrays at compile time; no runtime
 freezing is performed. `TRootState` defaults to `TState` for root handlers.
 Returning the readonly feature state unchanged is supported, including arrays;
 handlers do not have to clone unchanged values.
+
+`ExactState` checks nested state shapes and catches extra keys in object literals,
+but compatible union members can hide extra fields. For `items: { id: string }[]`,
+`[...state.items, { id: 'a', extra: true }]` is accepted. Required fields and value
+types are still checked. This simpler implementation remains the reducer default.
+
+`ExactStateStrict` is kept alongside it for comparison and is not connected to
+`define.reducer`. It rejects the mixed-array example by checking every inferred
+variant, including nested keys. It supports declared nullable/discriminated unions
+and tracks exact type pairs to finish checking recursive states. These additional
+checks make its implementation more complex; tests document the difference.
 
 Feature handlers receive and return their own complete state. Adapt them to a
 root property with `scope` before composing:
