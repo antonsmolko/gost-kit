@@ -1,7 +1,7 @@
-import type { Nil } from './nil';
+import type { Nlx } from './nlx';
 
 export type JSONObject = {
   [key: string]: JSONValue;
 };
 
-export type JSONValue = Nil<string | number | boolean | object | JSONValue[] | JSONObject>;
+export type JSONValue = Nlx<string | number | boolean | JSONValue[] | JSONObject>;
