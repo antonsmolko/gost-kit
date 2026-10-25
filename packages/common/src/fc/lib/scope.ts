@@ -3,7 +3,7 @@ import type { ReducerHandlers } from '../types/reducer-handlers';
 import type { Trigger } from '../types/trigger';
 
 /** Adapts feature handlers to a root state property, preserving their action keys. */
-export const scope = <TRootState, TKey extends keyof TRootState, TAction extends Trigger, TEffect extends Trigger>(
+export const scope = <TRootState, TKey extends keyof TRootState & {}, TAction extends Trigger, TEffect extends Trigger>(
   key: TKey,
   handlers: ReducerHandlers<TRootState[TKey], TAction, TEffect, TRootState>,
 ): ReducerHandlers<TRootState, TAction, TEffect> => {

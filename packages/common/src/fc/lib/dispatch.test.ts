@@ -21,6 +21,29 @@ type Action = { type: 'RunAction' };
 type Effect = { type: 'WorkEffect'; id: number };
 type TestDispatchConfig = DispatchConfig<number, Action, Effect>;
 
+test('dispatch accepts explicit root scope without requiring it in the source action type', async () => {
+  const received: Action[] = [];
+  const root = createTestStore<number, Action, never>({
+    initState: 0,
+    reducer: (state, action) => {
+      received.push(action);
+      return { state: state + 1, effects: [] };
+    },
+    effector: async () => {},
+  });
+  const implicit: Action = { type: 'RunAction' };
+  const explicit = { scope: 'root', type: 'RunAction' } as const;
+
+  await root.dispatch(implicit);
+  await root.dispatch({ scope: 'root', type: 'RunAction' });
+  await root.dispatch(explicit);
+
+  expect(root.state).toBe(3);
+  expect(received[0]).toBe(implicit);
+  expect(received[0]).not.toHaveProperty('scope');
+  expect(received[2]).toBe(explicit);
+});
+
 test('a readState failure is reported before reducer, writeState or effects run', async () => {
   const failure = new Error('Cannot read state');
   const onError = vi.fn<NonNullable<TestDispatchConfig['onError']>>();

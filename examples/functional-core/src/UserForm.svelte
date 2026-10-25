@@ -5,12 +5,12 @@
   const user = $derived(root.state.user);
 
   const handleInput = (email: string) => {
-    void root.dispatch({ type: 'UserSetEmailAction', email });
+    void root.dispatch({ scope: 'users', type: 'SetEmailAction', email });
   };
 
   const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault();
-    await root.dispatch({ type: 'UserLoadAction' });
+    await root.dispatch({ scope: 'users', type: 'LoadAction' });
   };
 </script>
 

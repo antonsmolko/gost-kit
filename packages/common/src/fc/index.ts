@@ -5,6 +5,8 @@ export { reducing } from './lib/reducing';
 export { scope } from './lib/scope';
 
 export type { Commit } from './types/commit';
+export type { ActionScope } from './types/action-scope';
+export type { ActionsInScope } from './types/actions-in-scope';
 export type { CheckedReducerHandlers } from './types/checked-reducer-handlers';
 export type { ExactState } from './types/exact-state';
 export type { ExactStateStrict } from './types/exact-state-strict';
@@ -17,6 +19,9 @@ export type { Effector } from './types/effector';
 export type { EffectorHandlers } from './types/effector-handlers';
 export type { Reducer } from './types/reducer';
 export type { ReducerHandlers } from './types/reducer-handlers';
+export type { DispatchAction } from './types/dispatch-action';
+export type { ScopedActions } from './types/scoped-actions';
+export type { ScopedReducerHandlers } from './types/scoped-reducer-handlers';
 export type { Store } from './types/store';
 export type { StoreConfig } from './types/store-config';
 export type { StoreError } from './types/store-error';

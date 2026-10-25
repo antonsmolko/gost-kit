@@ -6,6 +6,7 @@ import type { User } from '../../features/user/domain/entities/user';
 const apiEffector = (api: ApiClient) => define.effector<RootAction, ApiEffect>({
   ApiEffect: async ({ effect, dispatch }) => {
     let response: User;
+
     try {
       response = await api({ url: effect.url, body: effect.body });
     } catch {

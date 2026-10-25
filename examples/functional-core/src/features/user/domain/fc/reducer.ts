@@ -5,10 +5,10 @@ import type { UserAction } from './action';
 import type { UserState } from './state';
 
 export const userReducer = define.reducer<UserState, UserAction, RootEffect, RootState>()({
-  UserSetEmailAction: ({ state, action }) => ({
+  SetEmailAction: ({ state, action }) => ({
     state: { ...state, email: action.email },
   }),
-  UserLoadAction: ({ state }) => ({
+  LoadAction: ({ state }) => ({
     state: {
       ...state,
       status: 'loading',
@@ -19,14 +19,14 @@ export const userReducer = define.reducer<UserState, UserAction, RootEffect, Roo
       url: '/user',
       body: { email: state.email },
       defaultError: { code: 'USER_LOAD_FAILED', message: 'Could not load user', path: [] },
-      receiverSuccess: (response) => ({ type: 'UserSuccessReceiveAction', response }),
-      receiverError: (errors) => ({ type: 'UserErrorReceiveAction', errors }),
+      receiverSuccess: (response) => ({ scope: 'users', type: 'SuccessReceiveAction', response }),
+      receiverError: (errors) => ({ scope: 'users', type: 'ErrorReceiveAction', errors }),
     },
   }),
-  UserSuccessReceiveAction: ({ state, action }) => ({
+  SuccessReceiveAction: ({ state, action }) => ({
     state: { ...state, status: 'ready', data: action.response, errors: [] },
   }),
-  UserErrorReceiveAction: ({ state, action }) => ({
+  ErrorReceiveAction: ({ state, action }) => ({
     state: { ...state, status: 'error', errors: action.errors },
     effects: {
       type: 'DispatchActionEffect',

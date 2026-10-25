@@ -8,8 +8,8 @@ const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };
 const effect: ApiEffect = {
   type: 'ApiEffect', url: '/user', body: { email: user.email },
   defaultError: { code: 'USER_LOAD_FAILED', message: 'Could not load user', path: [] },
-  receiverSuccess: (response) => ({ type: 'UserSuccessReceiveAction', response }),
-  receiverError: (errors) => ({ type: 'UserErrorReceiveAction', errors }),
+  receiverSuccess: (response) => ({ scope: 'users', type: 'SuccessReceiveAction', response }),
+  receiverError: (errors) => ({ scope: 'users', type: 'ErrorReceiveAction', errors }),
 };
 
 test('request failure dispatches the configured default error', async () => {
@@ -21,7 +21,7 @@ test('request failure dispatches the configured default error', async () => {
   });
   await effector(effect, async (action) => { actions.push(action); });
   expect(requests).toEqual([{ url: '/user', body: { email: user.email } }]);
-  expect(actions).toEqual([{ type: 'UserErrorReceiveAction', errors: [effect.defaultError] }]);
+  expect(actions).toEqual([{ scope: 'users', type: 'ErrorReceiveAction', errors: [effect.defaultError] }]);
 });
 
 test('unknown request failures are normalized for the error receiver', async () => {
@@ -29,10 +29,10 @@ test('unknown request failures are normalized for the error receiver', async () 
   const effector = createEffector(() => Promise.reject(null));
   await effector({
     ...effect,
-    receiverError: (errors) => ({ type: 'UserErrorReceiveAction', errors }),
+    receiverError: (errors) => ({ scope: 'users', type: 'ErrorReceiveAction', errors }),
   }, async (action) => { actions.push(action); });
   expect(actions).toEqual([{
-    type: 'UserErrorReceiveAction', errors: [effect.defaultError],
+    scope: 'users', type: 'ErrorReceiveAction', errors: [effect.defaultError],
   }]);
 });
 
@@ -42,7 +42,7 @@ test('success receiver exceptions reject without calling the error receiver', as
   await expect(createEffector(async () => user)({
     ...effect,
     receiverSuccess: () => { throw failure; },
-    receiverError: () => { errorCalls += 1; return { type: 'UserLoadAction' }; },
+    receiverError: () => { errorCalls += 1; return { scope: 'users', type: 'LoadAction' }; },
   }, async () => {})).rejects.toBe(failure);
   expect(errorCalls).toBe(0);
 });
@@ -52,7 +52,7 @@ test('dispatch failures reject without being reclassified as API failures', asyn
   const failure = new Error('Broken reducer');
   await expect(createEffector(async () => user)({
     ...effect,
-    receiverError: () => { errorCalls += 1; return { type: 'UserLoadAction' }; },
+    receiverError: () => { errorCalls += 1; return { scope: 'users', type: 'LoadAction' }; },
   }, async () => { throw failure; })).rejects.toBe(failure);
   expect(errorCalls).toBe(0);
 });
@@ -69,11 +69,11 @@ test('DispatchActionEffect waits for the forwarded action', async () => {
   const actions: RootAction[] = [];
   let completed = false;
   const pending = createEffector(async () => user)({
-    type: 'DispatchActionEffect', action: { type: 'UserLoadAction' },
+    type: 'DispatchActionEffect', action: { scope: 'users', type: 'LoadAction' },
   }, async (action) => { actions.push(action); await completion.promise; })
     .then(() => { completed = true; });
   await Promise.resolve();
-  expect(actions).toEqual([{ type: 'UserLoadAction' }]);
+  expect(actions).toEqual([{ scope: 'users', type: 'LoadAction' }]);
   expect(completed).toBe(false);
   completion.resolve();
   await pending;

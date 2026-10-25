@@ -1,4 +1,5 @@
-import type { AsyncTap } from '../../types/async-tap';
+import type { AsyncTap } from '../../types';
 import type { Trigger } from './trigger';
+import type { DispatchAction } from './dispatch-action';
 
-export type Dispatch<TAction extends Trigger> = AsyncTap<TAction>;
+export type Dispatch<TAction extends Trigger> = AsyncTap<DispatchAction<TAction>>;

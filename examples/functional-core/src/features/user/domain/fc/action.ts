@@ -2,7 +2,7 @@ import type { User } from '../entities/user';
 import type { AppError } from '@gost/common';
 
 export type UserAction =
-  | { type: 'UserSetEmailAction'; email: string }
-  | { type: 'UserLoadAction' }
-  | { type: 'UserSuccessReceiveAction'; response: User }
-  | { type: 'UserErrorReceiveAction'; errors: AppError[] };
+  | { type: 'SetEmailAction'; email: string }
+  | { type: 'LoadAction' }
+  | { type: 'SuccessReceiveAction'; response: User }
+  | { type: 'ErrorReceiveAction'; errors: AppError[] };

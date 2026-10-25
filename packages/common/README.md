@@ -24,6 +24,25 @@ freezing is performed. `TRootState` defaults to `TState` for root handlers.
 Returning the readonly feature state unchanged is supported, including arrays;
 handlers do not have to clone unchanged values.
 
+Declare namespaces centrally with `ScopedActions`, keeping feature action types local:
+
+```ts
+import type { ScopedActions } from '@gost/common';
+
+type UserAction = { type: 'LoadAction'; page: number };
+type RootAction = ScopedActions<{
+  users: UserAction;
+  root: { type: 'ShowAlertAction'; message: string };
+}>;
+```
+
+The `users` branch gains required `scope: 'users'`. The root branch accepts omitted
+or explicit `scope: 'root'` without declaring it in the local action type.
+`ActionScope` lists the namespaces, `ActionsInScope` selects their action variants,
+and `ScopedReducerHandlers` describes the grouped handler contract. Runtime routing
+in `reducing` still uses the flat tables; grouped scope/type selection is being
+migrated separately.
+
 `ExactState` checks nested state shapes and catches extra keys in object literals,
 but compatible union members can hide extra fields. For `items: { id: string }[]`,
 `[...state.items, { id: 'a', extra: true }]` is accepted. Required fields and value

@@ -31,16 +31,16 @@ gets the shared instance with `const root = rootStore()`, reads
 notifications are rendered by `src/GlobalAlert.svelte`, outside the user feature.
 
 ```text
-component: dispatch(UserSetEmailAction)
+component: dispatch({ scope: 'users', type: 'SetEmailAction', email })
 → reducer returns { state, effects: [] }
 → shell replaces the complete state
 → Svelte updates the component
 
-component: await dispatch(UserLoadAction)
+component: await dispatch({ scope: 'users', type: 'LoadAction' })
 → reducer returns loading state + ApiEffect
 → shell commits state and starts the effect
 → injected fake API resolves/rejects
-→ receiver creates UserSuccessReceiveAction / UserErrorReceiveAction
+→ receiver creates SuccessReceiveAction / ErrorReceiveAction with scope: 'users'
 → await dispatch(receiver action)
 → on failure: DispatchActionEffect sends global ShowAlertAction
 → the original dispatch completes after the nested actions/effects complete
@@ -64,6 +64,14 @@ component: await dispatch(UserLoadAction)
 - `src/store/root.ts`: store factory and access to the shared application store instance.
 
 ## Handler tables and root composition
+
+Feature action declarations contain only local type names and payloads.
+`src/store/types/action.ts` passes the central scope map directly to `ScopedActions`:
+`RootAction = ScopedActions<{ users: UserAction; root: ShowAlertAction }>`. The helper
+builds the root union and adds scopes automatically. UI calls and API receivers
+supply `scope: 'users'`; application-level `ShowAlertAction` omits scope by default.
+This step migrates action contracts and callers. Runtime routing still uses
+the existing flat handler table; grouped scope/type routing is the next step.
 
 `define.reducer<UserState, UserAction, RootEffect, RootState>()({...})` defines a feature table.
 Its keys are action type names, and each handler receives `({ state, action }, rootState)`
