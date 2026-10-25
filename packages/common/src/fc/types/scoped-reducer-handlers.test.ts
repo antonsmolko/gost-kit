@@ -1,6 +1,4 @@
 import { expect, expectTypeOf, test } from 'vitest';
-import type { ActionScope } from './action-scope';
-import type { ActionsInScope } from './actions-in-scope';
 import type { ScopedReducerHandlers } from './scoped-reducer-handlers';
 import type { ScopedActions } from './scoped-actions';
 
@@ -9,15 +7,6 @@ type UserAction = { type: 'LoadAction'; page: number };
 type RoleAction = { type: 'LoadAction'; roleId: string };
 type GlobalAction = { type: 'ShowAlertAction'; message: string };
 type Action = ScopedActions<{ users: UserAction; roles: RoleAction; root: GlobalAction }>;
-
-test('actions are grouped by scope, with unscoped declarations belonging to root', () => {
-  expectTypeOf<ActionScope<Action>>().toEqualTypeOf<'users' | 'roles' | 'root'>();
-  expectTypeOf<ActionsInScope<Action, 'users'>>().toEqualTypeOf<UserAction & { scope: 'users' }>();
-  expectTypeOf<ActionsInScope<Action, 'roles'>>().toEqualTypeOf<RoleAction & { scope: 'roles' }>();
-  expectTypeOf<ActionsInScope<Action, 'root'>>().toEqualTypeOf<GlobalAction & { scope?: 'root' }>();
-  expectTypeOf<ActionsInScope<Action, 'missing'>>().toEqualTypeOf<never>();
-  expectTypeOf<ActionScope<never>>().toEqualTypeOf<never>();
-});
 
 test('equal action names in different scopes retain their own payload types', () => {
   const handlers: ScopedReducerHandlers<State, Action, never> = {

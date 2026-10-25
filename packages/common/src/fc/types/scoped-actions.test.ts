@@ -29,3 +29,16 @@ test('changing a map key changes the allowed scope without changing local action
   expectTypeOf<UserAction & { scope: 'people' }>().toExtend<Action>();
   expectTypeOf<UserAction & { scope: 'users' }>().not.toExtend<Action>();
 });
+
+test('local action declarations cannot define their own scope', () => {
+  // @ts-expect-error Scope is reserved for the namespace supplied by the map.
+  type PayloadScope = ScopedActions<{ users: { type: 'PickAction'; scope: 'all' | 'mine' } }>;
+  // @ts-expect-error A matching namespace must also be declared only in the map.
+  type MatchingScope = ScopedActions<{ users: UserAction & { scope: 'users' } }>;
+  // @ts-expect-error Optional feature scopes are not local payload fields either.
+  type OptionalScope = ScopedActions<{ users: UserAction & { scope?: 'users' } }>;
+  // @ts-expect-error Root scope is added by ScopedActions, not declared locally.
+  type RootScope = ScopedActions<{ root: GlobalAction & { scope?: 'root' } }>;
+  // @ts-expect-error Every variant of the local union must be unscoped.
+  type MixedScope = ScopedActions<{ users: UserAction | { type: 'PickAction'; scope: 'mine' } }>;
+});

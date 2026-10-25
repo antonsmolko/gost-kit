@@ -38,6 +38,13 @@ type RootAction = ScopedActions<{
 
 The `users` branch gains required `scope: 'users'`. The root branch accepts omitted
 or explicit `scope: 'root'` without declaring it in the local action type.
+`scope` is reserved for routing: local action types must not declare it,
+including an optional scope. Conflicts are rejected at the `ScopedActions` map
+declaration. For manually scoped unions, feature scopes must be required;
+only root may have an optional scope.
+`Dispatch` also accepts ordinary unscoped root action declarations, so it applies
+`DispatchAction` independently. Applying it again to `ScopedActions` preserves
+the accepted actions.
 `ActionScope` lists the namespaces, `ActionsInScope` selects their action variants,
 and `ScopedReducerHandlers` describes the grouped handler contract. Runtime routing
 in `reducing` still uses the flat tables; grouped scope/type selection is being

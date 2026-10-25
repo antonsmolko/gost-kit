@@ -4,8 +4,9 @@ import type { Trigger } from './trigger';
 
 /**
  * Builds the application's action union from a namespace-to-local-actions map.
- * Feature action declarations contain only their type and payload. Map keys add
- * their scope; root actions accept omitted or explicit scope: 'root'.
+ * Local action declarations must not define scope: it is reserved for routing.
+ * Map keys add required feature scopes; root actions accept omitted or explicit
+ * scope: 'root'.
  *
  * @example
  * type Action = ScopedActions<{
@@ -13,7 +14,7 @@ import type { Trigger } from './trigger';
  *   root: { type: 'ShowAlertAction'; message: string };
  * }>;
  */
-export type ScopedActions<TActionMap extends Rec<Trigger>> = {
+export type ScopedActions<TActionMap extends Rec<Trigger & { scope?: never }>> = {
   [TScope in Keyof<TActionMap>]: TScope extends 'root'
     ? DispatchAction<TActionMap[TScope]>
     : TActionMap[TScope] & { scope: TScope };
