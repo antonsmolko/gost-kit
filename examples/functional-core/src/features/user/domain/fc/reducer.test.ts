@@ -7,7 +7,9 @@ import type { RootEffect } from '../../../../store/types/effect';
 import type { RootAction } from '../../../../store/types/action';
 import type { User } from '../entities/user';
 
-const reducer: Reducer<RootState, ActionsInScope<RootAction, 'users'>, RootEffect> = reducing(scope('user', userReducer));
+const reducer: Reducer<RootState, ActionsInScope<RootAction, 'users'>, RootEffect> = reducing({
+  users: scope('user', userReducer),
+});
 const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };
 
 test('feature handlers receive and return feature state separately from root state', () => {

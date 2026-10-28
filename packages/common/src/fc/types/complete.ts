@@ -32,7 +32,7 @@ type MissingHandlerKeys<THandlerTables extends readonly object[], TTrigger exten
  *
  * type Invalid = Complete<readonly [DispatchHandlers], Effects>;
  * // Record<'ApiEffect', never>: ApiEffect не покрыт.
- * // Пересечение этого типа с аргументами reducing/effecting вызывает ошибку.
+ * // Пересечение этого типа с аргументами effecting вызывает ошибку.
  *
  * type Optional = Complete<readonly [Partial<ApiHandlers>], { type: 'ApiEffect' }>;
  * // Record<'ApiEffect', never>: необязательный обработчик тоже считается пропуском.

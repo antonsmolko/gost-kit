@@ -13,7 +13,7 @@ test('scope preserves root identity when the handler returns the same feature st
   const handlers = define.reducer<UserState, Extract<Action, { type: 'ReportAction' }>, Effect, RootState>()({
     ReportAction: ({ state }) => ({ state, effects: { type: 'ReportEffect', name: state.name } }),
   });
-  const reducer: Reducer<RootState, Extract<Action, { type: 'ReportAction' }>, Effect> = reducing(scope('user', handlers));
+  const reducer: Reducer<RootState, Extract<Action, { type: 'ReportAction' }>, Effect> = reducing({ root: scope('user', handlers) });
   const state: RootState = { user: { name: 'Ada' }, auth: { user: { name: 'Ada' } }, config: { enabled: true } };
 
   const commit = reducer(state, { type: 'ReportAction' });
@@ -32,7 +32,7 @@ test('scope updates only feature state and supplies the complete current root st
     IdleAction: () => {},
     ReportAction: ({ state }) => ({ effects: { type: 'ReportEffect', name: state.name } }),
   });
-  const reducer: Reducer<RootState, Action, Effect> = reducing(scope('user', handlers));
+  const reducer: Reducer<RootState, Action, Effect> = reducing({ root: scope('user', handlers) });
   const state: RootState = { user: { name: '' }, auth: { user: { name: 'Ada' } }, config: { enabled: true } };
 
   const commit = reducer(state, { type: 'LoadAction' });
@@ -53,7 +53,4 @@ test('scope updates only feature state and supplies the complete current root st
   scope('missing', handlers);
   // @ts-expect-error Auth state does not match the feature state shape.
   scope('auth', handlers);
-  // @ts-expect-error Scoped handlers still have exactly one owner per action.
-  const duplicate: Reducer<RootState, Action, Effect> = reducing(scope('user', handlers), scope('user', handlers));
-  void duplicate;
 });

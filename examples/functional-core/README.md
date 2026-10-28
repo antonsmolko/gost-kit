@@ -51,7 +51,7 @@ component: await dispatch({ scope: 'users', type: 'LoadAction' })
 - `src/features/user/domain/fc/`: user actions, reducer handlers, state type and initializer.
   All actions/effects are objects.
 - `src/store/fc/reducer.ts`: composes user handlers with application-level alert handling.
-  Handlers are keyed by action type; `reducing` normalizes their results into
+  Tables are keyed by action scope, handlers by action type; `reducing` normalizes their results into
   full state and an array of effect descriptions.
 - `@gost/svelte`: `createStore` stores reactive state with `$state.raw` and
   connects it to framework-independent dispatch from `@gost/common`.
@@ -70,8 +70,9 @@ Feature action declarations contain only local type names and payloads.
 `RootAction = ScopedActions<{ users: UserAction; root: ShowAlertAction }>`. The helper
 builds the root union and adds scopes automatically. UI calls and API receivers
 supply `scope: 'users'`; application-level `ShowAlertAction` omits scope by default.
-This step migrates action contracts and callers. Runtime routing still uses
-the existing flat handler table; grouped scope/type routing is the next step.
+`reducing` first selects the table by `action.scope ?? 'root'`, then selects
+the handler by `action.type`. Different namespaces can use the same action type
+with different payloads. The original action object is preserved.
 
 `define.reducer<UserState, UserAction, RootEffect, RootState>()({...})` defines a feature table.
 Its keys are action type names, and each handler receives `({ state, action }, rootState)`
@@ -87,10 +88,10 @@ Each definition must cover its declared action/effect union.
 The root assembles feature and application tables:
 
 ```ts
-const reducer: Reducer<RootState, RootAction, RootEffect> = reducing(
-  scope('user', userReducer),
-  appReducer,
-);
+const reducer: Reducer<RootState, RootAction, RootEffect> = reducing({
+  users: scope('user', userReducer),
+  root: appReducer,
+});
 
 const effector: Effector<RootAction, RootEffect> = effecting(
   apiEffector(api),
@@ -112,12 +113,14 @@ Missing/undefined state retains the current state. An effect can be a single
 object or an array; omitted effects become `[]`. The store always receives a
 complete `{ state, effects: [] }` commit after normalization. An unregistered
 action keeps the same state with no effects; an unregistered effect is ignored.
-Every declared action/effect must have exactly one owner: composition rejects
-missing handlers, optional-only coverage and duplicate table keys at compile time.
-Empty composition is allowed when the action/effect type is `never`.
-Supply statically known tables or tuples; widened dynamic arrays
-are rejected because unique ownership cannot be proven. Result annotations
-provide the state/action/effect types while preserving inline handler inference.
+Every declared action needs a handler within its namespace. The required map
+rejects missing namespaces and missing/optional handlers; object literals reject
+unknown keys and duplicate scope/type declarations. Overwrites already performed
+by object spread cannot be detected at this boundary. Use `reducing({})` for
+`never` actions. Effect tables still use statically known tuples, with coverage
+and duplicate-owner checks; dynamic arrays are rejected. Use `effecting()` for
+`never` effects. Result annotations provide the state/action/effect types while
+preserving inline handler inference.
 These APIs expect trusted typed application objects; they do not validate external input at runtime.
 
 ## Applying functional core in a feature

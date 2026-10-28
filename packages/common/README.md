@@ -10,7 +10,7 @@ import { createDispatch, guard, reducing, type Nlx, type Reducer } from '@gost/c
 
 type Action = { type: 'IncrementAction' };
 const reducer: Reducer<number, Action, never> = reducing({
-  IncrementAction: ({ state }) => ({ state: state + 1 }),
+  root: { IncrementAction: ({ state }) => ({ state: state + 1 }) },
 });
 ```
 
@@ -46,9 +46,11 @@ only root may have an optional scope.
 `DispatchAction` independently. Applying it again to `ScopedActions` preserves
 the accepted actions.
 `ActionScope` lists the namespaces, `ActionsInScope` selects their action variants,
-and `ScopedReducerHandlers` describes the grouped handler contract. Runtime routing
-in `reducing` still uses the flat tables; grouped scope/type selection is being
-migrated separately.
+and `ScopedReducerHandlers` describes the grouped handler contract. `reducing`
+selects a table by `action.scope ?? 'root'`, then its handler by `action.type`.
+Equal action type names in different namespaces retain their own payloads and
+handlers. The original action object is passed through without adding scope.
+Effects continue to route by type alone.
 
 `ExactState` checks nested state shapes and catches extra keys in object literals,
 but compatible union members can hide extra fields. For `items: { id: string }[]`,
@@ -76,21 +78,30 @@ const userHandlers = define.reducer<UserState, LoadAction, never, RootState>()({
     state: { ...state, name: rootState.auth.user.name },
   }),
 });
-const rootReducer: Reducer<RootState, LoadAction, never> = reducing(
-  scope('user', userHandlers),
-);
+const rootReducer: Reducer<RootState, LoadAction, never> = reducing({
+  root: scope('user', userHandlers),
+});
 ```
 
 `scope` supplies the current complete root state to feature handlers and replaces
 only the selected root property. Effects pass through unchanged; omitted state
 or returning the same feature state reference preserves the root state reference.
-It keeps the action keys so composition can
-check coverage and ownership across scoped and root tables.
+The state key and action namespace are independent: for example,
+`reducing({ users: scope('user', userHandlers) })` routes users actions to the
+user state property when its result is annotated with the matching `Reducer`.
 
-`reducing` and `effecting` compose them, requiring exactly one handler for every
-declared action/effect at compile time. Missing and optional-only handlers are
-rejected, as are duplicate owners. Empty composition is allowed for `never`
-actions/effects. Reducers normalize omitted state/effects into a complete commit.
+`reducing` takes one namespace map with a complete handler table per namespace.
+The result's `Reducer<TState, TAction, TEffect>` annotation (or explicit generic
+arguments) supplies the contracts and preserves inline handler inference.
+Missing and optional handlers are rejected; object literals also reject unknown
+namespaces/actions and duplicate scope/type keys. Composition cannot detect
+handlers already overwritten by object spread before they reach the API.
+Use `reducing({})` for `never` actions. Reducers normalize omitted state/effects
+into a complete commit.
+
+`effecting` continues to compose statically known tuples of tables, with exactly
+one handler for each declared effect type. Missing/optional handlers, duplicate
+owners and dynamic arrays are rejected; `effecting()` accepts `never` effects.
 
 `define.state` accepts a ready-made plain state object or a factory receiving
 one optional options object. Options are constrained to `Partial<TState>` so

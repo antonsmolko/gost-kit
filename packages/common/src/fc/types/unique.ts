@@ -4,7 +4,7 @@ import type { DuplicateKeys } from './duplicate-keys';
  * Проверяет, что у каждого action/effect не больше одного владельца среди таблиц.
  * DuplicateKeys находит повторяющиеся ключи, а Unique требует для них значение
  * never в каждой таблице. Обычный обработчик этому требованию не соответствует,
- * поэтому reducing/effecting отклоняют композицию с дублями.
+ * поэтому effecting отклоняет композицию с дублями.
  *
  * @example
  * type ApiHandlers = { ApiEffect: () => void };

@@ -104,17 +104,20 @@ const viewState = $derived(userPresenter(root.state.user));
 
 **Files:** `packages/common/src/fc/types/`, `lib/define.ts`, `lib/reducing.ts` и их тесты, публичный `fc/index.ts`; пример `features/user/domain/fc/action.ts`, `reducer.ts`, `store/types/action.ts`, `store/fc/reducer.ts`, компоненты, receivers и связанные тесты.
 
-Пользовательский checkpoint 1: контракт типов, вход dispatch и actions примера подготовлены к ревью. `ScopedActions`, `ActionScope`, `ActionsInScope`, `DispatchAction` и `ScopedReducerHandlers` экспортированы из common. По уточнению пользователя scope перенесён из UserAction в карту, переданную прямо в ScopedActions; локальные actions не содержат namespace. Обновлены UI-вызовы, receivers и тесты. Работающая маршрутизация reducing пока остаётся плоской; её изменение — следующий checkpoint после обсуждения и коммита.
+Пользовательский checkpoint 1 завершён коммитами `84e9369` и `02e08ad`: типы, вход dispatch, actions примера и замечания ревью. Scope задаётся в карте, переданной прямо в ScopedActions; локальные actions не содержат namespace.
+
+Checkpoint 2 подготовлен к пользовательскому ревью: `reducing` принимает карту пространств и выбирает обработчик по scope/type. Контракты выводятся из аннотации результата `Reducer` через `NoInfer`, чтобы сохранить контекстную типизацию inline handlers. Полноту проверяет `ScopedReducerHandlers`; уникальность ключей одной пары обеспечивает объектная карта. Перезапись, уже выполненная object spread до передачи карты, не обнаруживается. `Unique`/`Complete` продолжают проверять таблицы эффектов. Пример, документация и проверки state-flow/ошибок/логирования обновлены. После ревью нужен отдельный коммит; к реактивным веткам пока не переходить.
 
 - [x] Сначала подготовить type-тесты для двух фич с одинаковым `LoadAction` и разными payload. Проверить narrowing `action` в каждом обработчике.
-- [ ] Добавить отрицательные случаи: неверный scope, чужой handler, неверный/отсутствующий payload, пропущенная таблица, пропущенный handler, optional/undefined handler и конфликт одной пары scope/type. Не обещать обнаружение конфликтов, уже стёртых ручным object spread до передачи в API.
+- [x] Добавить отрицательные случаи: неверный scope, чужой handler, неверный/отсутствующий payload, пропущенная таблица, пропущенный handler, optional/undefined handler и конфликт одной пары scope/type. Не обещать обнаружение конфликтов, уже стёртых ручным object spread до передачи в API.
 - [x] Проверить root-action без scope в объявлении и вызове; явный `scope: 'root'`; ошибку вызова feature action без scope, если такого действия у root нет.
 - [x] Выделить минимальные типы определения namespace и выбора его action-union. Уточнить тип Dispatch для ранее согласованного явного root-вызова, сохранив исходные объявления root-actions без scope.
-- [ ] Реализовать `reducing({ users: ..., root: ... })`: выбор таблицы и handler, нормализацию draft в commit. Исходный action передаётся обработчику и в ошибки без добавления поля scope во время выполнения.
-- [ ] Проверки покрытия и единственного владельца привязать к scope/type. Существующие `Unique`/`Complete` для effecting сохранить; не усложнять их ради общего механизма, если reducer-таблицы можно проверить отдельно.
+- [x] Реализовать `reducing({ users: ..., root: ... })`: выбор таблицы и handler, нормализацию draft в commit. Исходный action передаётся обработчику и в ошибки без добавления поля scope во время выполнения.
+- [x] Проверки покрытия и единственного владельца привязать к scope/type. Существующие `Unique`/`Complete` для effecting сохранить; не усложнять их ради общего механизма, если reducer-таблицы можно проверить отдельно.
 - [x] Мигрировать пример: `UserLoadAction` → `{ scope: 'users', type: 'LoadAction' }`, аналогично остальные действия user. `ShowAlertAction` остаётся без scope. Обновить receivers, UI dispatch и тестовые ожидания.
-- [ ] Проверить общий state-flow, awaited nested dispatch и полный action-контекст ошибок/логирования.
-- [ ] Запустить корневой check, check/build примера и браузерные сценарии. Показать diff пользователю; после одобрения закоммитить блок перед следующим.
+- [x] Проверить общий state-flow, awaited nested dispatch и полный action-контекст ошибок/логирования.
+- [x] Запустить корневой check, check/build примера и браузерные сценарии.
+- [ ] Пользовательское ревью checkpoint 2, правки и отдельный коммит перед следующим пунктом.
 
 ## Блок 2. Реактивные ветки и presenter → view state
 

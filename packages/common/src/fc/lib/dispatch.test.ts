@@ -1,11 +1,13 @@
 import { expect, test, vi } from 'vitest';
 import { createDispatch } from './dispatch';
+import { reducing } from './reducing';
 import type { StoreConfig } from '../types/store-config';
 import type { Store } from '../types/store';
 import type { Trigger } from '../types/trigger';
 import type { DispatchConfig } from '../types/dispatch-config';
 import type { Commit } from '../types/commit';
 import type { StoreError } from '../types/store-error';
+import type { ScopedActions } from '../types/scoped-actions';
 
 const createTestStore = <TState, TAction extends Trigger, TEffect extends Trigger>(config: StoreConfig<TState, TAction, TEffect>): Store<TState, TAction> => {
   let state = config.initState;
@@ -42,6 +44,88 @@ test('dispatch accepts explicit root scope without requiring it in the source ac
   expect(received[0]).toBe(implicit);
   expect(received[0]).not.toHaveProperty('scope');
   expect(received[2]).toBe(explicit);
+});
+
+test('dispatch commits before effects and awaits nested actions across namespaces', async () => {
+  type State = { users: number; roles: string; message: string };
+  type Action = ScopedActions<{
+    users: { type: 'LoadAction'; page: number };
+    roles: { type: 'LoadAction'; roleId: string };
+    root: { type: 'LoadAction'; reason: string };
+  }>;
+  type Effect = { type: 'NextEffect'; target: 'roles' | 'root' };
+  const firstRequest = Promise.withResolvers<void>();
+  const lastRequest = Promise.withResolvers<void>();
+  const rootEffectStarted = Promise.withResolvers<void>();
+  const root = createTestStore<State, Action, Effect>({
+    initState: { users: 0, roles: '', message: '' },
+    reducer: reducing({
+      users: { LoadAction: ({ state, action }) => ({
+        state: { ...state, users: action.page }, effects: { type: 'NextEffect', target: 'roles' },
+      }) },
+      roles: { LoadAction: ({ state, action }) => ({
+        state: { ...state, roles: action.roleId }, effects: { type: 'NextEffect', target: 'root' },
+      }) },
+      root: { LoadAction: ({ state, action }) => ({ state: { ...state, message: action.reason } }) },
+    }),
+    effector: async (effect, dispatch) => {
+      if (effect.target === 'roles') {
+        expect(root.state.users).toBe(7);
+        await firstRequest.promise;
+        await dispatch({ scope: 'roles', type: 'LoadAction', roleId: 'admin' });
+      } else {
+        expect(root.state.roles).toBe('admin');
+        rootEffectStarted.resolve();
+        await lastRequest.promise;
+        await dispatch({ type: 'LoadAction', reason: 'ready' });
+      }
+    },
+  });
+  let completed = false;
+  const pending = root.dispatch({ scope: 'users', type: 'LoadAction', page: 7 }).then(() => { completed = true; });
+  expect(root.state).toEqual({ users: 7, roles: '', message: '' });
+  firstRequest.resolve();
+  await rootEffectStarted.promise;
+  expect(root.state).toEqual({ users: 7, roles: 'admin', message: '' });
+  expect(completed).toBe(false);
+  lastRequest.resolve();
+  await pending;
+  expect(root.state).toEqual({ users: 7, roles: 'admin', message: 'ready' });
+  expect(completed).toBe(true);
+});
+
+test('scoped reducer and effect failures retain the original action and effect context', async () => {
+  type Action = ScopedActions<{
+    users: { type: 'LoadAction'; page: number };
+    roles: { type: 'LoadAction'; roleId: string };
+  }>;
+  const reducerFailure = new Error('Users reducer failed');
+  const effectFailure = new Error('Roles effect failed');
+  const effect: Effect = { type: 'WorkEffect', id: 7 };
+  const reported: StoreError<Action, Effect>[] = [];
+  const root = createTestStore<number, Action, Effect>({
+    initState: 0,
+    reducer: reducing({
+      users: { LoadAction: () => { throw reducerFailure; } },
+      roles: { LoadAction: ({ action }) => ({ state: action.roleId.length, effects: effect }) },
+    }),
+    effector: async () => { throw effectFailure; },
+    onError: (failure) => { reported.push(failure); },
+  });
+  const users: Action = { scope: 'users', type: 'LoadAction', page: 7 };
+  const roles: Action = { scope: 'roles', type: 'LoadAction', roleId: 'admin' };
+
+  await expect(root.dispatch(users)).resolves.toBeUndefined();
+  expect(root.state).toBe(0);
+  await expect(root.dispatch(roles)).resolves.toBeUndefined();
+  expect(root.state).toBe(5);
+  expect(reported).toEqual([
+    { kind: 'reducer', action: users, error: reducerFailure },
+    { kind: 'effect', action: roles, effect, error: effectFailure },
+  ]);
+  expect(reported[0].action).toBe(users);
+  expect(reported[1].action).toBe(roles);
+  if (reported[1].kind === 'effect') expect(reported[1].effect).toBe(effect);
 });
 
 test('a readState failure is reported before reducer, writeState or effects run', async () => {

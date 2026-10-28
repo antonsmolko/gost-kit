@@ -10,7 +10,7 @@ const appReducer = define.reducer<RootState, ActionsInScope<RootAction, 'root'>,
   }),
 });
 
-export const reducer: Reducer<RootState, RootAction, RootEffect> = reducing(
-  scope('user', userReducer),
-  appReducer
-);
+export const reducer: Reducer<RootState, RootAction, RootEffect> = reducing({
+  users: scope('user', userReducer),
+  root: appReducer,
+});
