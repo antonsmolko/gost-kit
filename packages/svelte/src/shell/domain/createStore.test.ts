@@ -3,7 +3,7 @@ import type { StoreConfig, StoreError } from '@gost/common';
 import { describe, expect, test, vi } from 'vitest';
 import { createStore } from './createStore.svelte';
 import { observe } from './__tests__/observe.svelte';
-import { present } from './__tests__/present.svelte';
+import { present, presentDirect } from './__tests__/present.svelte';
 
 type State = { counter: number; previous?: boolean };
 type Action = { type: 'SetCounterAction'; counter: number };
@@ -12,6 +12,30 @@ type Effect = { type: 'WorkEffect' };
 const STATE: State = { counter: 0 };
 
 describe('createStore', () => {
+  test('прямой вызов presenter пересчитывается при замене другой ветки корня', async () => {
+    type RootState = { user: { name: string }; alert: string };
+    type Action = { type: 'ReplaceAction'; state: RootState };
+    const initial: RootState = { user: { name: 'Ada' }, alert: '' };
+    const store = createStore<RootState, Action, never>({
+      initState: initial,
+      reducer: (_state, action) => ({ state: action.state, effects: [] }),
+      effector: async () => {},
+    });
+    const userPresenter = vi.fn((user: RootState['user']) => ({ label: user.name.toUpperCase() }));
+    const view = presentDirect(() => store.state.user, userPresenter);
+    const observed = observe(() => view.value);
+    try {
+      expect(userPresenter).toHaveBeenCalledTimes(1);
+      await store.dispatch({ type: 'ReplaceAction', state: { ...initial, alert: 'Opened' } });
+      flushSync();
+      expect(store.state.user).toBe(initial.user);
+      expect(userPresenter).toHaveBeenCalledTimes(2);
+      expect(observed.values).toEqual([{ label: 'ADA' }, { label: 'ADA' }]);
+    } finally {
+      observed.stop();
+    }
+  });
+
   test('изменение другой ветки не вызывает presenter и не меняет view state', async () => {
     type RootState = { user: { name: string }; alert: string };
     type Action = { type: 'ReplaceAction'; state: RootState };
@@ -265,6 +289,54 @@ describe('createStore', () => {
       flushSync();
       expect(store.state).toBe(7);
       expect(observed.values).toEqual([0, 7]);
+    } finally {
+      observed.stop();
+    }
+  });
+
+  test('корень-массив сохраняет ссылку commit и реактивно заменяется', async () => {
+    const initial = [0];
+    const next = [7];
+    const store = createStore<number[], Action, never>({
+      initState: initial,
+      reducer: () => ({ state: next, effects: [] }),
+      effector: async () => {},
+    });
+    const observed = observe(() => store.state[0]);
+    try {
+      expect(store.state).toBe(initial);
+      await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+      flushSync();
+      expect(store.state).toBe(next);
+      expect(observed.values).toEqual([0, 7]);
+      expect(initial).toEqual([0]);
+    } finally {
+      observed.stop();
+    }
+  });
+
+  test('корень-экземпляр класса сохраняет ссылку commit, методы и реактивность', async () => {
+    class Counter {
+      #value: number;
+      constructor(value: number) { this.#value = value; }
+      read() { return this.#value; }
+    }
+    const initial = new Counter(0);
+    const next = new Counter(7);
+    const store = createStore<Counter, Action, never>({
+      initState: initial,
+      reducer: () => ({ state: next, effects: [] }),
+      effector: async () => {},
+    });
+    const observed = observe(() => store.state.read());
+    try {
+      expect(store.state).toBe(initial);
+      await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+      flushSync();
+      expect(store.state).toBe(next);
+      expect(store.state.read()).toBe(7);
+      expect(observed.values).toEqual([0, 7]);
+      expect(initial.read()).toBe(0);
     } finally {
       observed.stop();
     }
