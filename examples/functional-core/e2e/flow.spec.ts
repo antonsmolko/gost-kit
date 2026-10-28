@@ -8,9 +8,13 @@ test('component dispatches email and renders the completed request', async ({ pa
   await expect(page.getByText('Email in state: ada@example.test', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Load user' }).click();
   await expect(page.getByRole('status')).toHaveText('Status: loading');
+  await expect(page.getByLabel('Email')).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Load user' })).toBeDisabled();
   await expect(page.getByRole('heading', { name: 'Ada Lovelace' })).toBeVisible();
   await expect(page.getByText('Loaded email: ada@example.test', { exact: true })).toBeVisible();
   await expect(page.getByRole('status')).toHaveText('Status: ready');
+  await expect(page.getByLabel('Email')).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Load user' })).toBeEnabled();
   expect(errors).toEqual([]);
 });
 

@@ -26,12 +26,13 @@ and retry. There are no API network requests.
 
 Start with `src/UserForm.svelte`. It imports `rootStore` from `src/store/root.ts`,
 gets the shared instance with `const root = rootStore()`, reads
-`$derived(root.state.user)` and sends plain action objects through
+`$derived(root.state.user)`, computes view state with `userPresenter` in a second
+`$derived`, and sends plain action objects through
 `root.dispatch()`. Global
 notifications are rendered by `src/GlobalAlert.svelte`, outside the user feature.
 
-When adding presentation calculations, keep the feature selection in its own
-`$derived` and feed it to a second one:
+The form keeps feature selection in its own `$derived` and feeds it to a second
+one for presentation:
 
 ```ts
 const user = $derived(root.state.user);
@@ -62,6 +63,8 @@ component: await dispatch({ scope: 'users', type: 'LoadAction' })
 - `src/features/user/domain/entities/`: user entity.
 - `src/features/user/domain/fc/`: user actions, reducer handlers, state type and initializer.
   All actions/effects are objects.
+- `src/features/user/ui/`: pure `userPresenter` and its tests. It derives the form
+  loading flag and view data from explicit feature state, without store or Svelte imports.
 - `src/store/fc/reducer.ts`: composes user handlers with application-level alert handling.
   Tables are keyed by action scope, handlers by action type; `reducing` normalizes their results into
   full state and an array of effect descriptions.
@@ -256,8 +259,9 @@ npm run test:e2e
 
 Unit/integration tests cover pure transitions, full-state replacement, parallel
 execution, awaited nested dispatch, error handling and isolated root instances.
-Browser tests exercise input reactivity, success, a global error notification
-and retry through the actual components.
+Presenter tests cover each status, retained loaded data and unchanged inputs.
+Browser tests exercise input reactivity, disabled/loading controls, success, a
+global error notification and retry through the actual components.
 
 ## Baseline
 

@@ -1,8 +1,10 @@
 <script lang="ts">
   import { rootStore } from './store/root';
+  import { userPresenter } from './features/user/ui/user.presenter';
 
   const root = rootStore();
   const user = $derived(root.state.user);
+  const viewState = $derived(userPresenter(user));
 
   const handleInput = (email: string) => {
     void root.dispatch({ scope: 'users', type: 'SetEmailAction', email });
@@ -17,21 +19,21 @@
 <form onsubmit={handleSubmit}>
   <label for="email">Email</label>
   <input
-    id="email" type="email" required value={user.email}
-    disabled={user.status === 'loading'}
+    id="email" type="email" required value={viewState.email}
+    disabled={viewState.isLoading}
     oninput={(event) => handleInput(event.currentTarget.value)}
     aria-describedby="email-hint"
   />
   <p id="email-hint">Use error@example.test to simulate a failed request.</p>
-  <button type="submit" disabled={user.status === 'loading'}>Load user</button>
+  <button type="submit" disabled={viewState.isLoading}>Load user</button>
 </form>
 
-<p>Email in state: {user.email}</p>
-<p role="status">Status: {user.status}</p>
-{#if user.data}
+<p>Email in state: {viewState.email}</p>
+<p role="status">Status: {viewState.status}</p>
+{#if viewState.loadedUser}
   <section aria-label="Loaded user">
-    <h2>{user.data.name}</h2>
-    <p>Loaded email: {user.data.email}</p>
+    <h2>{viewState.loadedUser.name}</h2>
+    <p>Loaded email: {viewState.loadedUser.email}</p>
   </section>
 {/if}
 
