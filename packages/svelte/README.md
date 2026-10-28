@@ -40,6 +40,10 @@ Root identity follows reducer commits; feature references are preserved by the
 reducers. Primitive, array and class roots keep the same raw replacement model.
 Presenters stay pure; reactive bindings belong to components or Svelte adapters.
 
+Reducers still construct immutable root snapshots. Feature selection may rerun
+when the root is replaced; tests verify that an unchanged selected reference
+does not cause another presenter call.
+
 Build common first, then run `npm run build --workspace @gost/svelte` from the
 repository root. Packaging follows the official
 [Svelte library packaging guide](https://svelte.dev/docs/kit/packaging) using

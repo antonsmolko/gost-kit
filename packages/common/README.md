@@ -5,6 +5,10 @@ Unpublished, version 0.0.0. Import through `@gost/common`.
 
 Guard implementation and its URL helper live in `src/sharred/lib`.
 
+`JSONValue` and `JSONObject` are exported from the public API. They describe
+recursive JSON primitives, arrays and string-keyed objects, including `null`
+and excluding `undefined`.
+
 ```ts
 import { createDispatch, guard, reducing, type Nlx, type Reducer } from '@gost/common';
 

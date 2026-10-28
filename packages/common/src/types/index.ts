@@ -10,6 +10,8 @@ export type { DeepReadonly } from './deep-readonly';
 export type { FileType } from './file-type';
 export type { Fn } from './fn';
 export type { Impossible } from './impossible';
+export type { JSONObject } from './json-object';
+export type { JSONValue } from './json-value';
 export type { Keyof } from './keyof';
 export type { KnownKeys } from './known-keys';
 export type { Nil } from './nil';

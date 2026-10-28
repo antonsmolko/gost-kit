@@ -40,3 +40,7 @@ helpers from distributed package artifacts.
 
 Use descriptive generic parameter names, such as `TState`, `TAction`, `TEffect`
 and `TStateOptions`, instead of single-letter names for application contracts.
+
+Name presenter modules `<name>.presenter.ts`, for example `user.presenter.ts`,
+and their colocated tests `<name>.presenter.test.ts`. This naming is a repository
+convention; it does not prescribe a presenter class or factory.

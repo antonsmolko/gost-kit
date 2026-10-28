@@ -15,6 +15,8 @@ export type {
   FileType,
   Fn,
   Impossible,
+  JSONObject,
+  JSONValue,
   Keyof,
   KnownKeys,
   Nil,
