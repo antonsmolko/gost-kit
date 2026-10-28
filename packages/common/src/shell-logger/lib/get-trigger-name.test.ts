@@ -17,6 +17,10 @@ test.each([undefined, 'root'])('root actions keep the plain type name: %s', (sco
   expect(getTriggerName({ scope, type: 'LoadAction' })).toBe('LoadAction');
 });
 
+test('omits an empty namespace prefix from the log title', () => {
+  expect(getTriggerName({ scope: '', type: 'LoadAction' })).toBe('LoadAction');
+});
+
 test('effects keep their type name even when their payload has a scope field', () => {
   expect(getTriggerName({ scope: 'records', type: 'RequestEffect' })).toBe('RequestEffect');
 });
