@@ -174,3 +174,30 @@ test('one scope/type pair cannot be declared twice in a handler map', () => {
   } });
   void [duplicateScope, duplicateAction];
 });
+
+test('requires a result contract or explicit generics for nonempty namespace maps', () => {
+  // @ts-expect-error Without a contract, a nonempty map must not produce a broad reducer.
+  const untyped = reducing({ root: { IdleAction: () => ({ state: 1 }) } });
+  // @ts-expect-error A callback parameter does not supply the missing root contracts.
+  const withState = reducing({ root: { IdleAction: ({ state }) => ({ state }) } });
+  const handlers = define.reducer<State, Action, Effect>()({
+    SetAction: ({ action }) => ({ state: { count: action.count } }),
+    IdleAction: () => {},
+  });
+  // @ts-expect-error A table from a variable also requires a result contract.
+  const fromVariable = reducing({ root: handlers });
+  // @ts-expect-error Declaring never actions must not allow a nonempty namespace map.
+  const noActions = reducing<State, never, Effect>({ root: handlers });
+
+  const explicit = reducing<State, Action, Effect>({
+    root: {
+      SetAction: ({ action }) => {
+        expectTypeOf(action).toEqualTypeOf<Extract<Action, { type: 'SetAction' }>>();
+        return { state: { count: action.count } };
+      },
+      IdleAction: () => {},
+    },
+  });
+  expect(explicit({ count: 0 }, { type: 'SetAction', count: 7 }).state.count).toBe(7);
+  void [untyped, withState, fromVariable, noActions];
+});

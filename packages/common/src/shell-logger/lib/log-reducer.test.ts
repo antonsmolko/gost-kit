@@ -61,7 +61,7 @@ test('logs the full scoped action while equal type names select different handle
     const commit = logged(state, action);
     expect(commit.state.count).toBe(index === 0 ? 7 : 5);
     expect(output).toHaveBeenNthCalledWith(index + 1,
-      expect.stringContaining(action.type), expect.any(String),
+      `📟 %c${action.scope}/${action.type}`, expect.any(String),
       { trigger: action, prev: state, next: commit.state, effects: [] },
     );
   });

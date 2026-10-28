@@ -93,15 +93,24 @@ user state property when its result is annotated with the matching `Reducer`.
 `reducing` takes one namespace map with a complete handler table per namespace.
 The result's `Reducer<TState, TAction, TEffect>` annotation (or explicit generic
 arguments) supplies the contracts and preserves inline handler inference.
+Without either contract, generics default to `never` and nonempty namespace maps
+are rejected, including callbacks without parameters. Only an empty map is valid
+for `never` actions.
 Missing and optional handlers are rejected; object literals also reject unknown
 namespaces/actions and duplicate scope/type keys. Composition cannot detect
 handlers already overwritten by object spread before they reach the API.
+Maps from variables use TypeScript structural compatibility: required handlers
+and payloads are checked, but additional handlers or namespaces may be present.
 Use `reducing({})` for `never` actions. Reducers normalize omitted state/effects
 into a complete commit.
 
 `effecting` continues to compose statically known tuples of tables, with exactly
 one handler for each declared effect type. Missing/optional handlers, duplicate
 owners and dynamic arrays are rejected; `effecting()` accepts `never` effects.
+
+`logReducer` includes feature scope in log titles (`users/LoadAction`), so equal
+action names from different namespaces are distinguishable. Omitted or explicit
+root scope keeps the plain action name. Effect titles continue to use their type.
 
 `define.state` accepts a ready-made plain state object or a factory receiving
 one optional options object. Options are constrained to `Partial<TState>` so
