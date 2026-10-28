@@ -1,8 +1,9 @@
 import { flushSync } from 'svelte';
 import type { StoreConfig, StoreError } from '@gost/common';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { createStore } from './createStore.svelte';
 import { observe } from './__tests__/observe.svelte';
+import { present } from './__tests__/present.svelte';
 
 type State = { counter: number; previous?: boolean };
 type Action = { type: 'SetCounterAction'; counter: number };
@@ -11,6 +12,42 @@ type Effect = { type: 'WorkEffect' };
 const STATE: State = { counter: 0 };
 
 describe('createStore', () => {
+  test('изменение другой ветки не вызывает presenter и не меняет view state', async () => {
+    type RootState = { user: { name: string }; alert: string };
+    type Action = { type: 'ReplaceAction'; state: RootState };
+    const initial: RootState = { user: { name: 'Ada' }, alert: '' };
+    const store = createStore<RootState, Action, never>({
+      initState: initial,
+      reducer: (_state, action) => ({ state: action.state, effects: [] }),
+      effector: async () => {},
+    });
+    const userPresenter = vi.fn((user: RootState['user']) => ({ label: user.name.toUpperCase() }));
+    const view = present(() => store.state.user, userPresenter);
+    const observed = observe(() => view.value);
+    const rootView = store.state;
+
+    try {
+      expect(observed.values).toEqual([{ label: 'ADA' }]);
+      await store.dispatch({ type: 'ReplaceAction', state: { ...initial, alert: 'Opened' } });
+      flushSync();
+      expect(userPresenter).toHaveBeenCalledTimes(1);
+      expect(observed.values).toEqual([{ label: 'ADA' }]);
+      expect(store.state).not.toBe(rootView);
+      expect(store.state.user).toBe(initial.user);
+
+      await store.dispatch({ type: 'ReplaceAction', state: { ...initial, user: { name: 'Grace' } } });
+      flushSync();
+      expect(userPresenter).toHaveBeenCalledTimes(2);
+      expect(observed.values).toEqual([{ label: 'ADA' }, { label: 'GRACE' }]);
+
+      await store.dispatch({ type: 'ReplaceAction', state: { ...store.state } });
+      flushSync();
+      expect(userPresenter).toHaveBeenCalledTimes(2);
+    } finally {
+      observed.stop();
+    }
+  });
+
   test('сохраняет начальное состояние без глубокой реактивной обёртки', () => {
     const store = createStore<State, Action, Effect>({
       initState: STATE,
@@ -190,5 +227,46 @@ describe('createStore', () => {
 
     expect(first.state.counter).toBe(9);
     expect(second.state.counter).toBe(0);
+  });
+
+  test('редюсер получает обычные снимки, которые не меняются после следующих commit', async () => {
+    const initial = { counter: 0 };
+    const snapshots: State[] = [];
+    const commits: State[] = [];
+    const store = createStore<State, Action, never>({
+      initState: initial,
+      reducer: (state, action) => {
+        snapshots.push(state);
+        const next = { counter: action.counter };
+        commits.push(next);
+        return { state: next, effects: [] };
+      },
+      effector: async () => {},
+    });
+    await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+    await store.dispatch({ type: 'SetCounterAction', counter: 9 });
+
+    expect(snapshots[0]).toBe(initial);
+    expect(snapshots[1]).toBe(commits[0]);
+    expect(snapshots).toEqual([{ counter: 0 }, { counter: 7 }]);
+    expect(store.state).toBe(commits[1]);
+    expect(store.state.counter).toBe(9);
+  });
+
+  test('примитивный корень сохраняет реактивную замену значения', async () => {
+    const store = createStore<number, Action, never>({
+      initState: 0,
+      reducer: (_state, action) => ({ state: action.counter, effects: [] }),
+      effector: async () => {},
+    });
+    const observed = observe(() => store.state);
+    try {
+      await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+      flushSync();
+      expect(store.state).toBe(7);
+      expect(observed.values).toEqual([0, 7]);
+    } finally {
+      observed.stop();
+    }
   });
 });

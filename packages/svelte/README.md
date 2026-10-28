@@ -23,6 +23,23 @@ merge or deeply proxy state. Each instance has independent state. Dispatch,
 parallel effects, awaited nested dispatch and error reporting are implemented
 by `@gost/common` without a framework dependency.
 
+Select a feature before computing its presentation:
+
+```ts
+const user = $derived(root.state.user);
+const viewState = $derived(userPresenter(user));
+```
+
+Replacing the root reevaluates the selection. If `user` retains its reference,
+Svelte skips the downstream presenter. Replacing `user` updates its view state.
+Keep the selection separate: `$derived(userPresenter(root.state.user))` depends
+directly on the root and calls the presenter on unrelated root replacements.
+
+The store keeps one ordinary snapshot, without an additional UI representation.
+Root identity follows reducer commits; feature references are preserved by the
+reducers. Primitive, array and class roots keep the same raw replacement model.
+Presenters stay pure; reactive bindings belong to components or Svelte adapters.
+
 Build common first, then run `npm run build --workspace @gost/svelte` from the
 repository root. Packaging follows the official
 [Svelte library packaging guide](https://svelte.dev/docs/kit/packaging) using

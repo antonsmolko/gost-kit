@@ -30,6 +30,18 @@ gets the shared instance with `const root = rootStore()`, reads
 `root.dispatch()`. Global
 notifications are rendered by `src/GlobalAlert.svelte`, outside the user feature.
 
+When adding presentation calculations, keep the feature selection in its own
+`$derived` and feed it to a second one:
+
+```ts
+const user = $derived(root.state.user);
+const viewState = $derived(userPresenter(user));
+```
+
+An unrelated root update rechecks the user reference but does not call the
+presenter when that reference is unchanged. The store uses ordinary immutable
+snapshots and raw reactive replacement; no separate UI root view is needed.
+
 ```text
 component: dispatch({ scope: 'users', type: 'SetEmailAction', email })
 → reducer returns { state, effects: [] }
