@@ -1,12 +1,11 @@
-import type { AnyFn } from '../../types/any-fn';
-import type { Vdx } from '../../types/vdx';
+import type { AnyFn } from '../../types';
 
-export const report = async <TFailure>(
+export const report = <TFailure>(
   failure: TFailure,
-  onError: AnyFn<[failure: TFailure], Vdx<Promise<void>>> = (failure) => console.error(failure),
-): Promise<void> => {
+  onError: AnyFn<[failure: TFailure], void> = (failure) => console.error(failure),
+): void => {
   try {
-    await onError(failure);
+    onError(failure);
   } catch (error) {
     console.error('Error handler failed', { failure, error });
   }

@@ -10,11 +10,13 @@ import type { StoreError } from '../types/store-error';
 import type { ScopedActions } from '../types/scoped-actions';
 
 const createTestStore = <TState, TAction extends Trigger, TEffect extends Trigger>(config: StoreConfig<TState, TAction, TEffect>): Store<TState, TAction> => {
-  let state = config.initState;
+  const { initState, onError, ...handlers } = config;
+  let state = initState;
   const dispatch = createDispatch({
-    ...config,
+    ...handlers,
     readState: () => state,
     writeState: (next: TState) => { state = next; },
+    onError,
   });
   return { get state() { return state; }, dispatch };
 };
@@ -22,6 +24,24 @@ const createTestStore = <TState, TAction extends Trigger, TEffect extends Trigge
 type Action = { type: 'RunAction' };
 type Effect = { type: 'WorkEffect'; id: number };
 type TestDispatchConfig = DispatchConfig<number, Action, Effect>;
+
+test('accepts a synchronous onError in dispatch config', async () => {
+  const failure = new Error('Reducer failed');
+  const reported: StoreError<Action, never>[] = [];
+  const config: DispatchConfig<number, Action, never> = {
+    readState: () => 0,
+    writeState: () => {},
+    reducer: () => { throw failure; },
+    effector: async () => {},
+    onError: (error) => { reported.push(error); },
+  };
+  const dispatch = createDispatch(config);
+  const action: Action = { type: 'RunAction' };
+
+  const pending = dispatch(action);
+  expect(reported).toEqual([{ kind: 'reducer', action, error: failure }]);
+  await expect(pending).resolves.toBeUndefined();
+});
 
 test('dispatch accepts explicit root scope without requiring it in the source action type', async () => {
   const received: Action[] = [];
@@ -327,7 +347,7 @@ test('the default error handler logs context without rejecting dispatch', async 
   }
 });
 
-test('a rejected error handler is logged by the fallback without rejecting dispatch', async () => {
+test('a throwing error handler is logged by the fallback without rejecting dispatch', async () => {
   const log = vi.spyOn(console, 'error').mockImplementation(() => {});
   const failure = new Error('Reducer failed');
   const reporterFailure = new Error('Reporter failed');
@@ -337,7 +357,7 @@ test('a rejected error handler is logged by the fallback without rejecting dispa
       initState: null,
       reducer: () => { throw failure; },
       effector: async () => {},
-      onError: async () => { throw reporterFailure; },
+      onError: () => { throw reporterFailure; },
     });
     await expect(root.dispatch({ type: 'RunAction' })).resolves.toBeUndefined();
     expect(log).toHaveBeenCalledExactlyOnceWith('Error handler failed', {

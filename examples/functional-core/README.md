@@ -197,7 +197,8 @@ flow when an actual API boundary is introduced.
 fails: errors are caught and reported inside dispatch. Components do not need
 try/catch or promise rejection handlers. State is committed synchronously before
 any await or effect execution. Awaiting dispatch waits for that commit's effects,
-including any nested dispatch awaited by those effects, and error reporting.
+including any nested dispatch awaited by those effects. Error reporting runs
+synchronously.
 Without await the caller continues immediately. It does not wait for unrelated
 dispatches or a browser paint. Completion means processing finished, not that
 the business operation succeeded; feature state carries the API outcome.
@@ -213,14 +214,15 @@ commit are also caught by dispatch and reported as reducer failures.
 Effects are not cancelled or rolled back; a never-settling effect keeps dispatch
 pending. Unrelated dispatches and unawaited work are outside this completion boundary.
 
-Configure the store's optional `onError` callback for centralized reporting.
-It receives a `StoreError`: `{ kind: 'reducer', action, error }` or
-`{ kind: 'effect', action, effect, error }`. The default handler calls
-`console.error` with this context. An async callback is awaited; if the callback
-throws/rejects, a console fallback records the original failure and reporting
-error. Reporters should complete; a pending reporter keeps
-its dispatch pending. A nested dispatch reports its own failures and resolves,
-so the parent does not report the same failure again.
+Configure the store's optional synchronous `onError` callback for centralized
+reporting. It receives `StoreError` with kind `readState`, `reducer`, `writeState`
+or `effect`, plus the original action and error; effect failures also include the
+effect. The callback returns void and is called without awaiting a result.
+The default logs to `console.error`. If the callback throws synchronously, a
+console fallback records the original failure and reporting error. A nested
+dispatch reports its own failures and resolves, so the parent does not report the
+same failure again. The Svelte adapter includes the callback in
+`createDispatch(config)`.
 
 `ApiEffect.receiverSuccess`, `receiverError` and `defaultError` are required.
 `AppError` contains `code: string`, `message: string` and `path: readonly string[]`;

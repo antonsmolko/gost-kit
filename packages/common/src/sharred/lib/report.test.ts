@@ -1,27 +1,20 @@
 import { expect, test, vi } from 'vitest';
 import { report } from './report';
 
-test('report waits for the error handler', async () => {
-  const pending = Promise.withResolvers<void>();
+test('report calls the error handler synchronously and returns void', () => {
   const failure = new Error('Failed');
-  const handler = vi.fn(() => pending.promise);
-  let completed = false;
-  const reporting = report(failure, handler).then(() => { completed = true; });
+  const handler = vi.fn();
 
+  expect(report(failure, handler)).toBeUndefined();
   expect(handler).toHaveBeenCalledExactlyOnceWith(failure);
-  await Promise.resolve();
-  expect(completed).toBe(false);
-  pending.resolve();
-  await reporting;
-  expect(completed).toBe(true);
 });
 
-test('report logs a synchronous handler failure', async () => {
+test('report logs a synchronous handler failure', () => {
   const log = vi.spyOn(console, 'error').mockImplementation(() => {});
   const failure = new Error('Failed');
   const error = new Error('Handler failed');
   try {
-    await expect(report(failure, () => { throw error; })).resolves.toBeUndefined();
+    expect(() => report(failure, () => { throw error; })).not.toThrow();
     expect(log).toHaveBeenCalledExactlyOnceWith('Error handler failed', { failure, error });
   } finally {
     log.mockRestore();

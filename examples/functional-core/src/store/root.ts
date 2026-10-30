@@ -5,12 +5,15 @@ import { reducer } from './fc/reducer';
 import { initialState } from './fc/state';
 import type { ApiClient } from './types/effect';
 import { fakeApi } from '../fake-api';
-import { logReducer, logEffector } from '@gost/common';
+import { logReducer, logEffector, report } from '@gost/common';
+
+const loggedReducer = logReducer(reducer, { isEnabled: true });
 
 export const createRootStore = (api: ApiClient) => createStore({
   initState: initialState(),
-  reducer: logReducer(reducer, { isEnabled: true }),
+  reducer: loggedReducer,
   effector: logEffector(createEffector(api), { isEnabled: true }),
+  onError: (failure) => { report(failure); },
 });
 
 const root = createRootStore(fakeApi);

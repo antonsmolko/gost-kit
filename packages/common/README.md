@@ -142,12 +142,16 @@ independent. A function input is treated as a state factory. Reducer definitions
 default to `never` effects when no effect type is supplied; effectful reducers
 must declare their effect union.
 
-`createDispatch` accepts `reducer`, `effector`, optional `onError`, and
-`readState`/`writeState` callbacks. State is committed synchronously before
-effects start. Effects start in parallel; dispatch waits for all of them and
-for nested dispatches awaited by those effects. Reducer/effect failures are
-reported, and dispatch resolves successfully. Reporting failures use a console
-fallback. Pending effects or reporters keep dispatch pending.
+`createDispatch(config)` receives `reducer`, `effector`, `readState`, `writeState`
+and optional `onError` in the same config. The error callback is synchronous,
+with contract `(failure: StoreError<TAction, TEffect>) => void`.
+It is called without awaiting a result; the default logs to `console.error`.
+A synchronous handler failure uses the existing console fallback.
+
+State is committed synchronously before effects start. Effects start in parallel;
+dispatch waits for all of them and for nested dispatches awaited by those effects.
+Reducer/effect failures are reported, and dispatch resolves successfully. Pending
+effects keep dispatch pending.
 
 ```ts
 let state = 0;
@@ -156,6 +160,7 @@ const dispatch = createDispatch<number, Action, never>({
   effector: async () => {},
   readState: () => state,
   writeState: (next) => { state = next; },
+  onError: (failure) => { console.error(failure); },
 });
 await dispatch({ type: 'IncrementAction' });
 ```

@@ -1,4 +1,4 @@
-import type { Vdx } from '../../types/vdx';
+import type { AnyFn } from '../../types';
 import type { Effector } from './effector';
 import type { StoreError } from './store-error';
 import type { Reducer } from './reducer';
@@ -8,5 +8,5 @@ export type StoreConfig<TState, TAction extends Trigger, TEffect extends Trigger
   initState: TState;
   reducer: Reducer<TState, TAction, TEffect>;
   effector: Effector<TAction, TEffect>;
-  onError?: (failure: StoreError<TAction, TEffect>) => Vdx<Promise<void>>;
+  onError?: AnyFn<[failure: StoreError<TAction, TEffect>], void>;
 };
