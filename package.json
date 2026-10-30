@@ -7,5 +7,10 @@
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @gost/common && npm run build --workspace @gost/svelte",
+    "check": "npm run build && npm run check --workspaces && npm test",
+    "test": "npm run test --workspaces"
+  }
 }

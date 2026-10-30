@@ -1,0 +1,30 @@
+{
+  "name": "gost-kit-functional-core-example",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^26.0.0"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "check": "svelte-check --tsconfig ./tsconfig.json && tsc --noEmit && npm test"
+  },
+  "dependencies": {
+    "svelte": "5.57.2",
+
+    "@gost/common": "file:../../packages/common",
+    "@gost/svelte": "file:../../packages/svelte"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@types/node": "26.6.5",
+    "svelte-check": "4.7.7",
+    "typescript": "5.9.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

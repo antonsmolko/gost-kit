@@ -1,0 +1,344 @@
+import { flushSync } from 'svelte';
+import type { StoreConfig, StoreError } from '@gost/common';
+import { describe, expect, test, vi } from 'vitest';
+import { createStore } from './createStore.svelte';
+import { observe } from './__tests__/observe.svelte';
+import { present, presentDirect } from './__tests__/present.svelte';
+
+type State = { counter: number; previous?: boolean };
+type Action = { type: 'SetCounterAction'; counter: number };
+type Effect = { type: 'WorkEffect' };
+
+const STATE: State = { counter: 0 };
+
+describe('createStore', () => {
+  test('прямой вызов presenter пересчитывается при замене другой ветки корня', async () => {
+    type RootState = { user: { name: string }; alert: string };
+    type Action = { type: 'ReplaceAction'; state: RootState };
+    const initial: RootState = { user: { name: 'Ada' }, alert: '' };
+    const store = createStore<RootState, Action, never>({
+      initState: initial,
+      reducer: (_state, action) => ({ state: action.state, effects: [] }),
+      effector: async () => {},
+    });
+    const userPresenter = vi.fn((user: RootState['user']) => ({ label: user.name.toUpperCase() }));
+    const view = presentDirect(() => store.state.user, userPresenter);
+    const observed = observe(() => view.value);
+    try {
+      expect(userPresenter).toHaveBeenCalledTimes(1);
+      await store.dispatch({ type: 'ReplaceAction', state: { ...initial, alert: 'Opened' } });
+      flushSync();
+      expect(store.state.user).toBe(initial.user);
+      expect(userPresenter).toHaveBeenCalledTimes(2);
+      expect(observed.values).toEqual([{ label: 'ADA' }, { label: 'ADA' }]);
+    } finally {
+      observed.stop();
+    }
+  });
+
+  test('изменение другой ветки не вызывает presenter и не меняет view state', async () => {
+    type RootState = { user: { name: string }; alert: string };
+    type Action = { type: 'ReplaceAction'; state: RootState };
+    const initial: RootState = { user: { name: 'Ada' }, alert: '' };
+    const store = createStore<RootState, Action, never>({
+      initState: initial,
+      reducer: (_state, action) => ({ state: action.state, effects: [] }),
+      effector: async () => {},
+    });
+    const userPresenter = vi.fn((user: RootState['user']) => ({ label: user.name.toUpperCase() }));
+    const view = present(() => store.state.user, userPresenter);
+    const observed = observe(() => view.value);
+    const rootView = store.state;
+
+    try {
+      expect(observed.values).toEqual([{ label: 'ADA' }]);
+      await store.dispatch({ type: 'ReplaceAction', state: { ...initial, alert: 'Opened' } });
+      flushSync();
+      expect(userPresenter).toHaveBeenCalledTimes(1);
+      expect(observed.values).toEqual([{ label: 'ADA' }]);
+      expect(store.state).not.toBe(rootView);
+      expect(store.state.user).toBe(initial.user);
+
+      await store.dispatch({ type: 'ReplaceAction', state: { ...initial, user: { name: 'Grace' } } });
+      flushSync();
+      expect(userPresenter).toHaveBeenCalledTimes(2);
+      expect(observed.values).toEqual([{ label: 'ADA' }, { label: 'GRACE' }]);
+
+      await store.dispatch({ type: 'ReplaceAction', state: { ...store.state } });
+      flushSync();
+      expect(userPresenter).toHaveBeenCalledTimes(2);
+    } finally {
+      observed.stop();
+    }
+  });
+
+  test('сохраняет начальное состояние без глубокой реактивной обёртки', () => {
+    const store = createStore<State, Action, Effect>({
+      initState: STATE,
+      effector: () => {
+        return Promise.resolve();
+      },
+      reducer: (state) => {
+        return { state, effects: [] };
+      },
+    });
+
+    expect(store.state).toBe(STATE);
+    expect(store.state.counter).toBe(0);
+  });
+
+  test('изменяет состояние синхронно до завершения dispatch', async () => {
+    const store = createStore<State, Action, Effect>({
+      initState: STATE,
+      effector: () => {
+        return Promise.resolve();
+      },
+      reducer: (_state, action) => {
+        return { state: { counter: action.counter }, effects: [] };
+      },
+    });
+
+    const pending = store.dispatch({ type: 'SetCounterAction', counter: 7 });
+
+    expect(store.state.counter).toBe(7);
+    await pending;
+  });
+
+  test('реактивно заменяет состояние целиком', async () => {
+    const nextState: State = { counter: 7 };
+    const store = createStore<State, Action, Effect>({
+      initState: { counter: 0, previous: true },
+      effector: () => {
+        return Promise.resolve();
+      },
+      reducer: () => {
+        return { state: nextState, effects: [] };
+      },
+    });
+    const observed = observe(() => store.state.counter);
+
+    try {
+      expect(observed.values).toEqual([0]);
+
+      await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+      flushSync();
+
+      expect(observed.values).toEqual([0, 7]);
+      expect(store.state).toBe(nextState);
+      expect(store.state).not.toHaveProperty('previous');
+    } finally {
+      observed.stop();
+    }
+  });
+
+  test('запускает эффект после commit и ожидает его завершения', async () => {
+    const completion = Promise.withResolvers<void>();
+    const observed: number[] = [];
+    const store = createStore<State, Action, Effect>({
+      initState: STATE,
+      reducer: (_state, action) => {
+        return {
+          state: { counter: action.counter },
+          effects: [{ type: 'WorkEffect' }],
+        };
+      },
+      effector: async () => {
+        observed.push(store.state.counter);
+        await completion.promise;
+      },
+    });
+    let completed = false;
+    const pending = store.dispatch({ type: 'SetCounterAction', counter: 7 }).then(() => {
+      completed = true;
+    });
+
+    expect(observed).toEqual([7]);
+    await Promise.resolve();
+    expect(completed).toBe(false);
+
+    completion.resolve();
+    await pending;
+
+    expect(completed).toBe(true);
+  });
+
+  test('передаёт ошибку в onError и сохраняет состояние', async () => {
+    const failure = new Error('Broken reducer');
+    const reported: StoreError<Action, Effect>[] = [];
+    const action: Action = { type: 'SetCounterAction', counter: 7 };
+    const store = createStore<State, Action, Effect>({
+      initState: STATE,
+      reducer: () => {
+        throw failure;
+      },
+      effector: () => {
+        return Promise.resolve();
+      },
+      onError: (error) => {
+        reported.push(error);
+      },
+    });
+
+    await expect(store.dispatch(action)).resolves.toBeUndefined();
+
+    expect(store.state).toBe(STATE);
+    expect(reported).toEqual([{ kind: 'reducer', action, error: failure }]);
+  });
+
+  test('использует актуальные reducer и effector из конфигурации', async () => {
+    const effects: string[] = [];
+    const config: StoreConfig<State, Action, Effect> = {
+      initState: { counter: 1 },
+      reducer: (_state, action) => {
+        return { state: { counter: action.counter }, effects: [{ type: 'WorkEffect' }] };
+      },
+      effector: async () => {
+        effects.push('original');
+      },
+    };
+    const store = createStore(config);
+
+    config.reducer = (state, action) => {
+      return {
+        state: { counter: state.counter + action.counter },
+        effects: [{ type: 'WorkEffect' }],
+      };
+    };
+    config.effector = async () => {
+      effects.push('replacement');
+    };
+
+    await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+
+    expect(store.state.counter).toBe(8);
+    expect(effects).toEqual(['replacement']);
+  });
+
+  test('сохраняет исходную конфигурацию как this обработчиков', async () => {
+    const receivers: unknown[] = [];
+    const config: StoreConfig<State, Action, Effect> = {
+      initState: STATE,
+      reducer(_state, action) {
+        receivers.push(this);
+        return { state: { counter: action.counter }, effects: [{ type: 'WorkEffect' }] };
+      },
+      async effector() {
+        receivers.push(this);
+      },
+    };
+    const store = createStore(config);
+    await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+    expect(store.state.counter).toBe(7);
+    expect(receivers).toHaveLength(2);
+    expect(receivers[0]).toBe(config);
+    expect(receivers[1]).toBe(config);
+  });
+
+  test('изолирует состояние разных экземпляров', async () => {
+    const config: StoreConfig<State, Action, Effect> = {
+      initState: STATE,
+      reducer: (_state, action) => {
+        return { state: { counter: action.counter }, effects: [] };
+      },
+      effector: () => {
+        return Promise.resolve();
+      },
+    };
+    const first = createStore(config);
+    const second = createStore(config);
+
+    await first.dispatch({ type: 'SetCounterAction', counter: 9 });
+
+    expect(first.state.counter).toBe(9);
+    expect(second.state.counter).toBe(0);
+  });
+
+  test('редюсер получает обычные снимки, которые не меняются после следующих commit', async () => {
+    const initial = { counter: 0 };
+    const snapshots: State[] = [];
+    const commits: State[] = [];
+    const store = createStore<State, Action, never>({
+      initState: initial,
+      reducer: (state, action) => {
+        snapshots.push(state);
+        const next = { counter: action.counter };
+        commits.push(next);
+        return { state: next, effects: [] };
+      },
+      effector: async () => {},
+    });
+    await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+    await store.dispatch({ type: 'SetCounterAction', counter: 9 });
+
+    expect(snapshots[0]).toBe(initial);
+    expect(snapshots[1]).toBe(commits[0]);
+    expect(snapshots).toEqual([{ counter: 0 }, { counter: 7 }]);
+    expect(store.state).toBe(commits[1]);
+    expect(store.state.counter).toBe(9);
+  });
+
+  test('примитивный корень сохраняет реактивную замену значения', async () => {
+    const store = createStore<number, Action, never>({
+      initState: 0,
+      reducer: (_state, action) => ({ state: action.counter, effects: [] }),
+      effector: async () => {},
+    });
+    const observed = observe(() => store.state);
+    try {
+      await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+      flushSync();
+      expect(store.state).toBe(7);
+      expect(observed.values).toEqual([0, 7]);
+    } finally {
+      observed.stop();
+    }
+  });
+
+  test('корень-массив сохраняет ссылку commit и реактивно заменяется', async () => {
+    const initial = [0];
+    const next = [7];
+    const store = createStore<number[], Action, never>({
+      initState: initial,
+      reducer: () => ({ state: next, effects: [] }),
+      effector: async () => {},
+    });
+    const observed = observe(() => store.state[0]);
+    try {
+      expect(store.state).toBe(initial);
+      await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+      flushSync();
+      expect(store.state).toBe(next);
+      expect(observed.values).toEqual([0, 7]);
+      expect(initial).toEqual([0]);
+    } finally {
+      observed.stop();
+    }
+  });
+
+  test('корень-экземпляр класса сохраняет ссылку commit, методы и реактивность', async () => {
+    class Counter {
+      #value: number;
+      constructor(value: number) { this.#value = value; }
+      read() { return this.#value; }
+    }
+    const initial = new Counter(0);
+    const next = new Counter(7);
+    const store = createStore<Counter, Action, never>({
+      initState: initial,
+      reducer: () => ({ state: next, effects: [] }),
+      effector: async () => {},
+    });
+    const observed = observe(() => store.state.read());
+    try {
+      expect(store.state).toBe(initial);
+      await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+      flushSync();
+      expect(store.state).toBe(next);
+      expect(store.state.read()).toBe(7);
+      expect(observed.values).toEqual([0, 7]);
+      expect(initial.read()).toBe(0);
+    } finally {
+      observed.stop();
+    }
+  });
+});

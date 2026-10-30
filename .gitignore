@@ -1,2 +1,6 @@
 node_modules/
+dist/
+.svelte-kit/
+.idea/
+docs/superpowers/plans/
 .DS_Store
