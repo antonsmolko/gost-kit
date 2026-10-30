@@ -1,7 +1,8 @@
 import { expect, expectTypeOf, test } from 'vitest';
 import type { Result } from '../../types';
 import { safeRun } from './safeRun';
-import { guard } from './guard';
+
+const reasons = ['timeout', null, undefined, 17, { code: 'OFFLINE' }];
 
 test('sync returns the original value as a successful result', () => {
   const data = { count: 42 };
@@ -17,9 +18,21 @@ test('sync returns undefined for a callback without a result', () => {
   expect(result).toEqual({ type: 'ok', data: undefined });
 });
 
-test.each([new Error('Failed'), 'Failed'])('sync catches an exception: %s', (error) => {
-  const expected = guard.error(error) ? { type: 'error', error } : { type: 'error' };
-  expect(safeRun.sync(() => { throw error; })).toEqual(expected);
+test('sync preserves the original Error instance', () => {
+  const error = new Error('Failed');
+  const result = safeRun.sync(() => { throw error; });
+  expect(result.type).toBe('error');
+  if (result.type === 'error') expect(result.error).toBe(error);
+});
+
+test.each(reasons)('sync preserves a non-Error reason as cause: %s', (reason) => {
+  const result = safeRun.sync(() => { throw reason; });
+  expect(result.type).toBe('error');
+  if (result.type === 'error') {
+    expect(result.error).toBeInstanceOf(Error);
+    expect(result.error).toHaveProperty('cause');
+    expect(result.error?.cause).toBe(reason);
+  }
 });
 
 test('async returns the resolved value as a successful result', async () => {
@@ -34,9 +47,21 @@ test('async returns undefined for a callback without a result', async () => {
   await expect(result).resolves.toEqual({ type: 'ok', data: undefined });
 });
 
-test.each([new Error('Failed'), null])('async catches a rejection: %s', async (error) => {
-  const expected = guard.nlx(error) ? { type: 'error' } : { type: 'error', error };
-  await expect(safeRun.async(() => Promise.reject(error))).resolves.toEqual(expected);
+test('async preserves the original Error instance', async () => {
+  const error = new Error('Failed');
+  const result = await safeRun.async(() => Promise.reject(error));
+  expect(result.type).toBe('error');
+  if (result.type === 'error') expect(result.error).toBe(error);
+});
+
+test.each(reasons)('async preserves a non-Error rejection as cause: %s', async (reason) => {
+  const result = await safeRun.async(() => Promise.reject(reason));
+  expect(result.type).toBe('error');
+  if (result.type === 'error') {
+    expect(result.error).toBeInstanceOf(Error);
+    expect(result.error).toHaveProperty('cause');
+    expect(result.error?.cause).toBe(reason);
+  }
 });
 
 test('async catches a synchronous exception from its callback', async () => {

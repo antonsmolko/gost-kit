@@ -116,6 +116,17 @@ owners and dynamic arrays are rejected; `effecting()` accepts `never` effects.
 action names from different namespaces are distinguishable. Omitted or explicit
 root scope keeps the plain action name. Effect titles continue to use their type.
 
+The current `logger` prototype implements output only for `info`; `error`, `warn`,
+`trace` and `debug` intentionally remain no-op placeholders. Completing logging
+is tracked separately in [#4](https://github.com/antonsmolko/gost-kit/issues/4).
+Messages are passed as data to a fixed console format, so `%s`/`%o` in a message
+stay literal and do not consume the payload.
+
+`safeRun.sync` and `safeRun.async` preserve thrown `Error` instances. Other thrown
+or rejected values are wrapped in an `Error` with the original value in `cause`,
+including `null` and `undefined`. Both paths use the same internal normalization;
+the public `Result` contract is unchanged.
+
 `define.state` accepts a ready-made plain state object or a factory receiving
 one optional options object. Options are constrained to `Partial<TState>` so
 overrides keep the corresponding state property types. Factories must handle

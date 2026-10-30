@@ -30,7 +30,7 @@ test('logs before execution and still waits for the original effector', async ()
   await pending;
   expect(finished).toBe(true);
   expect(output).toHaveBeenCalledExactlyOnceWith(
-    expect.stringContaining(effect.type), expect.any(String), { trigger: effect },
+    '📟 %c%s', expect.any(String), effect.type, { trigger: effect },
   );
 });
 
@@ -49,7 +49,7 @@ test('logs the trigger even when the effector rejects and preserves its error', 
   await expect(logEffector(effector, { isEnabled: true })({ type: 'SaveEffect' }, async () => {}))
     .rejects.toBe(error);
   expect(output).toHaveBeenCalledExactlyOnceWith(
-    expect.stringContaining('SaveEffect'), expect.any(String), { trigger: { type: 'SaveEffect' } },
+    '📟 %c%s', expect.any(String), 'SaveEffect', { trigger: { type: 'SaveEffect' } },
   );
 });
 

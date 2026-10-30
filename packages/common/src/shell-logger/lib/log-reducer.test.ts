@@ -18,7 +18,7 @@ test('returns the original commit and logs the action, previous state, next stat
   expect(logReducer(reducer, { isEnabled: true })(state, action)).toBe(commit);
   expect(reducer).toHaveBeenCalledExactlyOnceWith(state, action);
   expect(output).toHaveBeenCalledExactlyOnceWith(
-    expect.stringContaining(action.type), expect.any(String),
+    '📟 %c%s', expect.any(String), action.type,
     { trigger: action, prev: state, next: commit.state, effects: commit.effects },
   );
 });
@@ -61,7 +61,7 @@ test('logs the full scoped action while equal type names select different handle
     const commit = logged(state, action);
     expect(commit.state.count).toBe(index === 0 ? 7 : 5);
     expect(output).toHaveBeenNthCalledWith(index + 1,
-      `📟 %c${action.scope}/${action.type}`, expect.any(String),
+      '📟 %c%s', expect.any(String), `${action.scope}/${action.type}`,
       { trigger: action, prev: state, next: commit.state, effects: [] },
     );
   });

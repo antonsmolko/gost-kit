@@ -1,7 +1,7 @@
-import { guard } from './guard';
-import type { Result, AsyncFn } from '../../types';
+import { toErrorResult } from './to-error-result';
+import type { Result, AsyncFn, AnyFn } from '../../types';
 
-type Fix<T> = T extends void ? undefined : T;
+type Fix<TResult> = TResult extends void ? undefined : TResult;
 
 export const safeRun = {
   async: async <TResult = undefined>(fn: AsyncFn<[], TResult>): Promise<Result<Fix<TResult>>> => {
@@ -13,37 +13,19 @@ export const safeRun = {
         data: data as Fix<TResult>,
       };
     } catch (error) {
-      if (guard.error(error)) {
-        return {
-          type: 'error',
-          error,
-        };
-      }
-
-      return {
-        type: 'error',
-      };
+      return toErrorResult(error);
     }
   },
-  sync: <T = undefined>(fn: () => T): Result<Fix<T>> => {
+  sync: <TResult = undefined>(fn: AnyFn<[], TResult>): Result<Fix<TResult>> => {
     try {
       const data = fn();
 
       return {
         type: 'ok',
-        data: data as Fix<T>,
+        data: data as Fix<TResult>,
       };
     } catch (error) {
-      if (guard.error(error)) {
-        return {
-          type: 'error',
-          error,
-        };
-      }
-
-      return {
-        type: 'error',
-      };
+      return toErrorResult(error);
     }
   },
 };

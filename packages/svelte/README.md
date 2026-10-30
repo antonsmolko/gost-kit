@@ -23,6 +23,10 @@ merge or deeply proxy state. Each instance has independent state. Dispatch,
 parallel effects, awaited nested dispatch and error reporting are implemented
 by `@gost/common` without a framework dependency.
 
+The optional `onError` callback is supplied when the store is created, for example
+to connect application logging. Replacing it on the original config afterwards
+does not change the store's handler.
+
 Select a feature before computing its presentation:
 
 ```ts

@@ -10,7 +10,7 @@ test('uses the trigger name and logs a snapshot of the payload', async () => {
   payload.state.count = 2;
   await Promise.resolve();
   expect(output).toHaveBeenCalledExactlyOnceWith(
-    expect.stringContaining('LoadAction'), expect.any(String),
+    '📟 %c%s', expect.any(String), 'LoadAction',
     { trigger: { type: 'LoadAction' }, state: { count: 1 } },
   );
 });
