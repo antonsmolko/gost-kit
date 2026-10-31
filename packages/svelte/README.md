@@ -41,7 +41,8 @@ directly on the root and calls the presenter on unrelated root replacements.
 
 The store keeps one ordinary snapshot, without an additional UI representation.
 Root identity follows reducer commits; feature references are preserved by the
-reducers. Primitive, array and class roots keep the same raw replacement model.
+reducers. Primitive and array roots keep the same raw replacement model.
+Class instances are outside the intended state contract.
 Presenters stay pure; reactive bindings belong to components or Svelte adapters.
 
 Reducers still construct immutable root snapshots. Feature selection may rerun
@@ -49,7 +50,7 @@ when the root is replaced; an unchanged selected reference does not cause
 another presenter call.
 
 The [createStore contract and test cases](docs/createStore.spec.md) describe
-the three Svelte integration checks; dispatch execution is tested in common.
+the Svelte integration checks; dispatch execution is tested in common.
 
 Build common first, then run `npm run build --workspace @gost-kit/svelte` from the
 repository root. Packaging follows the official
