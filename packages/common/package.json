@@ -1,6 +1,6 @@
 {
   "name": "@gost-kit/common",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Shared TypeScript types and runtime guards.",
   "type": "module",
   "license": "MIT",
@@ -8,7 +8,8 @@
     "node": "^26.0.0"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {

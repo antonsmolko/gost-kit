@@ -1,7 +1,7 @@
 # @gost-kit/svelte
 
 Reactive Svelte 5 binding for `@gost-kit/common` functional core.
-Unpublished, version 0.0.0. Requires Svelte 5.57.2 or later in the 5.x series.
+Requires Node 26 (`^26.0.0`) and Svelte 5.57.2 or later in the 5.x series.
 The store implementation lives in `src/shell/domain/createStore.svelte.ts`.
 
 ```ts

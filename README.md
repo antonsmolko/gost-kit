@@ -8,12 +8,13 @@ Engineering principles and specifications live in
 
 `@gost-kit/common` contains shared types, guards and framework-independent functional
 core execution. `@gost-kit/svelte` provides its reactive Svelte 5 store binding.
-Neither package has been published yet.
 
 ## Development
 
-Use Node 26; `.node-version` pins 26.11.1. Runtime packages will live under
-`packages/`. The repository root is private and cannot be published.
+The initial `0.1.0` release supports Node 26 (`^26.0.0`) for package consumers.
+Development, CI and consumer checks use 26.11.1, pinned in `.node-version`.
+Runtime packages live under `packages/`. The repository root is private and
+cannot be published.
 
 Install and verify the packages from the repository root:
 
@@ -70,18 +71,27 @@ before publishing. Package versions remain independent: a common patch within
 svelte's dependency range does not require a svelte release. When common leaves
 that range, Changesets updates the dependency and includes a svelte patch release.
 
-This applies after the initial release establishes `^0.1.0`. The current
-`^0.0.0` placeholder accepts only `0.0.0`, so even a common patch currently
-requires a svelte dependency update and release.
+The version command removes the changeset entries it has applied. A generated
+version PR therefore has updated manifests and changelogs without pending
+changesets. `changeset status` checks pending changesets and can exit with code 1
+in this state; it is not a publication check or a required gate for version PRs.
 
 After release approval and successful package and example checks, the maintainer
-can run `npm run release`. Changesets publishes unpublished versions and creates
-package version tags. Each package builds through its `prepack` hook, including
-when packed manually; the release command does not repeat that build.
-It performs real npm publication;
-version preparation does not publish. Push the resulting tags after confirming
-publication. The repository root and example remain private.
+starts the initial release locally from updated `main`:
 
-The first release is planned as `0.1.0` for both packages, with svelte depending
-on common through `^0.1.0`. Registry authorization and release automation are
-configured separately; no packages have been published yet.
+```sh
+npm run release
+```
+
+This invokes `changeset publish`, which publishes unpublished versions and creates
+package version tags such as `@gost-kit/common@0.1.0`. Each package builds through
+its `prepack` hook. After confirming publication, push the generated tags:
+
+```sh
+git push --follow-tags
+```
+
+Version preparation does not publish. The repository root and example remain private.
+
+The initial release uses `0.1.0` for both packages, with svelte depending
+on common through `^0.1.0`. Subsequent release automation is configured separately.
