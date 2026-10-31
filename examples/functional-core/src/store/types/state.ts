@@ -1,4 +1,4 @@
-import type { Nlx } from '@gost/common';
+import type { Nlx } from '@gost-kit/common';
 import type { UserState } from '../../features/user/domain/fc/state';
 
 export type RootState = {

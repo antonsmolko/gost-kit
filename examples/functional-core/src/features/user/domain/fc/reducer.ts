@@ -1,4 +1,4 @@
-import { define } from '@gost/common';
+import { define } from '@gost-kit/common';
 import type { RootState } from '../../../../store/types/state';
 import type { RootEffect } from '../../../../store/types/effect';
 import type { UserAction } from './action';

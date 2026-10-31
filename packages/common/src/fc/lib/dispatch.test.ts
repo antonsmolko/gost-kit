@@ -25,6 +25,87 @@ type Action = { type: 'RunAction' };
 type Effect = { type: 'WorkEffect'; id: number };
 type TestDispatchConfig = DispatchConfig<number, Action, Effect>;
 
+test('does not call callbacks when creating dispatch', () => {
+  const config: TestDispatchConfig = {
+    readState: vi.fn(() => 0),
+    writeState: vi.fn(),
+    reducer: vi.fn(() => ({ state: 1, effects: [] })),
+    effector: vi.fn(async () => {}),
+    onError: vi.fn(),
+  };
+
+  createDispatch(config);
+
+  expect(config.readState).not.toHaveBeenCalled();
+  expect(config.reducer).not.toHaveBeenCalled();
+  expect(config.writeState).not.toHaveBeenCalled();
+  expect(config.effector).not.toHaveBeenCalled();
+  expect(config.onError).not.toHaveBeenCalled();
+});
+
+test('each dispatch reads the current state and passes the original action', async () => {
+  type State = { count: number };
+  type AddAction = { type: 'AddAction'; amount: number };
+  const initial: State = { count: 0 };
+  const external: State = { count: 40 };
+  const firstAction: AddAction = { type: 'AddAction', amount: 3 };
+  const secondAction: AddAction = { type: 'AddAction', amount: 2 };
+  let state = initial;
+  const readState = vi.fn(() => state);
+  const writeState = vi.fn((next: State) => { state = next; });
+  const reducer = vi.fn((current: State, action: AddAction) => ({
+    state: { count: current.count + action.amount }, effects: [],
+  }));
+  const dispatch = createDispatch<State, AddAction, never>({
+    readState,
+    writeState,
+    reducer,
+    effector: async () => {},
+  });
+
+  await dispatch(firstAction);
+  expect(state).toEqual({ count: 3 });
+
+  state = external;
+  await dispatch(secondAction);
+
+  expect(state).toEqual({ count: 42 });
+  expect(readState).toHaveBeenCalledTimes(2);
+  expect(reducer).toHaveBeenCalledTimes(2);
+  expect(reducer.mock.calls[0][0]).toBe(initial);
+  expect(reducer.mock.calls[0][1]).toBe(firstAction);
+  expect(reducer.mock.calls[1][0]).toBe(external);
+  expect(reducer.mock.calls[1][1]).toBe(secondAction);
+  expect(writeState).toHaveBeenCalledTimes(2);
+  expect(writeState).toHaveBeenNthCalledWith(1, { count: 3 });
+  expect(writeState).toHaveBeenNthCalledWith(2, { count: 42 });
+});
+
+test('reads state, runs the reducer and writes the commit synchronously before effects', async () => {
+  let state = 0;
+  const steps: string[] = [];
+  const effectStates: number[] = [];
+  const dispatch = createDispatch<number, Action, Effect>({
+    readState: () => { steps.push('read'); return state; },
+    reducer: () => {
+      steps.push('reducer');
+      return { state: 7, effects: [{ type: 'WorkEffect', id: 0 }] };
+    },
+    writeState: (next) => { steps.push('write'); state = next; },
+    effector: async () => {
+      steps.push('effect');
+      effectStates.push(state);
+    },
+  });
+
+  const pending = dispatch({ type: 'RunAction' });
+
+  expect(state).toBe(7);
+  expect(steps).toEqual(['read', 'reducer', 'write', 'effect']);
+  expect(effectStates).toEqual([7]);
+  await expect(pending).resolves.toBeUndefined();
+});
+
 test('accepts a synchronous onError in dispatch config', async () => {
   const failure = new Error('Reducer failed');
   const reported: StoreError<Action, never>[] = [];
@@ -223,16 +304,29 @@ test('effects start in parallel after state commit and dispatch waits for all', 
   expect(completed).toBe(true);
 });
 
-test('dispatch assigns the returned full state without merging old keys', async () => {
+test('writes the complete state without merging and skips effects when the list is empty', async () => {
+  type State = { count: number; previous?: boolean };
+  let state: State = { count: 0, previous: true };
   const next = { count: 2 };
-  const root = createTestStore<{ count: number; previous?: boolean }, Action, Effect>({
-    initState: { count: 0, previous: true },
+  const writeState = vi.fn((value: State) => { state = value; });
+  const effector = vi.fn<TestDispatchConfig['effector']>(async () => {});
+  const onError = vi.fn<NonNullable<DispatchConfig<State, Action, Effect>['onError']>>();
+  const dispatch = createDispatch<State, Action, Effect>({
+    readState: () => state,
+    writeState,
     reducer: () => ({ state: next, effects: [] }),
-    effector: async () => {},
+    effector,
+    onError,
   });
-  await root.dispatch({ type: 'RunAction' });
-  expect(root.state).toBe(next);
-  expect(root.state).not.toHaveProperty('previous');
+
+  await expect(dispatch({ type: 'RunAction' })).resolves.toBeUndefined();
+
+  expect(writeState).toHaveBeenCalledExactlyOnceWith(next);
+  expect(writeState.mock.calls[0][0]).toBe(next);
+  expect(state).toBe(next);
+  expect(state).not.toHaveProperty('previous');
+  expect(effector).not.toHaveBeenCalled();
+  expect(onError).not.toHaveBeenCalled();
 });
 
 test('a reducer exception is reported with the action and dispatch resolves', async () => {

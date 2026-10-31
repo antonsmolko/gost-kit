@@ -1,4 +1,4 @@
-import type { AppError, AsyncFn } from '@gost/common';
+import type { AppError, AsyncFn } from '@gost-kit/common';
 import type { User } from '../../features/user/domain/entities/user';
 import type { RootAction } from './action';
 

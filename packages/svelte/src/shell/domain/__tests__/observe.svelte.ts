@@ -1,10 +1,18 @@
+import type { AnyFn } from '@gost-kit/common';
 import { flushSync } from 'svelte';
 
-export const observe = <T>(read: () => T) => {
-  const values: T[] = [];
+export const observe = <TState, TView>(
+  read: AnyFn<[], TState>,
+  presenter: AnyFn<[state: TState], TView>,
+) => {
+  const values: TView[] = [];
   const stop = $effect.root(() => {
-    $effect(() => { values.push(read()); });
+    const state = $derived(read());
+    const viewState = $derived(presenter(state));
+
+    $effect(() => { values.push(viewState); });
   });
+
   flushSync();
   return { values, stop };
 };

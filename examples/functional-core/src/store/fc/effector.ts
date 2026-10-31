@@ -1,4 +1,4 @@
-import { define, effecting, type Effector } from '@gost/common';
+import { define, effecting, type Effector } from '@gost-kit/common';
 import type { RootAction } from '../types/action';
 import type { ApiClient, ApiEffect, DispatchActionEffect, RootEffect } from '../types/effect';
 import type { User } from '../../features/user/domain/entities/user';

@@ -1,7 +1,7 @@
-# @gost/common
+# @gost-kit/common
 
 Shared TypeScript types, runtime guards and framework-independent functional core.
-Unpublished, version 0.0.0. Import through `@gost/common`.
+Unpublished, version 0.0.0. Import through `@gost-kit/common`.
 
 Guard implementation and its URL helper live in `src/sharred/lib`.
 
@@ -10,7 +10,7 @@ recursive JSON primitives, arrays and string-keyed objects, including `null`
 and excluding `undefined`.
 
 ```ts
-import { createDispatch, guard, reducing, type Nlx, type Reducer } from '@gost/common';
+import { createDispatch, guard, reducing, type Nlx, type Reducer } from '@gost-kit/common';
 
 type Action = { type: 'IncrementAction' };
 const reducer: Reducer<number, Action, never> = reducing({
@@ -31,7 +31,7 @@ handlers do not have to clone unchanged values.
 Declare namespaces centrally with `ScopedActions`, keeping feature action types local:
 
 ```ts
-import type { ScopedActions } from '@gost/common';
+import type { ScopedActions } from '@gost-kit/common';
 
 type UserAction = { type: 'LoadAction'; page: number };
 type RootAction = ScopedActions<{
@@ -71,7 +71,7 @@ Feature handlers receive and return their own complete state. Adapt them to a
 root property with `scope` before composing:
 
 ```ts
-import { define, reducing, scope, type Reducer } from '@gost/common';
+import { define, reducing, scope, type Reducer } from '@gost-kit/common';
 
 type UserState = { name: string };
 type RootState = { user: UserState; auth: { user: { name: string } } };
@@ -136,7 +136,7 @@ a call without options, for example by defaulting their parameter to `{}`.
 a function taking optional `Partial<TState>` overrides:
 
 ```ts
-import { define } from '@gost/common';
+import { define } from '@gost-kit/common';
 
 const createState = define.state({ counter: 0, name: '' });
 
@@ -159,6 +159,9 @@ with contract `(failure: StoreError<TAction, TEffect>) => void`.
 It is called without awaiting a result; the default logs to `console.error`.
 A synchronous handler failure uses the existing console fallback.
 
+The draft [createDispatch contract and test cases](docs/createDispatch.spec.md)
+separates execution coverage from Svelte binding tests.
+
 State is committed synchronously before effects start. Effects start in parallel;
 dispatch waits for all of them and for nested dispatches awaited by those effects.
 Reducer/effect failures are reported, and dispatch resolves successfully. Pending
@@ -176,12 +179,12 @@ const dispatch = createDispatch<number, Action, never>({
 await dispatch({ type: 'IncrementAction' });
 ```
 
-This package does not depend on Svelte. The `@gost/svelte` package supplies
+This package does not depend on Svelte. The `@gost-kit/svelte` package supplies
 reactive state through the same callbacks. Guards check the condition they
 name; collection guards do not validate element types. External data still
 requires validation of the complete relied-on contract.
 
-Build with `npm run build --workspace @gost/common` from the repository root.
+Build with `npm run build --workspace @gost-kit/common` from the repository root.
 Source imports may omit file extensions and directory `index` names. TypeScript
 uses Bundler resolution; `tsc-alias` resolves emitted imports to explicit `.js`
 paths for Node.js, including imports in declarations.
