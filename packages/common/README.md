@@ -1,7 +1,8 @@
 # @gost-kit/common
 
 Shared TypeScript types, runtime guards and framework-independent functional core.
-Unpublished, version 0.0.0. Import through `@gost-kit/common`.
+Import through `@gost-kit/common`.
+Requires Node 26 (`^26.0.0`).
 
 Guard implementation and its URL helper live in `src/sharred/lib`.
 

@@ -1,6 +1,6 @@
 {
   "name": "@gost-kit/svelte",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Svelte bindings for GOST functional core.",
   "type": "module",
   "license": "MIT",
@@ -8,7 +8,8 @@
     "node": "^26.0.0"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {
@@ -24,7 +25,7 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@gost-kit/common": "^0.0.0"
+    "@gost-kit/common": "^0.1.0"
   },
   "peerDependencies": {
     "svelte": "^5.57.2"
