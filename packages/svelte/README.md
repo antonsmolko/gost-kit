@@ -48,8 +48,8 @@ Reducers still construct immutable root snapshots. Feature selection may rerun
 when the root is replaced; an unchanged selected reference does not cause
 another presenter call.
 
-The draft [createStore contract and test cases](docs/createStore.spec.md)
-defines the behavior to review before rebuilding the store's test coverage.
+The [createStore contract and test cases](docs/createStore.spec.md) describe
+the three Svelte integration checks; dispatch execution is tested in common.
 
 Build common first, then run `npm run build --workspace @gost-kit/svelte` from the
 repository root. Packaging follows the official
