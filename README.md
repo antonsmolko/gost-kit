@@ -70,9 +70,15 @@ before publishing. Package versions remain independent: a common patch within
 svelte's dependency range does not require a svelte release. When common leaves
 that range, Changesets updates the dependency and includes a svelte patch release.
 
+This applies after the initial release establishes `^0.1.0`. The current
+`^0.0.0` placeholder accepts only `0.0.0`, so even a common patch currently
+requires a svelte dependency update and release.
+
 After release approval and successful package and example checks, the maintainer
-can run `npm run release`. This builds common before svelte, publishes unpublished
-versions and creates package version tags. It performs real npm publication;
+can run `npm run release`. Changesets publishes unpublished versions and creates
+package version tags. Each package builds through its `prepack` hook, including
+when packed manually; the release command does not repeat that build.
+It performs real npm publication;
 version preparation does not publish. Push the resulting tags after confirming
 publication. The repository root and example remain private.
 

@@ -14,7 +14,7 @@
     "test": "npm run test --workspaces",
     "changeset": "changeset",
     "version:packages": "changeset version && npm install --package-lock-only --ignore-scripts && npm --prefix examples/functional-core install --package-lock-only --ignore-scripts",
-    "release": "npm run build && changeset publish"
+    "release": "changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3"
