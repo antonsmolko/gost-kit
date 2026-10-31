@@ -1,5 +1,5 @@
 import { flushSync } from 'svelte';
-import type { StoreConfig, StoreError } from '@gost/common';
+import type { StoreConfig, StoreError } from '@gost-kit/common';
 import { describe, expect, test, vi } from 'vitest';
 import { createStore } from './createStore.svelte';
 import { observe } from './__tests__/observe.svelte';

@@ -1,5 +1,5 @@
 {
-  "name": "@gost/svelte",
+  "name": "@gost-kit/svelte",
   "version": "0.0.0",
   "description": "Svelte bindings for GOST functional core.",
   "type": "module",
@@ -24,7 +24,7 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@gost/common": "0.0.0"
+    "@gost-kit/common": "0.0.0"
   },
   "peerDependencies": {
     "svelte": "^5.57.2"
@@ -38,5 +38,17 @@
     "typescript": "5.9.3",
     "vite": "8.3.5",
     "vitest": "5.0.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antonsmolko/gost-kit.git",
+    "directory": "packages/svelte"
+  },
+  "homepage": "https://github.com/antonsmolko/gost-kit/tree/main/packages/svelte#readme",
+  "bugs": {
+    "url": "https://github.com/antonsmolko/gost-kit/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

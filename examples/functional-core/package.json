@@ -15,8 +15,8 @@
   "dependencies": {
     "svelte": "5.57.2",
 
-    "@gost/common": "file:../../packages/common",
-    "@gost/svelte": "file:../../packages/svelte"
+    "@gost-kit/common": "file:../../packages/common",
+    "@gost-kit/svelte": "file:../../packages/svelte"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

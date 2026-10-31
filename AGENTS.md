@@ -1,9 +1,9 @@
 # Shared TypeScript conventions
 
-Use the public API of `@gost/common` for shared types and runtime guards.
+Use the public API of `@gost-kit/common` for shared types and runtime guards.
 Use `import type` for type-only imports. When importing values and types from
 the same module, combine them with inline `type` specifiers, for example
-`import { guard, type Ulx } from '@gost/common';`. Reuse an existing type when its semantics match
+`import { guard, type Ulx } from '@gost-kit/common';`. Reuse an existing type when its semantics match
 the required contract, rather than repeating its definition locally. For example,
 use `Ulx<T>`, `Nlx<T>`, `Nil<T>` and `Vdx<T>` for the corresponding unions,
 and `AnyFn`, `AsyncFn`, `AsyncTap`, `Rec` and other exported helpers where applicable.
@@ -27,12 +27,12 @@ instead of declaring a separate function solely to assign it to a guard property
 The guard implementation and its tests may use primitive checks. Type helper
 definitions may use the primitives they encapsulate. Inside `packages/common`,
 use relative imports and avoid circular dependencies; elsewhere import through
-`@gost/common`. Keep each public type in its own file and re-export it from the
+`@gost-kit/common`. Keep each public type in its own file and re-export it from the
 package's public entry point. Generated and third-party code need not be migrated.
 
 Keep framework-independent functional core types, handler composition and dispatch
 execution in `packages/common/src/fc`. Put Svelte reactivity bindings
-in `packages/svelte/src/shell/domain` and consume them through `@gost/svelte`. The common package
+in `packages/svelte/src/shell/domain` and consume them through `@gost-kit/svelte`. The common package
 must not depend on Svelte. Examples consume both packages through their public APIs.
 
 Keep test files next to the implementation they cover. Exclude tests and test-only

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { reducing, scope, type ActionsInScope, type Reducer } from '@gost/common';
+import { reducing, scope, type ActionsInScope, type Reducer } from '@gost-kit/common';
 import { userReducer } from './reducer';
 import { initialState } from '../../../../store/fc/state';
 import type { RootState } from '../../../../store/types/state';

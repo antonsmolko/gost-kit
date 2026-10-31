@@ -1,4 +1,4 @@
-import { createDispatch, type Store, type StoreConfig, type Trigger } from '@gost/common';
+import { createDispatch, type Store, type StoreConfig, type Trigger } from '@gost-kit/common';
 
 export const createStore = <TState, TAction extends Trigger, TEffect extends Trigger>(
   config: StoreConfig<TState, TAction, TEffect>,

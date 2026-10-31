@@ -11,8 +11,8 @@ Use Node 26. From the repository root:
 
 ```sh
 npm ci
-npm run build --workspace @gost/common
-npm run build --workspace @gost/svelte
+npm run build --workspace @gost-kit/common
+npm run build --workspace @gost-kit/svelte
 npm --prefix examples/functional-core ci
 npm --prefix examples/functional-core run dev
 ```
@@ -68,12 +68,12 @@ component: await dispatch({ scope: 'users', type: 'LoadAction' })
 - `src/store/fc/reducer.ts`: composes user handlers with application-level alert handling.
   Tables are keyed by action scope, handlers by action type; `reducing` normalizes their results into
   full state and an array of effect descriptions.
-- `@gost/svelte`: `createStore` stores reactive state with `$state.raw` and
-  connects it to framework-independent dispatch from `@gost/common`.
+- `@gost-kit/svelte`: `createStore` stores reactive state with `$state.raw` and
+  connects it to framework-independent dispatch from `@gost-kit/common`.
 - `src/store/fc/effector.ts`: request execution and forwarding actions. API dependencies
   are injected; reducers never execute a request.
 - `src/store/fc/state.ts`: composes user initial state with application-level state.
-- `@gost/common`: handler definitions, table composition, dispatch execution,
+- `@gost-kit/common`: handler definitions, table composition, dispatch execution,
   shared types and guards, built from `../../packages/common`. Dispatch commits
   state before waiting for parallel effects through `Promise.allSettled`.
 - `src/store/root.ts`: store factory and access to the shared application store instance.

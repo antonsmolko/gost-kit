@@ -1,11 +1,11 @@
-# @gost/svelte
+# @gost-kit/svelte
 
-Reactive Svelte 5 binding for `@gost/common` functional core.
+Reactive Svelte 5 binding for `@gost-kit/common` functional core.
 Unpublished, version 0.0.0. Requires Svelte 5.57.2 or later in the 5.x series.
 The store implementation lives in `src/shell/domain/createStore.svelte.ts`.
 
 ```ts
-import { createStore } from '@gost/svelte';
+import { createStore } from '@gost-kit/svelte';
 
 const counter = createStore<number, { type: 'IncrementAction' }, never>({
   initState: 0,
@@ -18,10 +18,10 @@ await counter.dispatch({ type: 'IncrementAction' });
 ```
 
 `createStore` accepts `StoreConfig` and returns `Store`, both exported from
-`@gost/common`. It replaces the complete state through `$state.raw`; it does not
+`@gost-kit/common`. It replaces the complete state through `$state.raw`; it does not
 merge or deeply proxy state. Each instance has independent state. Dispatch,
 parallel effects, awaited nested dispatch and error reporting are implemented
-by `@gost/common` without a framework dependency.
+by `@gost-kit/common` without a framework dependency.
 
 The optional `onError` callback is supplied when the store is created, for example
 to connect application logging. Replacing it on the original config afterwards
@@ -48,7 +48,7 @@ Reducers still construct immutable root snapshots. Feature selection may rerun
 when the root is replaced; tests verify that an unchanged selected reference
 does not cause another presenter call.
 
-Build common first, then run `npm run build --workspace @gost/svelte` from the
+Build common first, then run `npm run build --workspace @gost-kit/svelte` from the
 repository root. Packaging follows the official
 [Svelte library packaging guide](https://svelte.dev/docs/kit/packaging) using
 `@sveltejs/package`. The `svelte` export condition points to JavaScript containing

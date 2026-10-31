@@ -6,8 +6,8 @@ Engineering principles and specifications live in
 
 ## Status
 
-`@gost/common` contains shared types, guards and framework-independent functional
-core execution. `@gost/svelte` provides its reactive Svelte 5 store binding.
+`@gost-kit/common` contains shared types, guards and framework-independent functional
+core execution. `@gost-kit/svelte` provides its reactive Svelte 5 store binding.
 Neither package has been published yet.
 
 ## Development
@@ -26,13 +26,13 @@ npm run check
 Import runtime guards and types through the package's public API:
 
 ```ts
-import { guard, type DeepPartial, type Result, type Ulx } from '@gost/common';
+import { guard, type DeepPartial, type Result, type Ulx } from '@gost-kit/common';
 ```
 
 Shared helpers live in `packages/common/src/types`; functional core types and
 execution live in `packages/common/src/fc`. Each public type has
 its own file. `createDispatch` owns execution and error reporting, while
-`@gost/svelte`'s `createStore` supplies reactive state through `$state.raw`.
+`@gost-kit/svelte`'s `createStore` supplies reactive state through `$state.raw`.
 Both packages expose their public API from the package root and build into
 `dist`. See their READMEs for usage. No release tooling is configured yet.
 

@@ -1,4 +1,4 @@
-import type { Store } from '@gost/common';
+import type { Store } from '@gost-kit/common';
 import type { RootAction } from './action';
 import type { RootState } from './state';
 

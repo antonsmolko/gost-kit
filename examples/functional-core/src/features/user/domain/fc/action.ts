@@ -1,5 +1,5 @@
 import type { User } from '../entities/user';
-import type { AppError } from '@gost/common';
+import type { AppError } from '@gost-kit/common';
 
 export type UserAction =
   | { type: 'SetEmailAction'; email: string }

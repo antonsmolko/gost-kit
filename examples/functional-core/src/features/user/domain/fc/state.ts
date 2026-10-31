@@ -1,4 +1,4 @@
-import { define, type AppError, type Nlx } from '@gost/common';
+import { define, type AppError, type Nlx } from '@gost-kit/common';
 import type { User } from '../entities/user';
 
 export type UserState = {
