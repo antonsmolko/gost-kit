@@ -24,7 +24,7 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@gost-kit/common": "0.0.0"
+    "@gost-kit/common": "^0.0.0"
   },
   "peerDependencies": {
     "svelte": "^5.57.2"

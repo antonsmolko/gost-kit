@@ -11,6 +11,12 @@
   "scripts": {
     "build": "npm run build --workspace @gost-kit/common && npm run build --workspace @gost-kit/svelte",
     "check": "npm run build && npm run check --workspaces && npm test",
-    "test": "npm run test --workspaces"
+    "test": "npm run test --workspaces",
+    "changeset": "changeset",
+    "version:packages": "changeset version && npm install --package-lock-only --ignore-scripts && npm --prefix examples/functional-core install --package-lock-only --ignore-scripts",
+    "release": "npm run build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "3.0.3"
   }
 }
