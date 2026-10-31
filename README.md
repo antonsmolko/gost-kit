@@ -94,4 +94,53 @@ git push --follow-tags
 Version preparation does not publish. The repository root and example remain private.
 
 The initial release uses `0.1.0` for both packages, with svelte depending
-on common through `^0.1.0`. Subsequent release automation is configured separately.
+on common through `^0.1.0`.
+
+### Automated releases
+
+On a push to `main`, `.github/workflows/release.yml` first runs the package and
+example checks from the reusable `check.yml` workflow. Pull requests run those
+checks directly. After successful checks, Changesets Action v2 selects a mode:
+
+- Pending changesets: create or update a release PR using `npm run version:packages`,
+  including both lockfiles. Review and merge the release PR to approve the release.
+- Unpublished package versions: run `npm run release` and push package version tags.
+- No pending changesets or unpublished versions: finish without releasing.
+
+Version and publish jobs share a concurrency group; active release operations
+finish before another starts. Main checks run independently for each commit.
+The workflow uses the built-in GitHub token and npm OIDC; the publish job alone
+receives `id-token: write`. Package releases use their `prepack` builds.
+
+In publish mode, the select-mode action always uploads a publish-plan artifact
+with a 30-day retention period. It is available for diagnostics; the publish job
+recomputes publication state through Changesets rather than consuming this artifact.
+
+Before the first automated release, complete these settings:
+
+1. In GitHub Settings → Actions → General → Workflow permissions, enable
+   **Allow GitHub Actions to create and approve pull requests**. The workflow
+   prepares release PRs; the maintainer reviews and merges them.
+2. GitHub requires approval for CI runs on PRs created with `GITHUB_TOKEN`.
+   Select **Approve workflows to run** on the generated release PR, then review
+   its checks before merging. Repeat this approval after each update to the release
+   PR, including updates from new changesets merged into `main`.
+   No personal access token or GitHub App is required.
+3. In each npm package's Settings → Trusted publishing, add GitHub Actions with
+   owner `antonsmolko`, repository `gost-kit`, and workflow filename `release.yml`.
+   Enable direct publishing with **Allow npm publish**; staging alone does not
+   authorize this workflow's publish command. No environment name is used.
+
+Configure npm trust when the next real package release is ready: a new
+configuration must complete its first successful publication within two days.
+After merging that release PR, verify the registry versions, package tags and
+installation from npm. GitHub's **Re-run jobs** retries a failed workflow;
+Changesets skips versions already published. The local `npm run release` command
+remains available for an approved maintainer-run release.
+
+The workflow is prepared before npm trust is configured. Its version and publish
+paths will be verified on the next real package change; no empty release is needed.
+
+References: [Changesets automation](https://changesets.dev/guide/automating),
+[GitHub token-triggered checks](https://docs.github.com/en/actions/concepts/security/github_token),
+and [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
