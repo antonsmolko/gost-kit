@@ -159,6 +159,9 @@ with contract `(failure: StoreError<TAction, TEffect>) => void`.
 It is called without awaiting a result; the default logs to `console.error`.
 A synchronous handler failure uses the existing console fallback.
 
+The draft [createDispatch contract and test cases](docs/createDispatch.spec.md)
+separates execution coverage from Svelte binding tests.
+
 State is committed synchronously before effects start. Effects start in parallel;
 dispatch waits for all of them and for nested dispatches awaited by those effects.
 Reducer/effect failures are reported, and dispatch resolves successfully. Pending

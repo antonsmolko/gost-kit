@@ -45,8 +45,11 @@ reducers. Primitive, array and class roots keep the same raw replacement model.
 Presenters stay pure; reactive bindings belong to components or Svelte adapters.
 
 Reducers still construct immutable root snapshots. Feature selection may rerun
-when the root is replaced; tests verify that an unchanged selected reference
-does not cause another presenter call.
+when the root is replaced; an unchanged selected reference does not cause
+another presenter call.
+
+The draft [createStore contract and test cases](docs/createStore.spec.md)
+defines the behavior to review before rebuilding the store's test coverage.
 
 Build common first, then run `npm run build --workspace @gost-kit/svelte` from the
 repository root. Packaging follows the official
