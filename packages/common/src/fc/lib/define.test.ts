@@ -1,6 +1,5 @@
 import { describe, expect, expectTypeOf, test } from 'vitest';
-import type { Nlx } from '../../types/nlx';
-import type { Ulx } from '../../types/ulx';
+import type { Nlx, Ulx } from '../../types';
 import { define } from './define';
 
 test('define.reducer infers feature handlers and checks their returned state', () => {
