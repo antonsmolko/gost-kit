@@ -16,11 +16,12 @@ export const userReducer = define.reducer<UserState, UserAction, RootEffect, Roo
     },
     effects: {
       type: 'ApiEffect',
+      method: 'post',
       url: '/user',
       body: { email: state.email },
       defaultError: { code: 'USER_LOAD_FAILED', message: 'Could not load user', path: [] },
-      receiverSuccess: (response) => ({ scope: 'users', type: 'SuccessReceiveAction', response }),
-      receiverError: (errors) => ({ scope: 'users', type: 'ErrorReceiveAction', errors }),
+      onSuccess: (response) => ({ scope: 'users', type: 'SuccessReceiveAction', response }),
+      onError: (errors) => ({ scope: 'users', type: 'ErrorReceiveAction', errors }),
     },
   }),
   SuccessReceiveAction: ({ state, action }) => ({

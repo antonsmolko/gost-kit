@@ -52,9 +52,9 @@ component: dispatch({ scope: 'users', type: 'SetEmailAction', email })
 component: await dispatch({ scope: 'users', type: 'LoadAction' })
 → reducer returns loading state + ApiEffect
 → shell commits state and starts the effect
-→ injected fake API resolves/rejects
-→ receiver creates SuccessReceiveAction / ErrorReceiveAction with scope: 'users'
-→ await dispatch(receiver action)
+→ shared API client executes the injected synthetic fetch and normalizes the result
+→ onSuccess/onError creates SuccessReceiveAction / ErrorReceiveAction with scope: 'users'
+→ await dispatch(callback action)
 → on failure: DispatchActionEffect sends global ShowAlertAction
 → the original dispatch completes after the nested actions/effects complete
 ```
@@ -70,8 +70,9 @@ component: await dispatch({ scope: 'users', type: 'LoadAction' })
   full state and an array of effect descriptions.
 - `@gost-kit/svelte`: `createStore` stores reactive state with `$state.raw` and
   connects it to framework-independent dispatch from `@gost-kit/common`.
-- `src/store/fc/effector.ts`: request execution and forwarding actions. API dependencies
-  are injected; reducers never execute a request.
+- `src/api/paths.ts`: the synthetic OpenAPI contract; it contains no production schema.
+- `src/store/fc/effector.ts`: composes the shared API handler and forwarding actions.
+  API dependencies are injected; reducers never execute a request.
 - `src/store/fc/state.ts`: composes user initial state with application-level state.
 - `@gost-kit/common`: handler definitions, table composition, dispatch execution,
   shared types and guards, built from `../../packages/common`. Dispatch commits
@@ -83,7 +84,7 @@ component: await dispatch({ scope: 'users', type: 'LoadAction' })
 Feature action declarations contain only local type names and payloads.
 `src/store/types/action.ts` passes the central scope map directly to `ScopedActions`:
 `RootAction = ScopedActions<{ users: UserAction; root: ShowAlertAction }>`. The helper
-builds the root union and adds scopes automatically. UI calls and API receivers
+builds the root union and adds scopes automatically. UI calls and API callbacks
 supply `scope: 'users'`; application-level `ShowAlertAction` omits scope by default.
 `reducing` first selects the table by `action.scope ?? 'root'`, then selects
 the handler by `action.type`. Different namespaces can use the same action type
@@ -96,9 +97,9 @@ provides the entire current root state, including other features, auth and globa
 configuration when present. Both state inputs are deeply readonly at compile time.
 The handler returns complete `UserState`, not `RootState`. Its inferred result is
 checked for extra state keys without a return annotation.
-`define.effector<RootAction, ApiEffect>`
-defines an effect table with handlers receiving `{ effect, dispatch }`.
-Each definition must cover its declared action/effect union.
+`createApiHandler<Paths, RootAction>(api)` supplies the common API effect table.
+`define.effector<RootAction, DispatchActionEffect>` defines the remaining table;
+handlers receive `{ effect, dispatch }`. Each table covers its declared effect union.
 
 The root assembles feature and application tables:
 
@@ -109,7 +110,7 @@ const reducer: Reducer<RootState, RootAction, RootEffect> = reducing({
 });
 
 const effector: Effector<RootAction, RootEffect> = effecting(
-  apiEffector(api),
+  createApiHandler<Paths, RootAction>(api),
   shellEffector,
 );
 ```
@@ -204,7 +205,7 @@ dispatches or a browser paint. Completion means processing finished, not that
 the business operation succeeded; feature state carries the API outcome.
 
 Effects from one commit start in parallel. A dependent step can be described by
-an action produced by the first effect's receiver. There is no separate scheduler.
+an action produced by the first effect's callback. There is no separate scheduler.
 `Promise.allSettled` waits for every started effect, even after another effect
 fails. Once all effects settle, failures are sent to `onError` in effect order.
 Synchronous effect throws are captured too, and do not prevent sibling effects
@@ -224,22 +225,29 @@ dispatch reports its own failures and resolves, so the parent does not report th
 same failure again. The Svelte adapter includes the callback in
 `createDispatch(config)`.
 
-`ApiEffect.receiverSuccess`, `receiverError` and `defaultError` are required.
-`AppError` contains `code: string`, `message: string` and `path: readonly string[]`;
-an empty path describes a request-level error. In this synthetic API example,
-request throws/rejections send `[effect.defaultError]` to `receiverError`, whose
-action lets the feature leave `loading` and display its configured error message.
-The feature reducer remains responsible for its status transitions. The raw
-exception is not shown to the user. The fake API returns only a trusted `User`
-or rejects; server validation/result envelopes are outside this example.
-Receiver exceptions go to the store's `onError` instead of being converted
-into request errors or retried. Reducer failures in receiver-generated actions
-are reported by that nested dispatch. Expected API failures stay in the domain
-receiver flow; `onError` handles unexpected execution failures. There is no
-recursive receiver retry pipeline.
+`ApiEffect<Paths, RootAction>` comes from `@gost-kit/common`. It describes a
+lowercase `method`, a schema path in `url`, typed `params`/`body`, `defaultError`
+and optional `onSuccess`/`onError` action factories. This example always supplies
+both callbacks so the feature leaves loading. The handler awaits the returned
+action's dispatch; it never interprets HTTP itself.
 
-The API dependency returns trusted typed data. This example defines only `/user`
-and does not implement HTTP, response validation or True Myth integration.
+`createApiClient<Paths>` uses openapi-fetch with an injected synthetic fetch. It
+returns `{ type: 'ok', data }` or `{ type: 'error', error }`, where failure.kind is
+http/network/contract/aborted. `mapErrors` can centrally decode a backend's errors
+into `AppError[]`; without it, the array is empty. The handler sends nonempty
+errors to the effect's `onError`, or `[defaultError]` when none are available.
+`AppError` has code/message/path; its request-level path is empty. Raw transport
+exceptions are not retained in failures or displayed to the user.
+
+Missing success callbacks skip dispatch. Missing error callbacks reject the
+failure to store-level reporting. Client/mapper/callback/dispatch exceptions
+propagate without being reclassified as request errors or retried. Reducer
+failures in callback-generated actions are reported by their own dispatch.
+Distinguish the effect's domain `onError` from the store's execution-error callback.
+
+The client parses successful JSON once and handles 204/HEAD as undefined. It
+does not validate the runtime shape against OpenAPI. This example defines only
+POST `/user`, with no real network, DTO validation or True Myth integration.
 State is immutable by convention and TypeScript readonly fields; it is not frozen
 at runtime. Components send actions instead of mutating state directly. Previous
 loaded data is retained during loading/error. Global alerts remain in state.

@@ -43,9 +43,10 @@ test('loading only describes a request and its success/error receivers', () => {
   const effect = commit.effects[0];
   expect(effect.type).toBe('ApiEffect');
   if (effect.type !== 'ApiEffect') throw new Error('Expected API description');
+  expect(effect.method).toBe('post');
   expect(effect.body).toEqual({ email: '' });
-  expect(effect.receiverSuccess(user)).toEqual({ scope: 'users', type: 'SuccessReceiveAction', response: user });
-  expect(effect.receiverError([{ code: 'OFFLINE', message: 'Offline', path: [] }])).toEqual({
+  expect(effect.onSuccess!(user)).toEqual({ scope: 'users', type: 'SuccessReceiveAction', response: user });
+  expect(effect.onError!([{ code: 'OFFLINE', message: 'Offline', path: [] }], { kind: 'network', errors: [] })).toEqual({
     scope: 'users', type: 'ErrorReceiveAction', errors: [{ code: 'OFFLINE', message: 'Offline', path: [] }],
   });
 });
