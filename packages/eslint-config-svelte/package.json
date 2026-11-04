@@ -1,0 +1,59 @@
+{
+  "name": "@gost-kit/eslint-config-svelte",
+  "version": "0.0.0",
+  "description": "Shared Svelte 5 ESLint configuration with the GOST JavaScript and TypeScript baseline.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": "^26.0.0"
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "RULES.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "npm run clean && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "prepack": "npm run build",
+    "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antonsmolko/gost-kit.git",
+    "directory": "packages/eslint-config-svelte"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "typescript": "5.9.3",
+    "tsc-alias": "1.9.9",
+    "vitest": "5.0.5",
+    "eslint": "10.14.0",
+    "prettier": "3.9.10",
+    "@gost-kit/prettier-config": "0.0.0",
+    "svelte": "5.57.2",
+    "prettier-plugin-svelte": "4.1.1"
+  },
+  "dependencies": {
+    "@gost-kit/eslint-config": "0.0.0",
+    "eslint-plugin-svelte": "3.24.0",
+    "svelte-eslint-parser": "1.10.1",
+    "typescript-eslint": "8.72.1"
+  },
+  "peerDependencies": {
+    "eslint": "^10.14.0",
+    "typescript": "^5.9.3",
+    "svelte": "^5.57.2"
+  }
+}
