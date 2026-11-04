@@ -1,8 +1,8 @@
 # @gost-kit/eslint-config
 
 Shared framework-independent JavaScript and TypeScript flat configuration.
-Unreleased: source version 0.0.0 prepares an independently versioned 0.1.0 release.
-Use prepared local tarballs until a release is approved and published.
+Independently versioned; consult package.json and CHANGELOG.md for the version.
+Install alongside the required peer dependencies.
 
 Requires Node ^26.0.0, ESLint ^10.14.0 and TypeScript ^5.9.3. The tested baseline
 uses ESLint 10.14.0 and TypeScript 5.9.3. No framework parser/plugin or runtime

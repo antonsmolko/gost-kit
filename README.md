@@ -22,10 +22,10 @@ framework-independent baseline:
 - [@gost-kit/prettier-config](packages/prettier-config/README.md): shared formatting
   settings without framework plugins.
 
-Their source versions are 0.0.0 with changesets preparing first 0.1.0 releases;
-no publication is implied. Runtime versions remain 0.1.0. Shared tooling does
-not automatically install project configs, format existing code or require
-runtime packages. Project adoption is separate from these reusable packages.
+Tooling and runtime packages have independent versions; see their package
+manifests and changelogs for the current release. Shared tooling does not
+automatically install project configs, format existing code or require runtime
+packages. Project adoption is separate from these reusable packages.
 
 ## Development
 
@@ -123,8 +123,11 @@ To prepare a release, run:
 npm run version:packages
 ```
 
-This consumes pending changesets, updates package versions and changelogs,
-and synchronizes the root and example lockfiles. Review and commit the result
+This first builds the workspace Prettier config used to format release files,
+then consumes pending changesets and updates package versions and changelogs,
+and synchronizes the root and example lockfiles. Private root/example tooling
+dependencies use local file references so independent version changes keep
+resolving to the workspaces. Review and commit the result
 before publishing. Package versions remain independent: a common patch within
 svelte's dependency range does not require a svelte release. When common leaves
 that range, Changesets updates the dependency and includes a svelte patch release.
