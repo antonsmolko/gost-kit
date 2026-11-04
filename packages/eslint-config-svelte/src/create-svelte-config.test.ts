@@ -394,3 +394,25 @@ test('reports a local raw snapshot and autofixes a typed component idempotently'
   expect(second.output).toBeUndefined();
   expect(second.messages).toEqual([]);
 });
+
+test('a TS module script does not enable the typed rule in a JS instance script', async () => {
+  const source =
+    '<script lang="ts" module>export const label: string = "ok";</script><script>let model = $state.raw({ user: { name: "Ada" } }); const view = $derived(String(model.user));</script><p>{view}</p>';
+  const result = await lint(source, 'MixedJs.svelte');
+
+  expect(
+    result.messages.filter((message) => {
+      return message.ruleId === 'gost/require-feature-state-selector';
+    }),
+  ).toEqual([]);
+});
+
+test('a JS module script does not disable the typed rule in a TS instance script', async () => {
+  const source =
+    '<script module>export const label = "ok";</script><script lang="ts">let model = $state.raw({ user: { name: "Ada" } }); const view = $derived(String(model.user));</script><p>{view}</p>';
+  const result = await lint(source, 'MixedTs.svelte');
+
+  expect(result.messages).toContainEqual(
+    expect.objectContaining({ ruleId: 'gost/require-feature-state-selector' }),
+  );
+});

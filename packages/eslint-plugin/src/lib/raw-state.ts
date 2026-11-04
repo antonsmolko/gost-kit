@@ -18,7 +18,11 @@ export const createRawStateCheck = (source: TSESLint.SourceCode) => {
 
     return (
       variable?.defs.some((definition) => {
-        if (definition.type !== 'Variable') {
+        if (
+          definition.type !== 'Variable' ||
+          definition.node.id.type !== AST_NODE_TYPES.Identifier ||
+          definition.node.id.name !== node.name
+        ) {
           return false;
         }
 

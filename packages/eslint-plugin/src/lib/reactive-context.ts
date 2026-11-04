@@ -42,7 +42,11 @@ export const reactiveContext = (
   source: TSESLint.SourceCode,
 ) => {
   let current = node;
-  let call: TSESTree.CallExpression | undefined;
+  let call:
+    | TSESTree.CallExpression
+    | TSESTree.NewExpression
+    | TSESTree.TaggedTemplateExpression
+    | undefined;
 
   while (current.parent) {
     const parent = current.parent;
@@ -51,8 +55,25 @@ export const reactiveContext = (
       if (isDerived(parent, source)) {
         return call ? { derived: parent, call } : undefined;
       }
+    }
 
+    if (
+      parent.type === AST_NODE_TYPES.CallExpression ||
+      parent.type === AST_NODE_TYPES.NewExpression ||
+      parent.type === AST_NODE_TYPES.TaggedTemplateExpression
+    ) {
       call ??= parent;
+    }
+
+    // Instance fields execute only when an instance is created. Static fields
+    // and computed keys execute while the class expression itself is evaluated.
+    if (
+      (parent.type === AST_NODE_TYPES.PropertyDefinition ||
+        parent.type === AST_NODE_TYPES.AccessorProperty) &&
+      !parent.static &&
+      parent.value === current
+    ) {
+      return undefined;
     }
 
     if (
@@ -68,6 +89,7 @@ export const reactiveContext = (
         memberKey(owner.callee) === 'by' &&
         owner.arguments[0] === parent &&
         !parent.async &&
+        !parent.generator &&
         isDerived(owner, source)
       ) {
         return call ? { derived: owner, call } : undefined;

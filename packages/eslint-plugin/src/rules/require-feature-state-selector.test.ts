@@ -63,6 +63,11 @@ const fixture = (source: string) => {
   return { filename, code };
 };
 const valid = [
+  'const view = $derived.by(function* () { yield userPresenter(root.state.user); });',
+  'const view = $derived(class { value = userPresenter(root.state.user); });',
+  'const { user } = $state.raw({ user: { name: "Ada" } }); const view = $derived(consume(user.name));',
+  'const [user] = $state.raw([{ name: "Ada" }]); const view = $derived(consume(user.name));',
+
   'const user = $derived(root.state.user); const view = $derived(userPresenter(user));',
   'const user = $derived(root.state.user); const config = $derived(root.state.config); const view = $derived(pagePresenter(user, config));',
   'const user = $derived.by(() => root.state.user);',
@@ -127,6 +132,38 @@ const autofixCases = [
   ],
 ];
 const noFixCases = [
+  [
+    'constructor',
+    'declare const Badge: new (user: User) => object; const view = $derived(new Badge(root.state.user));',
+    1,
+  ],
+  [
+    'tagged template',
+    'declare const tag: (strings: TemplateStringsArray, user: User) => object; const view = $derived(tag`${root.state.user}`);',
+    1,
+  ],
+  [
+    'static field',
+    'const view = $derived(class { static value = userPresenter(root.state.user); });',
+    1,
+  ],
+  ...[
+    '$state',
+    '$derived',
+    '$effect',
+    '$props',
+    '$bindable',
+    '$inspect',
+    '$host',
+    '$other',
+  ].map((name) => {
+    return [
+      `dollar field ${name}`,
+      `let model = $state.raw({ ${name}: { name: "Ada" } }); const view = $derived(userPresenter(model.${name}));`,
+      1,
+    ];
+  }),
+
   [
     'raw by',
     'let model = $state.raw({ user: { name: "Ada" } }); const view = $derived.by(() => userPresenter(model.user));',

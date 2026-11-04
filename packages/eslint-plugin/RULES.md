@@ -17,7 +17,9 @@ const view = $derived(userPresenter(user));
 `root` is not a special name. The rule recognizes the declaration provenance of
 `Store.state` from the public `@gost-kit/common` API, including aliases,
 reexports, inferred `createStore` returns, nullable Store and supported mapped
-or intersection types preserving that provenance. It does not identify Store
+or intersection types preserving that provenance. Declaration ownership is checked
+against the actual common package, including nested installations where the
+consumer cannot directly resolve common. It does not identify Store
 solely by its name or structural assignability. Mixed unions and any/unknown
 are not assumed to be Store.
 
@@ -37,13 +39,15 @@ TypeScript types alone cannot prove Svelte reactivity: both state runes return
 
 ### Diagnostic scope
 
-Direct reads used in call arguments or receivers inside reactive expressions
-are reported, including multiple branches, method chains, static bracket keys,
+Direct reads used in call arguments or receivers, constructor arguments and
+tagged template substitutions inside reactive expressions are reported, including multiple branches, method chains, static bracket keys,
 optional calls/access, and passing an entire `Store.state` snapshot.
 Selectors without a computation call remain valid, including `$derived.by`
 selectors. Event handlers and other nonreactive reads are outside the rule.
 Callbacks passed as values are not assumed to run synchronously; the explicit
-`$derived.by` callback is inspected. Helpers, arbitrary returned reactive values,
+`$derived.by` callback is inspected when it is neither async nor a generator.
+Instance field initializers are deferred; static fields and computed keys are
+evaluated with the class expression and remain in scope. Helpers, arbitrary returned reactive values,
 aliased snapshots, dynamic state keys and dependencies hidden across modules
 are not traced. No claim of complete interprocedural analysis or presenter
 purity is made.
@@ -55,8 +59,10 @@ component instance script, with a single direct function call and one immediate
 feature-field argument. A selector is inserted immediately before the declaration.
 The final field supplies the name; occupied names use `V2`, `V3`, etc. Imports,
 later declarations and references visible from outer scopes are considered.
-Repeated fixing does not add selectors.
+Repeated fixing does not add selectors. Field names beginning with `$` receive
+no fix: Svelte reserves dollar-prefixed bindings, including suffixed names.
 
+Constructors and tagged templates have diagnostics only.
 Complex `$derived.by`, nested declarations, multiple inputs/declarators,
 receivers, optional/dynamic access, deeper property/getter paths, conditional
 arguments, spreads and exported declarations retain diagnostics without fixes.

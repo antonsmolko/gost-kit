@@ -1,9 +1,61 @@
+import type { AST } from 'svelte-eslint-parser';
 import {
   AST_NODE_TYPES,
   type TSESLint,
   type TSESTree,
 } from '@typescript-eslint/utils';
 import { memberKey } from './member-key';
+
+const reserved = new Set([
+  'arguments',
+  'eval',
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'implements',
+  'import',
+  'in',
+  'instanceof',
+  'interface',
+  'let',
+  'new',
+  'null',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'return',
+  'static',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'typeof',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
+]);
 
 // A deliberately small syntax boundary: a standalone derived with one direct call.
 export const selectorFix = (
@@ -55,7 +107,7 @@ export const selectorFix = (
 
   const base = memberKey(selected);
 
-  if (!base || !/^[$A-Z_a-z][$\w]*$/u.test(base)) {
+  if (!base || base.startsWith('$') || !/^[A-Z_a-z][$\w]*$/u.test(base)) {
     return undefined;
   }
 
@@ -74,56 +126,6 @@ export const selectorFix = (
     scope = scope.upper;
   }
 
-  const reserved = new Set([
-    'arguments',
-    'eval',
-    'await',
-    'break',
-    'case',
-    'catch',
-    'class',
-    'const',
-    'continue',
-    'debugger',
-    'default',
-    'delete',
-    'do',
-    'else',
-    'enum',
-    'export',
-    'extends',
-    'false',
-    'finally',
-    'for',
-    'function',
-    'if',
-    'implements',
-    'import',
-    'in',
-    'instanceof',
-    'interface',
-    'let',
-    'new',
-    'null',
-    'package',
-    'private',
-    'protected',
-    'public',
-    'return',
-    'static',
-    'super',
-    'switch',
-    'this',
-    'throw',
-    'true',
-    'try',
-    'typeof',
-    'var',
-    'void',
-    'while',
-    'with',
-    'yield',
-  ]);
   let name = base;
   let version = 2;
 
@@ -132,10 +134,12 @@ export const selectorFix = (
     version += 1;
   }
 
-  // A selector is inserted only at a statement boundary in the same scope.
+  // Svelte adds script elements to ESTree; its parser supplies this parent.
+  const parent = declaration.parent as TSESTree.Node | AST.SvelteScriptElement;
+
   if (
-    declaration.parent.type !== AST_NODE_TYPES.Program &&
-    String(declaration.parent.type) !== 'SvelteScriptElement'
+    parent.type !== AST_NODE_TYPES.Program &&
+    parent.type !== 'SvelteScriptElement'
   ) {
     return undefined;
   }

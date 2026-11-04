@@ -181,15 +181,16 @@ root/example locks, package READMEs, описание правила и minor ch
 Runtime Store и public API приложения не менялись. Ограниченный fix реализован
 для top-level single-argument declarations; в сложных случаях остаётся диагностика.
 
-- RuleTester: 42 сценария valid/invalid, точные outputs, Store provenance,
+- Plugin: 59 тестов, включая 58 valid/invalid RuleTester-сценариев и проверку
+  isolated layout. Точные outputs, Store provenance,
   aliases/reexports/inferred return, nullable/mixed union, mapped/intersection,
   raw binding, глубокий proxy и plain snapshot, callback boundaries, V2/V3.
-- Svelte config: 37 тестов, включая настоящие component/rune diagnostics,
+- Svelte config: 39 тестов, включая настоящие component/rune diagnostics,
   raw-state fix и повторный запуск без новых изменений.
-- Общий check: 327 тестов с tooling/example, проверки типов и стиля.
+- Общий check: 346 тестов с tooling/example, проверки типов и стиля.
   Example production build и два browser scenarios прошли.
 - Tarballs всех шести пакетов проверены на отсутствие src/tests/helpers.
-  Plugin: 18 файлов; Svelte config: 11. Пакеты установлены во внешний consumer.
+  Plugin: 20 файлов; Svelte config: 11. Пакеты установлены во внешний consumer.
 - Во внешнем consumer raw rule/fix и Prettier работают до установки
   `@gost-kit/common`/`@gost-kit/svelte`: tooling не навязывает их production deps.
 - После установки runtime tarballs проверены Store diagnostic, точный autofix,
@@ -202,3 +203,29 @@ Runtime Store и public API приложения не менялись. Огра
 их скрипты не входят в distribution. RED-проверки подтвердили отсутствие
 диагностик до реализации правила, raw-поддержки и подключения config.
 Merge и публикация в рамках этой задачи не выполняются; результат поставляется PR.
+
+## Уточнения после ревью PR #24
+
+Store определяется по декларации свойства и экспортированному Store из
+фактического пакета `@gost-kit/common`; резолв common из файла потребителя
+больше не требуется. Регрессия использует реальные declarations common/svelte
+во вложенной installation layout без hoisting и без прямого импорта common.
+
+Автофикс не создаёт bindings с префиксом `$`: Svelte запрещает и имя руны,
+и имена вроде `$stateV2`. Для таких полей остаётся диагностика. Набор обычных
+зарезервированных слов вынесен на уровень модуля; Svelte AST parent проверяется
+через тип parser без `String(...)`.
+
+Генераторы и instance field initializers исключены из синхронного derived-контекста.
+Static fields и computed keys остаются в нём. Деструктуризация `$state.raw`
+захватывает snapshot и не создаёт реактивный binding; распознаём только прямой
+identifier declarator. `new` и tagged templates добавлены как синхронные
+вычисления с диагностикой без автофикса. В смешанных компонентах гейт применяется
+к диапазону конкретного TS script; соседний JS script остаётся вне typed rule.
+
+После исправлений полный check подтвердил 346 тестов, production build примера
+и два browser scenarios прошли. Новые tarballs plugin/config проверены на
+exclusions и установлены во внешний consumer: raw fix без GOST runtime,
+JS/TS script gating, dollar-field nofix, nested common без прямого resolve,
+компиляция результата fix, idempotence, constructor/tag diagnostics и NodeNext
+проверка деклараций. Повторное независимое ревью исправлений без material findings.

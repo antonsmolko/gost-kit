@@ -21,6 +21,8 @@ export const requireFeatureStateSelector = ESLintUtils.RuleCreator.withoutDocs({
   create(context) {
     const parserServices = context.sourceCode.parserServices;
 
+    let typedScripts: AST.SvelteScriptElement[] | undefined;
+
     if (
       parserServices &&
       'isSvelte' in parserServices &&
@@ -28,10 +30,13 @@ export const requireFeatureStateSelector = ESLintUtils.RuleCreator.withoutDocs({
     ) {
       // Svelte extends ESTree with script elements that TSESTree does not model.
       const program = context.sourceCode.ast as unknown as AST.SvelteProgram;
-      const typedScript = program.body.some((node) => {
-        return (
-          node.type === 'SvelteScriptElement' &&
-          node.startTag.attributes.some((attribute) => {
+
+      typedScripts = program.body
+        .filter((node): node is AST.SvelteScriptElement => {
+          return node.type === 'SvelteScriptElement';
+        })
+        .filter((node) => {
+          return node.startTag.attributes.some((attribute) => {
             return (
               attribute.type === 'SvelteAttribute' &&
               attribute.key.name === 'lang' &&
@@ -39,21 +44,32 @@ export const requireFeatureStateSelector = ESLintUtils.RuleCreator.withoutDocs({
                 return value.type === 'SvelteLiteral' && value.value === 'ts';
               })
             );
-          })
-        );
-      });
+          });
+        });
 
-      if (!typedScript) {
+      if (typedScripts.length === 0) {
         return {};
       }
     }
 
     const services = ESLintUtils.getParserServices(context);
-    const isStore = createStoreStateCheck(services, context.filename);
+    const isStore = createStoreStateCheck(services);
     const isRawState = createRawStateCheck(context.sourceCode);
 
     return {
       MemberExpression(node) {
+        if (
+          typedScripts &&
+          !typedScripts.some((script) => {
+            return (
+              node.range[0] >= script.range[0] &&
+              node.range[1] <= script.range[1]
+            );
+          })
+        ) {
+          return;
+        }
+
         const storeState = memberKey(node) === 'state' && isStore(node.object);
 
         if (!storeState && !isRawState(node.object)) {
@@ -77,12 +93,15 @@ export const requireFeatureStateSelector = ESLintUtils.RuleCreator.withoutDocs({
         context.report({
           node: location,
           messageId: 'selectFeature',
-          fix: selectorFix(
-            storeState ? node : node.object,
-            reactive.derived,
-            reactive.call,
-            context.sourceCode,
-          ),
+          fix:
+            reactive.call.type === AST_NODE_TYPES.CallExpression
+              ? selectorFix(
+                  storeState ? node : node.object,
+                  reactive.derived,
+                  reactive.call,
+                  context.sourceCode,
+                )
+              : undefined,
         });
       },
     };

@@ -25,10 +25,13 @@ export default [
 
 The plugin does not install application runtime packages. Store detection uses
 `@gost-kit/common` types already present in the consumer's TypeScript program.
+Nested common installations are supported; a direct common dependency of the
+application is not required for inferred Store detection.
 Local `$state.raw` bindings are recognized from their original lexical scope.
 Type information is required; an enabled typed rule without parser services
 reports a configuration error. Stateless and JavaScript-script components are
-skipped. The Svelte config does not enable this typed rule for `.svelte.js`.
+skipped. Mixed components are checked per script: a typed module script does
+not enable the rule for a JavaScript instance script. The Svelte config does not enable this typed rule for `.svelte.js`.
 
 See [RULES.md](RULES.md) for diagnostics, autofix boundaries and examples.
 Tests and test helpers are excluded from published artifacts.

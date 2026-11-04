@@ -70,7 +70,8 @@ select the branch with `$derived` before passing it to a reactive computation.
 Simple cases support conservative autofix with V2/V3 name collision suffixes.
 See the installed plugin's RULES.md or the [source inventory](../eslint-plugin/RULES.md)
 for exact supported forms and limitations. JS-script/stateless components are skipped;
-the typed architecture rule is not enabled for `.svelte.js`.
+mixed components check only the scripts marked `lang="ts"`.
+The typed architecture rule is not enabled for `.svelte.js`.
 
 Component state ownership (#16), UI dispatch (#17), boolean conditions (#18),
 and derived calculations (#19) remain separate work. Existing `$state.raw`

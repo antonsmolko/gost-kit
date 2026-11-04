@@ -3,38 +3,51 @@ import type {
   ParserServicesWithTypeInformation,
   TSESTree,
 } from '@typescript-eslint/utils';
+import { createCommonSourceCheck } from './common-source';
 
 export const createStoreStateCheck = (
   services: ParserServicesWithTypeInformation,
-  filename: string,
 ) => {
   const program = services.program;
   const checker = program.getTypeChecker();
-  const resolved = ts.resolveModuleName(
-    '@gost-kit/common',
-    filename,
-    program.getCompilerOptions(),
-    ts.sys,
-  ).resolvedModule;
-  const source = resolved && program.getSourceFile(resolved.resolvedFileName);
-  const module = source && checker.getSymbolAtLocation(source);
-  const exported =
-    module &&
-    checker.getExportsOfModule(module).find((symbol) => {
-      return symbol.name === 'Store';
-    });
-  const store =
-    exported &&
-    (exported.flags & ts.SymbolFlags.Alias
-      ? checker.getAliasedSymbol(exported)
-      : exported);
-  const declarations = new Set(
-    store &&
-      checker
-        .getDeclaredTypeOfSymbol(store)
-        .getProperty('state')
-        ?.getDeclarations(),
-  );
+  const isCommonSource = createCommonSourceCheck();
+  const declarations = new Map<ts.Declaration, boolean>();
+  const isStoreDeclaration = (declaration: ts.Declaration): boolean => {
+    const cached = declarations.get(declaration);
+
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const source = declaration.getSourceFile();
+    let matches = false;
+
+    if (isCommonSource(source)) {
+      const module = checker.getSymbolAtLocation(source);
+      const exported =
+        module &&
+        checker.getExportsOfModule(module).find((symbol) => {
+          return symbol.name === 'Store';
+        });
+      const store =
+        exported &&
+        (exported.flags & ts.SymbolFlags.Alias
+          ? checker.getAliasedSymbol(exported)
+          : exported);
+
+      matches = store
+        ? (checker
+            .getDeclaredTypeOfSymbol(store)
+            .getProperty('state')
+            ?.getDeclarations()
+            ?.includes(declaration) ?? false)
+        : false;
+    }
+
+    declarations.set(declaration, matches);
+
+    return matches;
+  };
 
   const isStore = (type: ts.Type): boolean => {
     if (
@@ -57,7 +70,7 @@ export const createStoreStateCheck = (
         .getProperty('state')
         ?.getDeclarations()
         ?.some((declaration) => {
-          return declarations.has(declaration);
+          return isStoreDeclaration(declaration);
         }) ?? false
     );
   };
