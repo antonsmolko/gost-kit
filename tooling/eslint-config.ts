@@ -1,18 +1,21 @@
-import { ESLint } from 'eslint';
+import { ESLint, type Linter } from 'eslint';
 import { createConfig } from '@gost-kit/eslint-config';
 import svelte from 'eslint-plugin-svelte';
 import ts from 'typescript-eslint';
 import globals from 'globals';
 import { join } from 'node:path';
 
-export const createProjectConfig = async (root, typeScriptFile) => {
+export const createProjectConfig = async (
+  root: string,
+  typeScriptFile: string,
+): Promise<Linter.Config[]> => {
   const shared = createConfig({ tsconfigRootDir: root });
   const eslint = new ESLint({
     cwd: root,
     overrideConfigFile: true,
     overrideConfig: shared,
   });
-  const policy = await eslint.calculateConfigForFile(
+  const policy: Linter.Config = await eslint.calculateConfigForFile(
     join(root, typeScriptFile),
   );
 
@@ -32,7 +35,7 @@ export const createProjectConfig = async (root, typeScriptFile) => {
     {
       files: ['**/*.svelte'],
       plugins: Object.fromEntries(
-        Object.entries(policy.plugins).filter(([name]) => {
+        Object.entries(policy.plugins ?? {}).filter(([name]) => {
           return name !== '@';
         }),
       ),

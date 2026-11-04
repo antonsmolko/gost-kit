@@ -80,3 +80,14 @@ GHSA-gcqx-w48m-w2h4; новых advisory по сравнению с #12 нет.
 
 #5 остаётся открытой для подключения будущего правила #6. Публикация
 и интеграция API-клиента из отдельного PR #11 не входят в эту работу.
+
+## Уточнение: TypeScript-конфиги ESLint
+
+По запросу владельца root/example eslint.config и tooling helper переведены
+с .mjs на .ts. Jiti 2.7.0 — явная devDependency обоих проектов; ESLint
+использует штатный TS config loader без unstable flags. Node 26 сам поддерживает
+стирание типов, но default loader ESLint10 для TS config требует jiti.
+Root tsconfig.json включает eslint.config.ts и tooling/**/*.ts; check:tooling
+входит в общий check. Example config проверяется существующим tsconfig.
+Типы Linter.Config[] и параметры helper проверяются tsc; jiti не проверяет типы.
+Prettier configs остаются .mjs, их перенос не входил в запрос.

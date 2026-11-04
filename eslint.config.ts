@@ -1,4 +1,5 @@
-import { createProjectConfig } from './tooling/eslint-config.mjs';
+import type { Linter } from 'eslint';
+import { createProjectConfig } from './tooling/eslint-config';
 
 export default [
   {
@@ -15,4 +16,4 @@ export default [
     import.meta.dirname,
     'packages/common/src/index.ts',
   )),
-];
+] satisfies Linter.Config[];

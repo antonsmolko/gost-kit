@@ -4,7 +4,11 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ESLint } from 'eslint';
-import { createProjectConfig } from './eslint-config.mjs';
+import { createJiti } from 'jiti';
+
+const { createProjectConfig } = await createJiti(import.meta.url).import(
+  './eslint-config',
+);
 
 let root;
 let eslint;

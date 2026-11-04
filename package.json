@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspace @gost-kit/common && npm run build --workspace @gost-kit/svelte && npm run build --workspace @gost-kit/prettier-config && npm run build --workspace @gost-kit/eslint-config",
-    "check": "npm run build && npm run test:tooling && npm run lint && npm run format:check && npm run check --workspaces && npm test && npm --prefix examples/functional-core run check:code",
+    "check": "npm run build && npm run check:tooling && npm run test:tooling && npm run lint && npm run format:check && npm run check --workspaces && npm test && npm --prefix examples/functional-core run check:code",
     "test": "npm run test --workspaces",
     "changeset": "changeset",
     "version:packages": "changeset version && npm install --package-lock-only --ignore-scripts && npm --prefix examples/functional-core install --package-lock-only --ignore-scripts",
@@ -20,7 +20,8 @@
     "format": "prettier . --write && npm --prefix examples/functional-core run format",
     "format:check": "prettier . --check && npm --prefix examples/functional-core run format:check",
     "fix": "npm run lint:fix && npm run format",
-    "test:tooling": "node --test tooling/*.test.mjs"
+    "test:tooling": "node --test tooling/*.test.mjs",
+    "check:tooling": "tsc -p tsconfig.json"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",
@@ -32,6 +33,9 @@
     "prettier": "3.9.10",
     "prettier-plugin-svelte": "4.1.1",
     "svelte": "5.57.2",
-    "typescript-eslint": "8.72.1"
+    "typescript-eslint": "8.72.1",
+    "jiti": "2.7.0",
+    "typescript": "5.9.3",
+    "@types/node": "26.6.5"
   }
 }

@@ -280,7 +280,7 @@ npm run fix
 changes. `check` includes lint/format checks, type checking and tests; the root
 `check` performs the same coverage without repeating the style checks.
 The project consumes both shared configuration packages and adds Svelte parsing
-and formatting locally. The repository's [adapter](../../tooling/eslint-config.mjs)
+and formatting locally. The repository's [adapter](../../tooling/eslint-config.ts)
 keeps component scripts on the shared TypeScript policy. Dependencies/config
 exports must be prepared in the repository first; the example is not a standalone
 copy of the published packages.

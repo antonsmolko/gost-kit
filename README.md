@@ -78,10 +78,12 @@ all diagnostics; remaining errors require manual changes before the combined
 command can continue. The example provides the same style/fix commands locally.
 
 The shared packages own the agreed E/T/A and P policies. The local
-[ESLint adapter](tooling/eslint-config.mjs) adds Svelte parsing and scoped globals,
+[ESLint adapter](tooling/eslint-config.ts) adds Svelte parsing and scoped globals,
 using the shared resolved TypeScript rules for component scripts. It adds no
 Svelte recommended rule policy. Prettier adds `prettier-plugin-svelte` locally.
-Tests retain error severity. Narrow inline exceptions explain intentional negative
+ESLint configs and the project helper are TypeScript. ESLint loads them through
+`jiti`; `npm run check:tooling` checks the root config/helper with `tsc`, and
+the example tsconfig covers its own config. Tests retain error severity. Narrow inline exceptions explain intentional negative
 type fixtures; generated files, lockfiles, reports and local private materials
 are excluded. ESLint and Prettier run as separate tools in CI.
 

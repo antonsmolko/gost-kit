@@ -1,4 +1,5 @@
-import { createProjectConfig } from '../../tooling/eslint-config.mjs';
+import type { Linter } from 'eslint';
+import { createProjectConfig } from '../../tooling/eslint-config';
 import globals from 'globals';
 
 export default [
@@ -7,4 +8,4 @@ export default [
     files: ['src/**/*.ts', 'src/**/*.svelte'],
     languageOptions: { globals: globals.browser },
   },
-];
+] satisfies Linter.Config[];
