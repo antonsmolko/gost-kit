@@ -279,9 +279,9 @@ npm run fix
 `fix` runs ESLint autofixes followed by Prettier. Some lint errors need manual
 changes. `check` includes lint/format checks, type checking and tests; the root
 `check` performs the same coverage without repeating the style checks.
-The project consumes both shared configuration packages and adds Svelte parsing
-and formatting locally. The repository's [adapter](../../tooling/eslint-config.ts)
-keeps component scripts on the shared TypeScript policy. Dependencies/config
+The project consumes the Svelte ESLint configuration and the shared Prettier
+configuration; the Prettier Svelte plugin is connected locally. The repository's [adapter](../../tooling/eslint-config.ts) adds project globals;
+the published Svelte config owns component parsing and shared policies. Dependencies/config
 exports must be prepared in the repository first; the example is not a standalone
 copy of the published packages.
 

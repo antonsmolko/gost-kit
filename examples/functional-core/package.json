@@ -36,9 +36,8 @@
     "eslint": "10.14.0",
     "prettier": "3.9.10",
     "globals": "17.4.0",
-    "eslint-plugin-svelte": "3.24.0",
     "prettier-plugin-svelte": "4.1.1",
-    "typescript-eslint": "8.72.1",
+    "@gost-kit/eslint-config-svelte": "file:../../packages/eslint-config-svelte",
     "jiti": "2.7.0"
   }
 }

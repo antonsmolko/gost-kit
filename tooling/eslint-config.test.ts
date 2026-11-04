@@ -26,7 +26,7 @@ before(async () => {
   eslint = new ESLint({
     cwd: root,
     overrideConfigFile: true,
-    overrideConfig: await createProjectConfig(root, 'policy.ts'),
+    overrideConfig: await createProjectConfig(root),
   });
 });
 
@@ -110,7 +110,7 @@ void test('Svelte runes and component expressions parse with the shared policy',
   );
   assert.deepEqual(
     await lint(
-      'Valid.svelte',
+      'ValidView.svelte',
       '<script lang="ts">const count = $state(1);</script><p>{count}</p>',
     ),
     [],
