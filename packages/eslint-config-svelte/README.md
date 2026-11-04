@@ -2,8 +2,8 @@
 
 Shared Svelte 5 ESLint configuration, including the complete
 `@gost-kit/eslint-config` JavaScript/TypeScript baseline. Independently versioned;
-source version 0.0.0 prepares its first 0.1.0 release. Use prepared local tarballs
-until publication is approved.
+consult package.json and CHANGELOG.md for the version. Install alongside
+the required peer dependencies.
 
 Requires Node ^26.0.0, ESLint ^10.14.0, TypeScript ^5.9.3 and Svelte ^5.57.2.
 The pinned tested combination uses ESLint 10.14.0, TypeScript 5.9.3, Svelte

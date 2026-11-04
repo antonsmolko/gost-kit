@@ -1,8 +1,8 @@
 # @gost-kit/prettier-config
 
-Shared framework-independent Prettier settings. Unreleased: source version 0.0.0
-prepares an independently versioned 0.1.0 release. Use prepared local tarballs
-until publication is approved.
+Shared framework-independent Prettier settings, independently versioned.
+Consult package.json and CHANGELOG.md for the version. Install this package
+alongside the required Prettier peer dependency.
 
 Requires Node ^26.0.0 and Prettier ^3.9.10; tested with Prettier 3.9.10.
 No language/framework plugin is included.
