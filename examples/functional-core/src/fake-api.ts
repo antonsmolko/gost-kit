@@ -1,23 +1,13 @@
-import { createApiClient, guard } from '@gost-kit/common';
-import type { Paths } from './api/paths';
+import { createSyntheticApi } from './api/create-synthetic-api';
 
-export const fakeApi = createApiClient<Paths>({
-  baseUrl: 'https://synthetic.invalid',
-  fetch: async (request) => {
-    await new Promise<void>((resolve) => {
-      return setTimeout(resolve, 400);
-    });
+export const fakeApi = createSyntheticApi(async ({ email }) => {
+  await new Promise<void>((resolve) => {
+    return setTimeout(resolve, 400);
+  });
 
-    const body: unknown = await request.json();
+  if (email === 'error@example.test') {
+    throw new Error('Synthetic API failure');
+  }
 
-    if (!guard.record(body) || !guard.string(body.email)) {
-      throw new Error('Invalid synthetic request');
-    }
-
-    if (body.email === 'error@example.test') {
-      throw new Error('Synthetic API failure');
-    }
-
-    return Response.json({ id: '1', name: 'Ada Lovelace', email: body.email });
-  },
+  return { id: '1', name: 'Ada Lovelace', email };
 });

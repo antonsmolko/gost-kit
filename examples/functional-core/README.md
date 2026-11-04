@@ -70,6 +70,8 @@ component: await dispatch({ scope: 'users', type: 'LoadAction' })
 - `@gost-kit/svelte`: `createStore` stores reactive state with `$state.raw` and
   connects it to framework-independent dispatch from `@gost-kit/common`.
 - `src/api/paths.ts`: the synthetic OpenAPI contract; it contains no production schema.
+- `src/api/create-synthetic-api.ts`: shared synthetic transport and request validation,
+  used by the demo and tests. `fake-api.ts` supplies the delayed success/failure operation.
 - `src/store/fc/effector.ts`: composes the shared API handler and forwarding actions.
   API dependencies are injected; reducers never execute a request.
 - `src/store/fc/state.ts`: composes user initial state with application-level state.
