@@ -1,7 +1,7 @@
 {
   "name": "@gost-kit/common",
   "version": "0.1.0",
-  "description": "Shared TypeScript types and runtime guards.",
+  "description": "Shared TypeScript types, guards, functional core and typed API client.",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -41,5 +41,9 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "openapi-fetch": "0.17.0",
+    "openapi-typescript-helpers": "0.1.0"
   }
 }

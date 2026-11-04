@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 import {
+  guard,
   reducing,
   scope,
   type ActionsInScope,
@@ -71,14 +72,23 @@ test('loading only describes a request and its success/error receivers', () => {
   if (effect.type !== 'ApiEffect') {
     throw new Error('Expected API description');
   }
+  expect(effect.method).toBe('post');
   expect(effect.body).toEqual({ email: '' });
-  expect(effect.receiverSuccess(user)).toEqual({
+
+  if (guard.ulx(effect.onSuccess) || guard.ulx(effect.onError)) {
+    throw new Error('Expected request result callbacks');
+  }
+
+  expect(effect.onSuccess(user)).toEqual({
     scope: 'users',
     type: 'SuccessReceiveAction',
     response: user,
   });
   expect(
-    effect.receiverError([{ code: 'OFFLINE', message: 'Offline', path: [] }]),
+    effect.onError([{ code: 'OFFLINE', message: 'Offline', path: [] }], {
+      kind: 'network',
+      errors: [],
+    }),
   ).toEqual({
     scope: 'users',
     type: 'ErrorReceiveAction',

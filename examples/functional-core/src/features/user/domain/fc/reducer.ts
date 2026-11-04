@@ -24,6 +24,7 @@ export const userReducer = define.reducer<
       },
       effects: {
         type: 'ApiEffect',
+        method: 'post',
         url: '/user',
         body: { email: state.email },
         defaultError: {
@@ -31,10 +32,10 @@ export const userReducer = define.reducer<
           message: 'Could not load user',
           path: [],
         },
-        receiverSuccess: (response) => {
+        onSuccess: (response) => {
           return { scope: 'users', type: 'SuccessReceiveAction', response };
         },
-        receiverError: (errors) => {
+        onError: (errors) => {
           return { scope: 'users', type: 'ErrorReceiveAction', errors };
         },
       },

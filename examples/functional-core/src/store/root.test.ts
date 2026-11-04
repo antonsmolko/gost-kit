@@ -1,13 +1,16 @@
 import { expect, test } from 'vitest';
 import { createRootStore } from './root';
+import { createTestApi } from '../api/create-test-api.test-helper';
 import type { User } from '../features/user/domain/entities/user';
 
 const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };
 
 test('dispatch applies an input action synchronously and returns a promise', async () => {
-  const root = createRootStore(async () => {
-    return user;
-  });
+  const root = createRootStore(
+    createTestApi(async () => {
+      return user;
+    }),
+  );
   const completed = root.dispatch({
     scope: 'users',
     type: 'SetEmailAction',
@@ -20,9 +23,11 @@ test('dispatch applies an input action synchronously and returns a promise', asy
 
 test('await dispatch waits for API and the success receiver action', async () => {
   const request = Promise.withResolvers<User>();
-  const root = createRootStore(() => {
-    return request.promise;
-  });
+  const root = createRootStore(
+    createTestApi(() => {
+      return request.promise;
+    }),
+  );
   let completed = false;
   const pending = root
     .dispatch({ scope: 'users', type: 'LoadAction' })
@@ -40,9 +45,11 @@ test('await dispatch waits for API and the success receiver action', async () =>
 });
 
 test('request rejection reaches a global alert through nested dispatch', async () => {
-  const root = createRootStore(() => {
-    return Promise.reject(new Error('Offline'));
-  });
+  const root = createRootStore(
+    createTestApi(() => {
+      return Promise.reject(new Error('Offline'));
+    }),
+  );
 
   await root.dispatch({ scope: 'users', type: 'LoadAction' });
   expect(root.state.user.status).toBe('error');
@@ -57,13 +64,15 @@ test('request rejection reaches a global alert through nested dispatch', async (
 
 test('retry clears the feature error and can succeed', async () => {
   let failed = true;
-  const root = createRootStore(async () => {
-    if (failed) {
-      throw new Error('Offline');
-    }
+  const root = createRootStore(
+    createTestApi(async () => {
+      if (failed) {
+        throw new Error('Offline');
+      }
 
-    return user;
-  });
+      return user;
+    }),
+  );
 
   await root.dispatch({ scope: 'users', type: 'LoadAction' });
   failed = false;
@@ -73,12 +82,16 @@ test('retry clears the feature error and can succeed', async () => {
 });
 
 test('root instances do not share state', async () => {
-  const first = createRootStore(async () => {
-    return user;
-  });
-  const second = createRootStore(async () => {
-    return user;
-  });
+  const first = createRootStore(
+    createTestApi(async () => {
+      return user;
+    }),
+  );
+  const second = createRootStore(
+    createTestApi(async () => {
+      return user;
+    }),
+  );
 
   await first.dispatch({
     scope: 'users',

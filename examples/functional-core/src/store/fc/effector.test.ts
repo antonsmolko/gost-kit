@@ -1,12 +1,14 @@
 import { expect, test } from 'vitest';
 import { createEffector } from './effector';
-import type { ApiClient, ApiEffect } from '../types/effect';
+import { createTestApi } from '../../api/create-test-api.test-helper';
+import type { ApiEffect } from '../types/effect';
 import type { RootAction } from '../types/action';
 import type { User } from '../../features/user/domain/entities/user';
 
 const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };
 const effect: ApiEffect = {
   type: 'ApiEffect',
+  method: 'post',
   url: '/user',
   body: { email: user.email },
   defaultError: {
@@ -14,26 +16,28 @@ const effect: ApiEffect = {
     message: 'Could not load user',
     path: [],
   },
-  receiverSuccess: (response) => {
+  onSuccess: (response) => {
     return { scope: 'users', type: 'SuccessReceiveAction', response };
   },
-  receiverError: (errors) => {
+  onError: (errors) => {
     return { scope: 'users', type: 'ErrorReceiveAction', errors };
   },
 };
 
 test('request failure dispatches the configured default error', async () => {
   const actions: RootAction[] = [];
-  const requests: Parameters<ApiClient>[0][] = [];
-  const effector = createEffector(async (request) => {
-    requests.push(request);
-    throw new Error('Offline');
-  });
+  const requests: { email: string }[] = [];
+  const effector = createEffector(
+    createTestApi(async (request) => {
+      requests.push(request);
+      throw new Error('Offline');
+    }),
+  );
 
   await effector(effect, async (action) => {
     actions.push(action);
   });
-  expect(requests).toEqual([{ url: '/user', body: { email: user.email } }]);
+  expect(requests).toEqual([{ email: user.email }]);
   expect(actions).toEqual([
     {
       scope: 'users',
@@ -45,14 +49,16 @@ test('request failure dispatches the configured default error', async () => {
 
 test('unknown request failures are normalized for the error receiver', async () => {
   const actions: RootAction[] = [];
-  const effector = createEffector(() => {
-    return Promise.reject(null);
-  });
+  const effector = createEffector(
+    createTestApi(() => {
+      return Promise.reject(null);
+    }),
+  );
 
   await effector(
     {
       ...effect,
-      receiverError: (errors) => {
+      onError: (errors) => {
         return { scope: 'users', type: 'ErrorReceiveAction', errors };
       },
     },
@@ -74,15 +80,17 @@ test('success receiver exceptions reject without calling the error receiver', as
   const failure = new Error('Broken receiver');
 
   await expect(
-    createEffector(async () => {
-      return user;
-    })(
+    createEffector(
+      createTestApi(async () => {
+        return user;
+      }),
+    )(
       {
         ...effect,
-        receiverSuccess: () => {
+        onSuccess: () => {
           throw failure;
         },
-        receiverError: () => {
+        onError: () => {
           errorCalls += 1;
 
           return { scope: 'users', type: 'LoadAction' };
@@ -99,12 +107,14 @@ test('dispatch failures reject without being reclassified as API failures', asyn
   const failure = new Error('Broken reducer');
 
   await expect(
-    createEffector(async () => {
-      return user;
-    })(
+    createEffector(
+      createTestApi(async () => {
+        return user;
+      }),
+    )(
       {
         ...effect,
-        receiverError: () => {
+        onError: () => {
           errorCalls += 1;
 
           return { scope: 'users', type: 'LoadAction' };
@@ -122,12 +132,14 @@ test('error receiver exceptions propagate without retry', async () => {
   const failure = new Error('Broken error receiver');
 
   await expect(
-    createEffector(async () => {
-      throw new Error('Offline');
-    })(
+    createEffector(
+      createTestApi(async () => {
+        throw new Error('Offline');
+      }),
+    )(
       {
         ...effect,
-        receiverError: () => {
+        onError: () => {
           throw failure;
         },
       },
@@ -140,9 +152,11 @@ test('DispatchActionEffect waits for the forwarded action', async () => {
   const completion = Promise.withResolvers<void>();
   const actions: RootAction[] = [];
   let completed = false;
-  const pending = createEffector(async () => {
-    return user;
-  })(
+  const pending = createEffector(
+    createTestApi(async () => {
+      return user;
+    }),
+  )(
     {
       type: 'DispatchActionEffect',
       action: { scope: 'users', type: 'LoadAction' },

@@ -202,3 +202,100 @@ paths for Node.js, including imports in declarations.
 Public types have individual source files and are exported from the package
 root. The package distributes JavaScript and declarations in `dist`, excluding
 tests.
+
+## API client and effects
+
+`createApiClient` is framework-independent and uses openapi-fetch 0.17.0. Supply
+an OpenAPI `paths` type and explicit configuration; no Svelte, browser origin,
+storage or application schema is imported. The upstream API and serialization
+baseline is documented at https://openapi-ts.dev/openapi-fetch/api.
+
+```ts
+import {
+  createApiClient,
+  createApiHandler,
+  effecting,
+  type ApiEffect,
+} from '@gost-kit/common';
+import type { paths } from './schema';
+
+type Action = { type: 'LoadedAction'; name: string } | { type: 'FailedAction' };
+const api = createApiClient<paths>({ baseUrl: 'https://api.example.test' });
+// The path/method/options and result below depend on your actual schema.
+const result = await api.request('get', '/users/{id}', {
+  params: { path: { id: 1 } },
+});
+
+type Effect = ApiEffect<paths, Action>;
+const handlers = createApiHandler<paths, Action>(api);
+const effector = effecting<Action, Effect, readonly [typeof handlers]>(
+  handlers,
+);
+```
+
+Methods are lowercase (`get`, `post`, `put`, `patch`, `delete`, `head`, `options`,
+`trace`). The client keeps upstream method/path/init generics: `request(method, url, options)`.
+The schema determines available methods/paths, required path/query params, request
+bodies and successful response types. The third argument is optional only when
+the operation has no required options. `body` and `params` are
+separate: one request can use both. There is no arbitrary response-type generic.
+The initial contract supports JSON parsing; `parseAs: 'text'` and other modes
+are outside it. Upstream serializers, headers, credentials and fetch injection
+remain configurable, without application-specific defaults.
+
+The result is `ApiResult<TData>`:
+
+- `{ type: 'ok', data }`: JSON data, preserving JSON null; 204 and HEAD return
+  undefined. Other successful empty or non-JSON responses are contract failures.
+  JSON and application/*+json content types are accepted. OpenAPI types do not
+  validate actual response shapes; a later extension can add runtime validators.
+- `{ type: 'error', error }`: `ApiFailure` with kind http/network/contract/aborted,
+  optional status and `errors: AppError[]`. HTTP errors take precedence over
+  successful-response validation. Failed JSON parsing is contract; rejected
+  AbortError/TimeoutError or a rejected request with an aborted signal is aborted.
+  Other transport rejections are network. Failures do not retain raw bodies,
+  requests, responses or original exceptions. Status can be absent when upstream
+  parsing rejects before returning the response. Cancellation is not retried or
+  silently ignored; feature callbacks decide what state/action should follow.
+
+Set `mapErrors(body, response)` once when creating the client to convert your
+backend's HTTP errors into `AppError[]`. The default is an empty array because
+no backend error envelope is assumed. Its input is the already parsed error
+payload (possibly text or undefined); validate external data before using it.
+Mapper exceptions propagate, rather than becoming network failures. Existing
+`Result<T>` and `AppError` contracts are unchanged.
+
+The pure `ApiEffect<paths, Action>` remains an object: it contains `method`, `url`
+and request options, plus `type: 'ApiEffect'`, required `defaultError` and optional
+action factories. The handler adapts that description to the client call:
+
+```ts
+const effect: Effect = {
+  type: 'ApiEffect',
+  method: 'get',
+  url: '/users/{id}',
+  params: { path: { id: 1 } },
+  defaultError: {
+    code: 'LOAD_FAILED',
+    message: 'Could not load user',
+    path: [],
+  },
+  onSuccess: (data) => ({ type: 'LoadedAction', name: data.name }),
+  onError: () => ({ type: 'FailedAction' }),
+};
+```
+
+`onSuccess` receives the endpoint's schema-derived data. `onError` receives
+`(errors, failure)`, using the client's nonempty errors or `[defaultError]`.
+Both return an action, and the handler awaits dispatch of that action. A missing
+onSuccess skips dispatch; a missing onError rejects the failure to the existing
+store error reporter. Callback and dispatch exceptions propagate without being
+converted to request failures. Effect metadata/callbacks never reach the client.
+
+Request execution, response interpretation and error normalization live in
+separate internal helpers; endpoints and the effect handler do not duplicate
+HTTP handling. API-client rejections represent unexpected implementation or
+mapper errors; expected transport failures use `ApiResult`. Auth/refresh,
+automatic retries, CSRF/Origin policy, state management and runtime response
+validation are separate application concerns or future extensions.
+See the [synthetic example](../../examples/functional-core/README.md).

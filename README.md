@@ -7,7 +7,7 @@ Engineering principles and specifications live in
 ## Status
 
 `@gost-kit/common` contains shared types, guards and framework-independent functional
-core execution. `@gost-kit/svelte` provides its reactive Svelte 5 store binding.
+core execution, a typed API client and ApiEffect handler. `@gost-kit/svelte` provides its reactive Svelte 5 store binding.
 
 ## Shared tooling configurations
 

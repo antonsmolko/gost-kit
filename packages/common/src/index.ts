@@ -45,3 +45,4 @@ export type {
   Vdx,
 } from './types';
 export * from './fc';
+export * from './api';
