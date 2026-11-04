@@ -2,7 +2,10 @@ import type { AppError, AsyncFn } from '@gost-kit/common';
 import type { User } from '../../features/user/domain/entities/user';
 import type { RootAction } from './action';
 
-export type DispatchActionEffect = { type: 'DispatchActionEffect'; action: RootAction };
+export type DispatchActionEffect = {
+  type: 'DispatchActionEffect';
+  action: RootAction;
+};
 
 export type ApiEffect = {
   type: 'ApiEffect';
@@ -15,4 +18,7 @@ export type ApiEffect = {
 
 export type RootEffect = ApiEffect | DispatchActionEffect;
 
-export type ApiClient = AsyncFn<[request: Pick<ApiEffect, 'url' | 'body'>], User>;
+export type ApiClient = AsyncFn<
+  [request: Pick<ApiEffect, 'url' | 'body'>],
+  User
+>;

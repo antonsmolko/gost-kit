@@ -10,20 +10,34 @@ type Effect = { type: 'RecordEffect'; value: number } | { type: 'OtherEffect' };
 test('effecting composes effect tables and forwards dispatch and async completion', async () => {
   const completion = Promise.withResolvers<void>();
   const actions: Action[] = [];
-  const first = define.effector<Action, Extract<Effect, { type: 'RecordEffect' }>>({
+  const first = define.effector<
+    Action,
+    Extract<Effect, { type: 'RecordEffect' }>
+  >({
     RecordEffect: async ({ effect, dispatch }) => {
       await dispatch({ type: 'SetAction', count: effect.value });
       await completion.promise;
     },
   });
-  const second = define.effector<Action, Extract<Effect, { type: 'OtherEffect' }>>({
-    OtherEffect: async ({ dispatch }) => { await dispatch({ type: 'IdleAction' }); },
+  const second = define.effector<
+    Action,
+    Extract<Effect, { type: 'OtherEffect' }>
+  >({
+    OtherEffect: async ({ dispatch }) => {
+      await dispatch({ type: 'IdleAction' });
+    },
   });
   const effector: Effector<Action, Effect> = effecting(first, second);
   let completed = false;
-  const dispatch = async (action: Action) => { actions.push(action); };
-  const pending = effector({ type: 'RecordEffect', value: 7 }, dispatch)
-    .then(() => { completed = true; });
+  const dispatch = async (action: Action) => {
+    actions.push(action);
+  };
+  const pending = effector({ type: 'RecordEffect', value: 7 }, dispatch).then(
+    () => {
+      completed = true;
+    },
+  );
+
   await Promise.resolve();
   expect(actions).toEqual([{ type: 'SetAction', count: 7 }]);
   expect(completed).toBe(false);
@@ -34,7 +48,10 @@ test('effecting composes effect tables and forwards dispatch and async completio
 });
 
 test('requires coverage of every declared effect', () => {
-  const handlers = define.effector<Action, Extract<Effect, { type: 'OtherEffect' }>>({
+  const handlers = define.effector<
+    Action,
+    Extract<Effect, { type: 'OtherEffect' }>
+  >({
     OtherEffect: async () => {},
   });
   // @ts-expect-error RecordEffect has no handler.
@@ -44,43 +61,77 @@ test('requires coverage of every declared effect', () => {
   const optional: Partial<EffectorHandlers<Action, Effect>> = {};
   // @ts-expect-error Optional handlers cannot guarantee effect coverage.
   const uncertain: Effector<Action, Effect> = effecting(optional);
-  const possiblyUndefined: { OtherEffect: typeof handlers.OtherEffect | undefined } = { OtherEffect: undefined };
-  // @ts-expect-error A possibly undefined handler cannot guarantee effect coverage.
-  const undefinedEffector: Effector<Action, Extract<Effect, { type: 'OtherEffect' }>> = effecting(possiblyUndefined);
-  const chooseTable = (first: boolean) => first ? handlers : { RecordEffect: async () => {} };
+  const possiblyUndefined: {
+    OtherEffect: typeof handlers.OtherEffect | undefined;
+  } = { OtherEffect: undefined };
+  const undefinedEffector: Effector<
+    Action,
+    Extract<Effect, { type: 'OtherEffect' }>
+    // @ts-expect-error A possibly undefined handler cannot guarantee effect coverage.
+  > = effecting(possiblyUndefined);
+  const chooseTable = (first: boolean) => {
+    return first ? handlers : { RecordEffect: async () => {} };
+  };
   // @ts-expect-error Each alternative is missing one declared effect.
   const alternatives: Effector<Action, Effect> = effecting(chooseTable(true));
-  const chooseTables = (first: boolean) => first
-    ? [handlers, { RecordEffect: async () => {} }] as const
-    : [handlers] as const;
-  // @ts-expect-error One tuple alternative is missing RecordEffect.
-  const alternativeTables: Effector<Action, Effect> = effecting(...chooseTables(true));
-  // @ts-expect-error Explicit tuple types must not bypass coverage of each alternative.
-  const explicitAlternatives = effecting<Action, Effect, ReturnType<typeof chooseTables>>(...chooseTables(true));
+  const chooseTables = (first: boolean) => {
+    return first
+      ? ([handlers, { RecordEffect: async () => {} }] as const)
+      : ([handlers] as const);
+  };
+  const alternativeTables: Effector<Action, Effect> = effecting(
+    // @ts-expect-error One tuple alternative is missing RecordEffect.
+    ...chooseTables(true),
+  );
+  const explicitAlternatives = effecting<
+    Action,
+    Effect,
+    ReturnType<typeof chooseTables>
+    // @ts-expect-error Explicit tuple types must not bypass coverage of each alternative.
+  >(...chooseTables(true));
   const dynamic = [handlers];
   // @ts-expect-error A dynamic array cannot prove handler ownership or coverage.
   const dynamicEffector: Effector<Action, Effect> = effecting(...dynamic);
-  // @ts-expect-error OtherEffect has two owners.
-  const duplicate: Effector<Action, Extract<Effect, { type: 'OtherEffect' }>> = effecting(handlers, handlers);
+  const duplicate: Effector<
+    Action,
+    Extract<Effect, { type: 'OtherEffect' }>
+    // @ts-expect-error OtherEffect has two owners.
+  > = effecting(handlers, handlers);
   const noEffects: Effector<Action, never> = effecting();
+
   expectTypeOf(missing).toEqualTypeOf<Effector<Action, Effect>>();
   expectTypeOf(empty).toEqualTypeOf<Effector<Action, Effect>>();
   expectTypeOf(uncertain).toEqualTypeOf<Effector<Action, Effect>>();
-  expectTypeOf(undefinedEffector).toEqualTypeOf<Effector<Action, Extract<Effect, { type: 'OtherEffect' }>>>();
+  expectTypeOf(undefinedEffector).toEqualTypeOf<
+    Effector<Action, Extract<Effect, { type: 'OtherEffect' }>>
+  >();
   expectTypeOf(alternatives).toEqualTypeOf<Effector<Action, Effect>>();
   expectTypeOf(alternativeTables).toEqualTypeOf<Effector<Action, Effect>>();
   expectTypeOf(explicitAlternatives).toEqualTypeOf<Effector<Action, Effect>>();
   expectTypeOf(dynamicEffector).toEqualTypeOf<Effector<Action, Effect>>();
-  expectTypeOf(duplicate).toEqualTypeOf<Effector<Action, Extract<Effect, { type: 'OtherEffect' }>>>();
+  expectTypeOf(duplicate).toEqualTypeOf<
+    Effector<Action, Extract<Effect, { type: 'OtherEffect' }>>
+  >();
   expectTypeOf(noEffects).toEqualTypeOf<Effector<Action, never>>();
 });
 
 test('retains inline effect inference across complete tables', async () => {
   const actions: Action[] = [];
   const effector: Effector<Action, Effect> = effecting(
-    { RecordEffect: async ({ effect, dispatch }) => { await dispatch({ type: 'SetAction', count: effect.value }); } },
-    { OtherEffect: async ({ dispatch }) => { await dispatch({ type: 'IdleAction' }); } },
+    {
+      RecordEffect: async ({ effect, dispatch }) => {
+        await dispatch({ type: 'SetAction', count: effect.value });
+      },
+    },
+    {
+      OtherEffect: async ({ dispatch }) => {
+        await dispatch({ type: 'IdleAction' });
+      },
+    },
   );
-  await effector({ type: 'RecordEffect', value: 3 }, async (action) => { actions.push(action); });
+
+  await effector({ type: 'RecordEffect', value: 3 }, async (action) => {
+    actions.push(action);
+  });
   expect(actions).toEqual([{ type: 'SetAction', count: 3 }]);
 });

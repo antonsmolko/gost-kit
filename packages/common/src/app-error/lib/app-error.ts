@@ -6,5 +6,5 @@ export const appError = (data: Partial<AppError> = {}): AppError => {
     message: '',
     path: [],
     ...data,
-  }
-}
+  };
+};

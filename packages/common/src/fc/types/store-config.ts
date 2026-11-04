@@ -4,7 +4,11 @@ import type { StoreError } from './store-error';
 import type { Reducer } from './reducer';
 import type { Trigger } from './trigger';
 
-export type StoreConfig<TState, TAction extends Trigger, TEffect extends Trigger> = {
+export type StoreConfig<
+  TState,
+  TAction extends Trigger,
+  TEffect extends Trigger,
+> = {
   initState: TState;
   reducer: Reducer<TState, TAction, TEffect>;
   effector: Effector<TAction, TEffect>;

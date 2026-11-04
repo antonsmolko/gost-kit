@@ -36,14 +36,19 @@ Install and verify the packages from the repository root:
 
 ```sh
 npm ci
-npm run build
+npm --prefix examples/functional-core ci
 npm run check
 ```
 
 Import runtime guards and types through the package's public API:
 
 ```ts
-import { guard, type DeepPartial, type Result, type Ulx } from '@gost-kit/common';
+import {
+  guard,
+  type DeepPartial,
+  type Result,
+  type Ulx,
+} from '@gost-kit/common';
 ```
 
 Shared helpers live in `packages/common/src/types`; functional core types and
@@ -52,6 +57,42 @@ its own file. `createDispatch` owns execution and error reporting, while
 `@gost-kit/svelte`'s `createStore` supplies reactive state through `$state.raw`.
 Both packages expose their public API from the package root and build into
 `dist`. See their READMEs for usage.
+
+## Linting and formatting
+
+The root commands cover all packages, root/tooling configuration and the private
+functional-core example. After installing dependencies, `npm run build` prepares
+the workspace configuration exports; `npm run check` builds them automatically.
+
+| Command                | Purpose                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| `npm run lint`         | Check JS/TS/Svelte, including tests and configuration        |
+| `npm run lint:fix`     | Apply ESLint autofixes                                       |
+| `npm run format`       | Apply Prettier formatting                                    |
+| `npm run format:check` | Check formatting without changing files                      |
+| `npm run fix`          | Run ESLint autofixes, then Prettier                          |
+| `npm run check`        | Build, check lint/format/types and run package/example tests |
+
+Run `npm run fix` during development, then `npm run check`. ESLint cannot fix
+all diagnostics; remaining errors require manual changes before the combined
+command can continue. The example provides the same style/fix commands locally.
+
+The shared packages own the agreed E/T/A and P policies. The local
+[ESLint adapter](tooling/eslint-config.ts) adds Svelte parsing and scoped globals,
+using the shared resolved TypeScript rules for component scripts. It adds no
+Svelte recommended rule policy. Prettier adds `prettier-plugin-svelte` locally.
+ESLint/Prettier configs, the project helper and its tests are TypeScript. ESLint loads them through
+`jiti`; node:test and Prettier load TS natively on Node26.
+`npm run check:tooling` checks root configs/helper/tests with `tsc`, and
+the example tsconfig covers its own config. Tests retain error severity. Narrow inline exceptions explain intentional negative
+type fixtures; generated files, lockfiles, reports and local private materials
+are excluded. ESLint and Prettier run as separate tools in CI.
+
+Automated checks cover braces, spacing, imports, promises and the selected rules
+in [the full inventory](packages/eslint-config/RULES.md). Domain semantics,
+immutability, common-helper reuse and architecture still require review.
+The feature-state selection rule is tracked separately in
+[#6](https://github.com/antonsmolko/gost-kit/issues/6) and is not enabled yet.
 
 ## Examples
 

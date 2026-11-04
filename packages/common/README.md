@@ -11,7 +11,13 @@ recursive JSON primitives, arrays and string-keyed objects, including `null`
 and excluding `undefined`.
 
 ```ts
-import { createDispatch, guard, reducing, type Nlx, type Reducer } from '@gost-kit/common';
+import {
+  createDispatch,
+  guard,
+  reducing,
+  type Nlx,
+  type Reducer,
+} from '@gost-kit/common';
 
 type Action = { type: 'IncrementAction' };
 const reducer: Reducer<number, Action, never> = reducing({
@@ -174,8 +180,12 @@ const dispatch = createDispatch<number, Action, never>({
   reducer,
   effector: async () => {},
   readState: () => state,
-  writeState: (next) => { state = next; },
-  onError: (failure) => { console.error(failure); },
+  writeState: (next) => {
+    state = next;
+  },
+  onError: (failure) => {
+    console.error(failure);
+  },
 });
 await dispatch({ type: 'IncrementAction' });
 ```

@@ -19,9 +19,14 @@
 <form onsubmit={handleSubmit}>
   <label for="email">Email</label>
   <input
-    id="email" type="email" required value={viewState.email}
+    id="email"
+    type="email"
+    required
+    value={viewState.email}
     disabled={viewState.isLoading}
-    oninput={(event) => handleInput(event.currentTarget.value)}
+    oninput={(event) => {
+      return handleInput(event.currentTarget.value);
+    }}
     aria-describedby="email-hint"
   />
   <p id="email-hint">Use error@example.test to simulate a failed request.</p>
@@ -38,8 +43,25 @@
 {/if}
 
 <style>
-  label { display: block; margin-bottom: 6px; font-weight: 600; }
-  input { box-sizing: border-box; width: 100%; padding: 10px; font: inherit; border: 1px solid #9aa5b5; border-radius: 4px; }
-  #email-hint { color: #536071; font-size: 14px; }
-  section { border-top: 1px solid #d8dee7; margin-top: 20px; }
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px;
+    font: inherit;
+    border: 1px solid #9aa5b5;
+    border-radius: 4px;
+  }
+  #email-hint {
+    color: #536071;
+    font-size: 14px;
+  }
+  section {
+    border-top: 1px solid #d8dee7;
+    margin-top: 20px;
+  }
 </style>

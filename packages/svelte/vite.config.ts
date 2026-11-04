@@ -3,7 +3,13 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   // Vitest runs in Node; compile runes for the client to exercise reactivity.
-  plugins: [svelte({ dynamicCompileOptions: () => ({ generate: 'client' }) })],
+  plugins: [
+    svelte({
+      dynamicCompileOptions: () => {
+        return { generate: 'client' };
+      },
+    }),
+  ],
   resolve: { conditions: ['browser'] },
   ssr: { resolve: { conditions: ['browser'] } },
   test: {

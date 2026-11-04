@@ -8,10 +8,12 @@ export type UserState = {
   readonly errors: readonly AppError[];
 };
 
-export const userState = define.state<UserState>((options = {}) => ({
-  email: '',
-  status: 'idle',
-  data: null,
-  errors: [],
-  ...options,
-}));
+export const userState = define.state<UserState>((options = {}) => {
+  return {
+    email: '',
+    status: 'idle',
+    data: null,
+    errors: [],
+    ...options,
+  };
+});

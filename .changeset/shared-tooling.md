@@ -1,6 +1,6 @@
 ---
-"@gost-kit/eslint-config": minor
-"@gost-kit/prettier-config": minor
+'@gost-kit/eslint-config': minor
+'@gost-kit/prettier-config': minor
 ---
 
 Introduce independently versioned framework-independent ESLint and Prettier

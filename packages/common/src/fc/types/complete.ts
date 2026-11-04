@@ -2,16 +2,27 @@ import type { AnyFn } from '../../types';
 import type { Trigger } from './trigger';
 
 type RequiredHandlerKeys<THandlerTable> = keyof {
-  [TKey in keyof THandlerTable as THandlerTable[TKey] extends AnyFn ? TKey : never]: unknown;
+  [
+    TKey in keyof THandlerTable as THandlerTable[TKey] extends AnyFn
+      ? TKey
+      : never
+  ]: unknown;
 };
 
 // Every possible tuple must cover the trigger union.
-type MissingHandlerKeys<THandlerTables extends readonly object[], TTrigger extends Trigger> =
-  THandlerTables extends unknown
-    ? Exclude<TTrigger['type'], {
-        [TIndex in keyof THandlerTables]: RequiredHandlerKeys<THandlerTables[TIndex]>;
-      }[number]>
-    : never;
+type MissingHandlerKeys<
+  THandlerTables extends readonly object[],
+  TTrigger extends Trigger,
+> = THandlerTables extends unknown
+  ? Exclude<
+      TTrigger['type'],
+      {
+        [TIndex in keyof THandlerTables]: RequiredHandlerKeys<
+          THandlerTables[TIndex]
+        >;
+      }[number]
+    >
+  : never;
 
 /**
  * Проверяет, что подключённые таблицы покрывают каждый type из TTrigger.
@@ -45,7 +56,9 @@ type MissingHandlerKeys<THandlerTables extends readonly object[], TTrigger exten
  * Поэтому Complete применяется вместе с Unique, ограничивающим динамические
  * массивы/rest-хвосты и запрещающим дубли: Unique<TTables> & Complete<TTables, TTrigger>.
  */
-export type Complete<THandlerTables extends readonly object[], TTrigger extends Trigger> =
-  number extends THandlerTables['length']
-    ? unknown
-    : Record<MissingHandlerKeys<THandlerTables, TTrigger>, never>;
+export type Complete<
+  THandlerTables extends readonly object[],
+  TTrigger extends Trigger,
+> = number extends THandlerTables['length']
+  ? unknown
+  : Record<MissingHandlerKeys<THandlerTables, TTrigger>, never>;

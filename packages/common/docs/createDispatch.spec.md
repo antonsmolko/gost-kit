@@ -16,13 +16,13 @@ State принадлежит вызывающему коду. Dispatch не со
 `createDispatch<TState, TAction, TEffect>(config)` возвращает
 `Dispatch<TAction>`, то есть функцию `(action) => Promise<void>`.
 
-| Поле config | Назначение |
-| --- | --- |
-| `readState` | Синхронно прочитать актуальный TState. |
-| `writeState` | Синхронно записать полный следующий TState. |
-| `reducer` | Получить `(state, action)` и вернуть `Commit<TState, TEffect>`. |
-| `effector` | Выполнить `(effect, dispatch)`, вернув Promise. |
-| `onError` | Необязательный синхронный callback для StoreError. |
+| Поле config  | Назначение                                                      |
+| ------------ | --------------------------------------------------------------- |
+| `readState`  | Синхронно прочитать актуальный TState.                          |
+| `writeState` | Синхронно записать полный следующий TState.                     |
+| `reducer`    | Получить `(state, action)` и вернуть `Commit<TState, TEffect>`. |
+| `effector`   | Выполнить `(effect, dispatch)`, вернув Promise.                 |
+| `onError`    | Необязательный синхронный callback для StoreError.              |
 
 `Commit` содержит обязательные поля `state` и `effects: TEffect[]`.
 Нормализация результата handler в Commit выполняется до этой границы,
@@ -83,12 +83,12 @@ Promise успешно завершается без значения после
 
 ## Ошибки
 
-| Где возникла ошибка | Контекст StoreError | Что происходит дальше |
-| --- | --- | --- |
-| readState | `{ kind: 'readState', action, error }` | Reducer, writeState и эффекты этого action не вызываются. |
-| reducer | `{ kind: 'reducer', action, error }` | WriteState и эффекты этого action не вызываются. |
-| writeState | `{ kind: 'writeState', action, error }` | Эффекты этого action не вызываются. |
-| effector | `{ kind: 'effect', action, effect, error }` | Остальные эффекты продолжаются; ранее выполненная запись state не отменяется. |
+| Где возникла ошибка | Контекст StoreError                         | Что происходит дальше                                                         |
+| ------------------- | ------------------------------------------- | ----------------------------------------------------------------------------- |
+| readState           | `{ kind: 'readState', action, error }`      | Reducer, writeState и эффекты этого action не вызываются.                     |
+| reducer             | `{ kind: 'reducer', action, error }`        | WriteState и эффекты этого action не вызываются.                              |
+| writeState          | `{ kind: 'writeState', action, error }`     | Эффекты этого action не вызываются.                                           |
+| effector            | `{ kind: 'effect', action, effect, error }` | Остальные эффекты продолжаются; ранее выполненная запись state не отменяется. |
 
 В error передаётся исходное выброшенное значение или причина отклонения
 Promise, включая значения, не являющиеся Error. Объекты action и effect
@@ -112,36 +112,36 @@ callback мог выполнить часть своей работы перед
 Значения «есть» и «частично» — сверка сценариев с текущим dispatch.test.ts,
 а не измерение покрытия строк. Существующие тесты пока сохраняются.
 
-| ID | Условия и действие | Ожидаемый результат | Текущее покрытие |
-| --- | --- | --- | --- |
-| CD-01 | Создать dispatch с наблюдаемыми callback, не вызывать action. | Ни один callback не запущен. | Есть: «does not call callbacks when creating dispatch». |
-| CD-02 | Вызвать dispatch с action A; записать первый commit; затем вызвать action B. | Каждый вызов читает актуальный state; reducer получает результат чтения и исходный action; callback чтения и записи вызываются по одному разу на успешный action. | Есть: «each dispatch reads the current state and passes the original action». |
-| CD-03 | Вызвать dispatch; записывать события read/reducer/write/effect и проверить state до await. | События идут в указанном порядке; write уже выполнен до await и до запуска effect. | Есть: «reads state, runs the reducer and writes the commit synchronously before effects». |
-| CD-04 | Reducer возвращает отдельный объект `{ count: 2 }` после state с дополнительным полем. | WriteState получает ровно этот объект по ссылке, без старого поля и без слияния. | Есть: «writes the complete state without merging and skips effects when the list is empty». |
-| CD-05 | Reducer возвращает effects `[]`. | Запись state происходит; effector и onError не вызываются; Promise завершается с undefined. | Есть: тот же тест явно проверяет отсутствие effector/onError и завершение с undefined. |
-| CD-06 | Два эффекта ожидают разные управляемые Promise; завершить второй раньше первого. | Оба запущены до завершения любого; после второго dispatch ещё pending; после первого завершается. | Есть: effects start in parallel. |
-| CD-07 | Effector вызывает и ожидает вложенный dispatch, который также выполняет effect с управляемым завершением. | Вложенный reducer видит актуальный state; внешний dispatch pending до завершения вложенной цепочки. | Есть: nested actions across namespaces. |
-| CD-08 | Передать action с feature scope, без scope и с явным root scope. | Reducer получает исходные объекты; dispatch не вставляет scope и не маршрутизирует action самостоятельно. | Есть: explicit root scope и scoped failure context; подробная маршрутизация уже проверяется в reducing. |
-| CD-09 | ReadState выбрасывает конкретное значение. | Один контекст kind readState с исходным action/error; последующие стадии не вызваны; dispatch завершается успешно. | Есть: readState failure. |
-| CD-10 | Reducer выбрасывает конкретное значение. | Один контекст kind reducer; writeState и эффекты не вызваны; dispatch завершается успешно. | Есть: reducer exception; отсутствие writeState/effector стоит явно закрепить. |
-| CD-11 | WriteState выбрасывает конкретное значение после успешного reducer. | Один контекст kind writeState; effector не вызывается; dispatch завершается успешно. Сохранение прежнего внешнего state не обещается. | Есть: writeState failure. |
-| CD-12 | Один effector выбрасывает синхронно, другой возвращает отклонённый Promise. | Запускаются оба; каждая ошибка сообщается с соответствующим effect; dispatch успешно завершается после группы. | Есть: synchronous throws do not skip siblings. |
-| CD-13 | Один effect отклоняется, второй остаётся pending и затем выполняет вложенный dispatch. | Пока второй pending, внешний dispatch pending и ошибки группы ещё не сообщены; после завершения сохраняется вложенный commit и сообщается первая ошибка. | Есть: waits for another effect after a rejection. |
-| CD-14 | Несколько эффектов завершаются с ошибками в обратном порядке. | Сообщения следуют порядку effects в commit; action, effect и причины сохраняют идентичность. | Частично: сбор всех ошибок и ссылки проверены отдельно, обратный порядок завершения не проверяется. |
-| CD-15 | Вложенный reducer выбрасывает; effector ожидает его dispatch. | Ошибка сообщается один раз с вложенным action; внешний dispatch не создаёт второе сообщение об этой ошибке. | Есть: nested reducer failure reported once. |
-| CD-16 | Выполнить ошибочный action без onError, наблюдая стандартный logging sink. | Общий report получает контекст через стандартный путь; dispatch завершается успешно. Точный формат fallback не дублируется. | Есть: default error handler logs context. |
-| CD-17 | Проверить throw/reject со строкой и undefined вместо Error. | В StoreError остаётся исходная причина; никаких обёрток или подмены значения; dispatch завершается успешно. | Нет. |
-| CD-18 | A записывает state и ждёт свой effect. Запустить B, который записывает другой state и ждёт другой effect. Завершить только эффект A, проверив успешный и ошибочный варианты. | B успевает записать state до завершения A; A завершается независимо от pending B; ошибка его эффекта не откатывает commit B. Затем завершить B для очистки сценария. | Нет отдельной проверки. |
+| ID    | Условия и действие                                                                                                                                                           | Ожидаемый результат                                                                                                                                                  | Текущее покрытие                                                                                        |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| CD-01 | Создать dispatch с наблюдаемыми callback, не вызывать action.                                                                                                                | Ни один callback не запущен.                                                                                                                                         | Есть: «does not call callbacks when creating dispatch».                                                 |
+| CD-02 | Вызвать dispatch с action A; записать первый commit; затем вызвать action B.                                                                                                 | Каждый вызов читает актуальный state; reducer получает результат чтения и исходный action; callback чтения и записи вызываются по одному разу на успешный action.    | Есть: «each dispatch reads the current state and passes the original action».                           |
+| CD-03 | Вызвать dispatch; записывать события read/reducer/write/effect и проверить state до await.                                                                                   | События идут в указанном порядке; write уже выполнен до await и до запуска effect.                                                                                   | Есть: «reads state, runs the reducer and writes the commit synchronously before effects».               |
+| CD-04 | Reducer возвращает отдельный объект `{ count: 2 }` после state с дополнительным полем.                                                                                       | WriteState получает ровно этот объект по ссылке, без старого поля и без слияния.                                                                                     | Есть: «writes the complete state without merging and skips effects when the list is empty».             |
+| CD-05 | Reducer возвращает effects `[]`.                                                                                                                                             | Запись state происходит; effector и onError не вызываются; Promise завершается с undefined.                                                                          | Есть: тот же тест явно проверяет отсутствие effector/onError и завершение с undefined.                  |
+| CD-06 | Два эффекта ожидают разные управляемые Promise; завершить второй раньше первого.                                                                                             | Оба запущены до завершения любого; после второго dispatch ещё pending; после первого завершается.                                                                    | Есть: effects start in parallel.                                                                        |
+| CD-07 | Effector вызывает и ожидает вложенный dispatch, который также выполняет effect с управляемым завершением.                                                                    | Вложенный reducer видит актуальный state; внешний dispatch pending до завершения вложенной цепочки.                                                                  | Есть: nested actions across namespaces.                                                                 |
+| CD-08 | Передать action с feature scope, без scope и с явным root scope.                                                                                                             | Reducer получает исходные объекты; dispatch не вставляет scope и не маршрутизирует action самостоятельно.                                                            | Есть: explicit root scope и scoped failure context; подробная маршрутизация уже проверяется в reducing. |
+| CD-09 | ReadState выбрасывает конкретное значение.                                                                                                                                   | Один контекст kind readState с исходным action/error; последующие стадии не вызваны; dispatch завершается успешно.                                                   | Есть: readState failure.                                                                                |
+| CD-10 | Reducer выбрасывает конкретное значение.                                                                                                                                     | Один контекст kind reducer; writeState и эффекты не вызваны; dispatch завершается успешно.                                                                           | Есть: reducer exception; отсутствие writeState/effector стоит явно закрепить.                           |
+| CD-11 | WriteState выбрасывает конкретное значение после успешного reducer.                                                                                                          | Один контекст kind writeState; effector не вызывается; dispatch завершается успешно. Сохранение прежнего внешнего state не обещается.                                | Есть: writeState failure.                                                                               |
+| CD-12 | Один effector выбрасывает синхронно, другой возвращает отклонённый Promise.                                                                                                  | Запускаются оба; каждая ошибка сообщается с соответствующим effect; dispatch успешно завершается после группы.                                                       | Есть: synchronous throws do not skip siblings.                                                          |
+| CD-13 | Один effect отклоняется, второй остаётся pending и затем выполняет вложенный dispatch.                                                                                       | Пока второй pending, внешний dispatch pending и ошибки группы ещё не сообщены; после завершения сохраняется вложенный commit и сообщается первая ошибка.             | Есть: waits for another effect after a rejection.                                                       |
+| CD-14 | Несколько эффектов завершаются с ошибками в обратном порядке.                                                                                                                | Сообщения следуют порядку effects в commit; action, effect и причины сохраняют идентичность.                                                                         | Частично: сбор всех ошибок и ссылки проверены отдельно, обратный порядок завершения не проверяется.     |
+| CD-15 | Вложенный reducer выбрасывает; effector ожидает его dispatch.                                                                                                                | Ошибка сообщается один раз с вложенным action; внешний dispatch не создаёт второе сообщение об этой ошибке.                                                          | Есть: nested reducer failure reported once.                                                             |
+| CD-16 | Выполнить ошибочный action без onError, наблюдая стандартный logging sink.                                                                                                   | Общий report получает контекст через стандартный путь; dispatch завершается успешно. Точный формат fallback не дублируется.                                          | Есть: default error handler logs context.                                                               |
+| CD-17 | Проверить throw/reject со строкой и undefined вместо Error.                                                                                                                  | В StoreError остаётся исходная причина; никаких обёрток или подмены значения; dispatch завершается успешно.                                                          | Нет.                                                                                                    |
+| CD-18 | A записывает state и ждёт свой effect. Запустить B, который записывает другой state и ждёт другой effect. Завершить только эффект A, проверив успешный и ошибочный варианты. | B успевает записать state до завершения A; A завершается независимо от pending B; ошибка его эффекта не откатывает commit B. Затем завершить B для очистки сценария. | Нет отдельной проверки.                                                                                 |
 
 ## Границы тестирования
 
-| Поведение | Где проверять |
-| --- | --- |
-| Порядок стадий, актуальный state, конкурентные effects, вложенные dispatch, контекст ошибок | dispatch.test.ts в common. |
-| Выбор handler по scope/type, нормализация Draft, полнота таблиц | reducing и его типовые контракты. |
-| Допустимые payload и root scope на уровне TypeScript | Тесты типов Dispatch/DispatchAction. |
-| Вызов onError, стандартное логирование и fallback при исключении callback | report.test.ts; в dispatch остаётся только интеграция с report. |
-| Связь state с Svelte runtime и feature → presenter | [createStore.spec.md](../../svelte/docs/createStore.spec.md); там не повторяются сценарии dispatch. |
+| Поведение                                                                                   | Где проверять                                                                                       |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Порядок стадий, актуальный state, конкурентные effects, вложенные dispatch, контекст ошибок | dispatch.test.ts в common.                                                                          |
+| Выбор handler по scope/type, нормализация Draft, полнота таблиц                             | reducing и его типовые контракты.                                                                   |
+| Допустимые payload и root scope на уровне TypeScript                                        | Тесты типов Dispatch/DispatchAction.                                                                |
+| Вызов onError, стандартное логирование и fallback при исключении callback                   | report.test.ts; в dispatch остаётся только интеграция с report.                                     |
+| Связь state с Svelte runtime и feature → presenter                                          | [createStore.spec.md](../../svelte/docs/createStore.spec.md); там не повторяются сценарии dispatch. |
 
 Текущий тест fallback в dispatch повторяет report.test.ts. При реализации плана
 оставить подробную проверку fallback в report и убрать повторение из dispatch.
