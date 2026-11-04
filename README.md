@@ -9,11 +9,27 @@ Engineering principles and specifications live in
 `@gost-kit/common` contains shared types, guards and framework-independent functional
 core execution. `@gost-kit/svelte` provides its reactive Svelte 5 store binding.
 
+## Shared tooling configurations
+
+Two additional independently versioned development packages provide the shared
+framework-independent baseline:
+
+- [@gost-kit/eslint-config](packages/eslint-config/README.md): JS/TS flat configs,
+  type-aware checks and explicit readability policies; consumers supply globals
+  and their own tsconfig root.
+- [@gost-kit/prettier-config](packages/prettier-config/README.md): shared formatting
+  settings without framework plugins.
+
+Their source versions are 0.0.0 with changesets preparing first 0.1.0 releases;
+no publication is implied. Runtime versions remain 0.1.0. Shared tooling does
+not automatically install project configs, format existing code or require
+runtime packages. Project adoption is separate from these reusable packages.
+
 ## Development
 
 The initial `0.1.0` release supports Node 26 (`^26.0.0`) for package consumers.
 Development, CI and consumer checks use 26.11.1, pinned in `.node-version`.
-Runtime packages live under `packages/`. The repository root is private and
+Runtime and shared tooling packages live under `packages/`. The repository root is private and
 cannot be published.
 
 Install and verify the packages from the repository root:
@@ -47,7 +63,7 @@ and local dependencies on both workspace packages.
 ## Versioning and releases
 
 [Changesets](https://changesets.dev/guide/getting-started) manages independent
-versions and changelogs for `@gost-kit/common` and `@gost-kit/svelte`.
+versions and changelogs for all four packages.
 For a change that needs a package release, run:
 
 ```sh
@@ -93,8 +109,9 @@ git push --follow-tags
 
 Version preparation does not publish. The repository root and example remain private.
 
-The initial release uses `0.1.0` for both packages, with svelte depending
-on common through `^0.1.0`.
+The initial runtime release uses `0.1.0` for common and svelte, with svelte
+depending on common through `^0.1.0`. The tooling packages prepare their own
+initial `0.1.0` versions independently.
 
 ### Automated releases
 
