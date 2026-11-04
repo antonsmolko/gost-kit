@@ -6,17 +6,35 @@ import type { User } from '../features/user/domain/entities/user';
 const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };
 
 test('dispatch applies an input action synchronously and returns a promise', async () => {
-  const root = createRootStore(createTestApi(async () => user));
-  const completed = root.dispatch({ scope: 'users', type: 'SetEmailAction', email: user.email });
+  const root = createRootStore(
+    createTestApi(async () => {
+      return user;
+    }),
+  );
+  const completed = root.dispatch({
+    scope: 'users',
+    type: 'SetEmailAction',
+    email: user.email,
+  });
+
   expect(root.state.user.email).toBe(user.email);
   await completed;
 });
 
 test('await dispatch waits for API and the success receiver action', async () => {
   const request = Promise.withResolvers<User>();
-  const root = createRootStore(createTestApi(() => request.promise));
+  const root = createRootStore(
+    createTestApi(() => {
+      return request.promise;
+    }),
+  );
   let completed = false;
-  const pending = root.dispatch({ scope: 'users', type: 'LoadAction' }).then(() => { completed = true; });
+  const pending = root
+    .dispatch({ scope: 'users', type: 'LoadAction' })
+    .then(() => {
+      completed = true;
+    });
+
   expect(root.state.user.status).toBe('loading');
   await Promise.resolve();
   expect(completed).toBe(false);
@@ -27,19 +45,35 @@ test('await dispatch waits for API and the success receiver action', async () =>
 });
 
 test('request rejection reaches a global alert through nested dispatch', async () => {
-  const root = createRootStore(createTestApi(() => Promise.reject(new Error('Offline'))));
+  const root = createRootStore(
+    createTestApi(() => {
+      return Promise.reject(new Error('Offline'));
+    }),
+  );
+
   await root.dispatch({ scope: 'users', type: 'LoadAction' });
   expect(root.state.user.status).toBe('error');
-  expect(root.state.alert).toEqual({ status: 'error', message: 'Could not load user' });
-  expect(root.state.user.errors).toEqual([{ code: 'USER_LOAD_FAILED', message: 'Could not load user', path: [] }]);
+  expect(root.state.alert).toEqual({
+    status: 'error',
+    message: 'Could not load user',
+  });
+  expect(root.state.user.errors).toEqual([
+    { code: 'USER_LOAD_FAILED', message: 'Could not load user', path: [] },
+  ]);
 });
 
 test('retry clears the feature error and can succeed', async () => {
   let failed = true;
-  const root = createRootStore(createTestApi(async () => {
-    if (failed) throw new Error('Offline');
-    return user;
-  }));
+  const root = createRootStore(
+    createTestApi(async () => {
+      if (failed) {
+        throw new Error('Offline');
+      }
+
+      return user;
+    }),
+  );
+
   await root.dispatch({ scope: 'users', type: 'LoadAction' });
   failed = false;
   await root.dispatch({ scope: 'users', type: 'LoadAction' });
@@ -48,8 +82,21 @@ test('retry clears the feature error and can succeed', async () => {
 });
 
 test('root instances do not share state', async () => {
-  const first = createRootStore(createTestApi(async () => user));
-  const second = createRootStore(createTestApi(async () => user));
-  await first.dispatch({ scope: 'users', type: 'SetEmailAction', email: user.email });
+  const first = createRootStore(
+    createTestApi(async () => {
+      return user;
+    }),
+  );
+  const second = createRootStore(
+    createTestApi(async () => {
+      return user;
+    }),
+  );
+
+  await first.dispatch({
+    scope: 'users',
+    type: 'SetEmailAction',
+    email: user.email,
+  });
   expect(second.state.user.email).toBe('');
 });

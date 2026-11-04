@@ -9,13 +9,19 @@ import { logReducer, logEffector, report } from '@gost-kit/common';
 
 const loggedReducer = logReducer(reducer, { isEnabled: true });
 
-export const createRootStore = (api: ApiClient) => createStore({
-  initState: initialState(),
-  reducer: loggedReducer,
-  effector: logEffector(createEffector(api), { isEnabled: true }),
-  onError: (failure) => { report(failure); },
-});
+export const createRootStore = (api: ApiClient) => {
+  return createStore({
+    initState: initialState(),
+    reducer: loggedReducer,
+    effector: logEffector(createEffector(api), { isEnabled: true }),
+    onError: (failure) => {
+      report(failure);
+    },
+  });
+};
 
 const root = createRootStore(fakeApi);
 
-export const rootStore = (): RootStore => root;
+export const rootStore = (): RootStore => {
+  return root;
+};

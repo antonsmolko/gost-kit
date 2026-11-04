@@ -7,8 +7,11 @@ export type ApiRequest<TPaths extends object> = {
     [TUrl in PathsWithMethod<TPaths, TMethod> & string]: {
       method: TMethod;
       url: TUrl;
-    } & Omit<FetchOptions<FilterKeys<TPaths[TUrl], TMethod>>, 'method' | 'parseAs'> & {
-      parseAs?: 'json';
-    };
+    } & Omit<
+      FetchOptions<FilterKeys<TPaths[TUrl], TMethod>>,
+      'method' | 'parseAs'
+    > & {
+        parseAs?: 'json';
+      };
   }[PathsWithMethod<TPaths, TMethod> & string];
 }[ApiMethod];

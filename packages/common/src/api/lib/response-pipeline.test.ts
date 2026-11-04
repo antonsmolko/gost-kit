@@ -5,10 +5,12 @@ import type { TestUser } from '../types/api-request.test';
 
 const checkPipelineTypes = async () => {
   const data: TestUser = { id: 1, name: 'Ada' };
-  const execution = await executeRequest(async () => ({
-    data,
-    response: Response.json(data),
-  }));
+  const execution = await executeRequest(async () => {
+    return {
+      data,
+      response: Response.json(data),
+    };
+  });
 
   if (execution.type === 'ok') {
     expectTypeOf(execution.data.data).toEqualTypeOf<TestUser>();

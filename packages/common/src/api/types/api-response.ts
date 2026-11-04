@@ -13,8 +13,14 @@ export type ApiResponse<
   ? TMethod extends 'head'
     ? undefined
     : FilterKeys<TPaths[TPath], TMethod> extends infer TOperation extends object
-      ? FetchResponse<TOperation, {}, MediaType> extends infer TResponse
-        ? TResponse extends { data: infer TData } ? TData : never
+      ? FetchResponse<
+          TOperation,
+          { parseAs: 'json' },
+          MediaType
+        > extends infer TResponse
+        ? TResponse extends { data: infer TData }
+          ? TData
+          : never
         : never
       : never
   : never;

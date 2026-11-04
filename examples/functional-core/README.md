@@ -11,8 +11,7 @@ Use Node 26. From the repository root:
 
 ```sh
 npm ci
-npm run build --workspace @gost-kit/common
-npm run build --workspace @gost-kit/svelte
+npm run build
 npm --prefix examples/functional-core ci
 npm --prefix examples/functional-core run dev
 ```
@@ -272,6 +271,27 @@ execution, awaited nested dispatch, error handling and isolated root instances.
 Presenter tests cover each status, retained loaded data and unchanged inputs.
 Browser tests exercise input reactivity, disabled/loading controls, success, a
 global error notification and retry through the actual components.
+
+## Autofix and style checks
+
+After the root build and example install, from this directory:
+
+```sh
+npm run lint
+npm run lint:fix
+npm run format
+npm run format:check
+npm run fix
+```
+
+`fix` runs ESLint autofixes followed by Prettier. Some lint errors need manual
+changes. `check` includes lint/format checks, type checking and tests; the root
+`check` performs the same coverage without repeating the style checks.
+The project consumes both shared configuration packages and adds Svelte parsing
+and formatting locally. The repository's [adapter](../../tooling/eslint-config.ts)
+keeps component scripts on the shared TypeScript policy. Dependencies/config
+exports must be prepared in the repository first; the example is not a standalone
+copy of the published packages.
 
 ## Baseline
 

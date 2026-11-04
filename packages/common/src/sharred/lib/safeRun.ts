@@ -4,7 +4,9 @@ import type { Result, AsyncFn, AnyFn } from '../../types';
 type Fix<TResult> = TResult extends void ? undefined : TResult;
 
 export const safeRun = {
-  async: async <TResult = undefined>(fn: AsyncFn<[], TResult>): Promise<Result<Fix<TResult>>> => {
+  async: async <TResult = undefined>(
+    fn: AsyncFn<[], TResult>,
+  ): Promise<Result<Fix<TResult>>> => {
     try {
       const data = await fn();
 

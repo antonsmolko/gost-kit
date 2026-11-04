@@ -53,13 +53,16 @@ export const guard = {
 
     try {
       const url = new URL(value);
+
       return HTTP_PROTOCOLS.includes(url.protocol);
     } catch {
       return false;
     }
   },
   record: (value: unknown): value is Rec => {
-    return typeof value === 'object' && !guard.nlx(value) && !guard.array(value);
+    return (
+      typeof value === 'object' && !guard.nlx(value) && !guard.array(value)
+    );
   },
   recordEmpty: (value: unknown): value is Rec<never> => {
     return guard.record(value) && Object.keys(value).length === 0;
@@ -89,7 +92,9 @@ export const guard = {
     );
   },
   SVGSVGElement: (value: unknown): value is SVGSVGElement => {
-    return typeof SVGSVGElement !== 'undefined' && value instanceof SVGSVGElement;
+    return (
+      typeof SVGSVGElement !== 'undefined' && value instanceof SVGSVGElement
+    );
   },
   promise: (value: unknown): value is Promise<unknown> => {
     return value instanceof Promise;

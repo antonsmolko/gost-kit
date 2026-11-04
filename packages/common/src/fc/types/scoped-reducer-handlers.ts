@@ -11,8 +11,18 @@ import type { Rec } from '../../types';
  * With never actions, the map must be empty. This also rejects nonempty reducing
  * calls when neither a result contract nor explicit generic arguments are given.
  */
-export type ScopedReducerHandlers<TState, TAction extends Trigger, TEffect extends Trigger, TRootState = TState> = [TAction] extends [never]
+export type ScopedReducerHandlers<
+  TState,
+  TAction extends Trigger,
+  TEffect extends Trigger,
+  TRootState = TState,
+> = [TAction] extends [never]
   ? Rec<never>
   : {
-      [TScope in ActionScope<TAction>]: ReducerHandlers<TState, ActionsInScope<TAction, TScope>, TEffect, TRootState>;
+      [TScope in ActionScope<TAction>]: ReducerHandlers<
+        TState,
+        ActionsInScope<TAction, TScope>,
+        TEffect,
+        TRootState
+      >;
     };

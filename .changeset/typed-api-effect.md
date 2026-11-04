@@ -1,5 +1,5 @@
 ---
-"@gost-kit/common": minor
+'@gost-kit/common': minor
 ---
 
 Add a framework-independent OpenAPI client with centralized result/error handling

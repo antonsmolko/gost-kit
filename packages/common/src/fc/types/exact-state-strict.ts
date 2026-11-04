@@ -13,6 +13,5 @@ import type { StateMatches } from './state-matches';
  * type Invalid = ExactStateStrict<State, { items: ({ id: string } | { id: string; extra: boolean })[] }>;
  * // Invalid is never: the second array element variant contains an extra key.
  */
-export type ExactStateStrict<TState, TNextState> = false extends StateMatches<TState, TNextState>
-  ? never
-  : TNextState;
+export type ExactStateStrict<TState, TNextState> =
+  false extends StateMatches<TState, TNextState> ? never : TNextState;

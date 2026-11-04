@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.svelte-kit/
+coverage/
+test-results/
+playwright-report/
+package-lock.json
+examples/
+.superpowers/
+.agents/
+.claude/
+.idea/
+docs-review/
+docs/superpowers/plans/
+herdr.md

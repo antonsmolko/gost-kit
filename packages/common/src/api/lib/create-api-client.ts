@@ -6,9 +6,10 @@ import type { ApiClientOptions } from '../types/api-client-options';
 import type { ApiInit } from '../types/api-init';
 import type { ApiMethod } from '../types/api-method';
 
-export const createApiClient = <TPaths extends object>(
-  { mapErrors, ...options }: ApiClientOptions,
-) => {
+export const createApiClient = <TPaths extends object>({
+  mapErrors,
+  ...options
+}: ApiClientOptions) => {
   const client = createClient<TPaths>(options);
 
   return {
@@ -23,21 +24,16 @@ export const createApiClient = <TPaths extends object>(
     ) => {
       const [requestOptions] = init;
 
-      const execution = await executeRequest(
-        () => client.request<TMethod, TPath, TInit>(method, url, ...init),
-        requestOptions?.signal,
-      );
+      const execution = await executeRequest(() => {
+        return client.request<TMethod, TPath, TInit>(method, url, ...init);
+      }, requestOptions?.signal);
 
       if (execution.type === 'error') {
         return execution;
       }
 
       // openapi-fetch owns decoding; schema-derived types are not runtime validators.
-      return readResult(
-        execution.data,
-        method,
-        mapErrors,
-      );
+      return readResult(execution.data, method, mapErrors);
     },
   };
 };

@@ -8,10 +8,15 @@ export type ApiEffect<TPaths extends object, TAction extends Trigger> =
   ApiRequest<TPaths> extends infer TRequest
     ? TRequest extends ApiRequest<TPaths>
       ? TRequest & {
-        type: 'ApiEffect';
-        defaultError: AppError;
-        onSuccess?: (data: ApiResponse<TPaths, TRequest>) => DispatchAction<TAction>;
-        onError?: (errors: AppError[], failure: ApiFailure) => DispatchAction<TAction>;
-      }
+          type: 'ApiEffect';
+          defaultError: AppError;
+          onSuccess?: (
+            data: ApiResponse<TPaths, TRequest>,
+          ) => DispatchAction<TAction>;
+          onError?: (
+            errors: AppError[],
+            failure: ApiFailure,
+          ) => DispatchAction<TAction>;
+        }
       : never
     : never;

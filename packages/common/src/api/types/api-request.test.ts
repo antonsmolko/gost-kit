@@ -20,8 +20,16 @@ export type TestPaths = {
   };
   '/empty': { delete: { responses: { 204: { content?: never } } } };
   '/interface': { get: ReadUserOperation };
-  '/vendor': { get: { responses: { 200: { content: { 'application/vnd.example+json': TestUser } } } } };
-  '/head-json': { head: { responses: { 200: { content: { 'application/json': TestUser } } } } };
+  '/vendor': {
+    get: {
+      responses: {
+        200: { content: { 'application/vnd.example+json': TestUser } };
+      };
+    };
+  };
+  '/head-json': {
+    head: { responses: { 200: { content: { 'application/json': TestUser } } } };
+  };
   '/health': { head: { responses: { 200: { content?: never } } } };
 };
 
@@ -66,23 +74,32 @@ const checkRequestTypes = async () => {
   }
 
   // @ts-expect-error unknown route
-  api.request('get', '/missing');
+  void api.request('get', '/missing');
   // @ts-expect-error method not declared on route
-  api.request('get', '/empty');
+  void api.request('get', '/empty');
   // @ts-expect-error required path params
-  api.request('get', '/users/{id}');
+  void api.request('get', '/users/{id}');
   // @ts-expect-error invalid path type
-  api.request('get', '/users/{id}', { params: { path: { id: 'one' } } });
+  void api.request('get', '/users/{id}', { params: { path: { id: 'one' } } });
   // @ts-expect-error required body
-  api.request('post', '/users/{id}', { params: { path: { id: 1 } } });
-  // @ts-expect-error invalid body type
-  api.request('post', '/users/{id}', { params: { path: { id: 1 } }, body: { name: 1 } });
+  void api.request('post', '/users/{id}', { params: { path: { id: 1 } } });
+  void api.request('post', '/users/{id}', {
+    params: { path: { id: 1 } },
+    // @ts-expect-error invalid body type
+    body: { name: 1 },
+  });
   // @ts-expect-error no response type override
-  api.request<TestUser>('delete', '/empty');
+  void api.request<TestUser>('delete', '/empty');
+
+  const invalidParse = {
+    params: { path: { id: 1 } },
+    parseAs: 'text',
+  };
+
   // @ts-expect-error JSON-only response contract
-  api.request('get', '/users/{id}', { params: { path: { id: 1 } }, parseAs: 'text' });
+  void api.request('get', '/users/{id}', invalidParse);
   // @ts-expect-error obsolete object-style client call
-  api.request({ method: 'delete', url: '/empty' });
+  void api.request({ method: 'delete', url: '/empty' });
 };
 
 test('request type assertions are checked by tsc without executing requests', () => {

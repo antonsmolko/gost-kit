@@ -1,7 +1,16 @@
-import { createApiHandler, define, effecting, type Effector } from '@gost-kit/common';
+import {
+  createApiHandler,
+  define,
+  effecting,
+  type Effector,
+} from '@gost-kit/common';
 import type { Paths } from '../../api/paths';
 import type { RootAction } from '../types/action';
-import type { ApiClient, DispatchActionEffect, RootEffect } from '../types/effect';
+import type {
+  ApiClient,
+  DispatchActionEffect,
+  RootEffect,
+} from '../types/effect';
 
 const shellEffector = define.effector<RootAction, DispatchActionEffect>({
   DispatchActionEffect: async ({ effect, dispatch }) => {
@@ -9,8 +18,8 @@ const shellEffector = define.effector<RootAction, DispatchActionEffect>({
   },
 });
 
-export const createEffector = (api: ApiClient): Effector<RootAction, RootEffect> =>
-  effecting(
-    createApiHandler<Paths, RootAction>(api),
-    shellEffector,
-  );
+export const createEffector = (
+  api: ApiClient,
+): Effector<RootAction, RootEffect> => {
+  return effecting(createApiHandler<Paths, RootAction>(api), shellEffector);
+};

@@ -108,7 +108,6 @@ imports. Перед runtime-изменениями запускать failing be
 - Работа выполняется в текущем checkout на отдельной ветке feature/gost-kit-10-api-client;
   исходный main не редактируется. Коммиты/публикация не требуются для review результата.
 
-
 ## Результат реализации — 2026-11-04
 
 Реализован весь базовый scope #10 в ветке feature/gost-kit-10-api-client.
@@ -181,7 +180,6 @@ AbortError/TimeoutError собраны во внутреннем api/enums/Error
 обязательными скобками if, читаемыми переносами и пустыми строками между шагами.
 Само подключение форматтера/линтера в scope этой правки не включалось.
 
-
 ## Уточнение сигнатуры клиента — 2026-11-04
 
 После обсуждения TypeScript casts владелец согласовал нативную форму
@@ -208,7 +206,6 @@ tsc также зафиксировал arity errors. После реализа�
 Старый object-call клиента теперь проверяется как compile-time ошибка.
 Итоговые full/consumer/review результаты этого раунда записываются ниже отдельно.
 
-
 ## Сохранение типа результата без output-cast — 2026-11-04
 
 Владелец отдельно запросил удалить приведение результата readResult. Для этого
@@ -229,7 +226,6 @@ type assertions сначала дали RED (unknown от обоих helpers), �
 Отдельно проверяется HEAD со схемой JSON body. Обработчик effects сохраняет
 свою документированную динамическую адаптацию; schema runtime validation всё
 ещё не входит в первую итерацию.
-
 
 ### Итог уточнений сигнатуры и результата
 
@@ -265,3 +261,23 @@ fetch: HEAD и origin/main — fbf8a51. Повторный pre-PR check прох
 набором 156 common + 6 Svelte, пример — 26 tests. В PR входят исходники, пример,
 этот дизайн, документация и common changeset; ignored implementation plan не
 публикуется. Merge и выпуск остаются отдельными действиями.
+
+## Интеграция после подключения общих правил
+
+Владелец разрешил merge рабочих PR. При обновлении PR #11 из main сохранена
+API-реализация и миграция примера; source-конфликты были между API-изменениями
+и форматированием #5. Применены общие lint/format политики без ослабления правил.
+Негативные type fixtures используют void и адресные @ts-expect-error у фактических
+строк после форматирования. В тесте callbacks вместо non-null assertions есть
+проверка через публичный guard. Discriminator ApiEffect намеренно удаляется
+из native request init; адресное no-unused-vars исключение документирует это.
+ApiResponse явно задаёт parseAs json вместо пустого object type; независимая
+проверка подтверждает прежний nullable/vendor/204/HEAD контракт.
+
+Независимое review выявило сдвиг четырёх type-error directives и отсутствовавший
+import guard; оба воспроизведены, исправлены, полный suite проходит.
+На базе main #20: 156 common +46 ESLint +3 Prettier +6 Svelte tests,
+11 project-policy tests и26 example tests. Example build/browser2 проходят.
+Свежий реальный common tarball установлен offline во внешний consumer:
+native request, ApiEffect dispatch, metadata stripping и NodeNext types проходят.
+Минимальная Node26.0.0 проверена common tsc и156tests. Публикация отдельно.

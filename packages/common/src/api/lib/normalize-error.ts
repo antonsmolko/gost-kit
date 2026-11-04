@@ -7,11 +7,10 @@ export const normalizeError = (
   error: unknown,
   signal?: Nlx<AbortSignal>,
 ): ApiFailure => {
-  const isAborted = signal?.aborted
-    || (
-      guard.record(error)
-      && (error.name === ErrorName.Abort || error.name === ErrorName.Timeout)
-    );
+  const isAborted =
+    signal?.aborted ||
+    (guard.record(error) &&
+      (error.name === ErrorName.Abort || error.name === ErrorName.Timeout));
 
   if (isAborted) {
     return {

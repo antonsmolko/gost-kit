@@ -11,7 +11,13 @@ recursive JSON primitives, arrays and string-keyed objects, including `null`
 and excluding `undefined`.
 
 ```ts
-import { createDispatch, guard, reducing, type Nlx, type Reducer } from '@gost-kit/common';
+import {
+  createDispatch,
+  guard,
+  reducing,
+  type Nlx,
+  type Reducer,
+} from '@gost-kit/common';
 
 type Action = { type: 'IncrementAction' };
 const reducer: Reducer<number, Action, never> = reducing({
@@ -174,8 +180,12 @@ const dispatch = createDispatch<number, Action, never>({
   reducer,
   effector: async () => {},
   readState: () => state,
-  writeState: (next) => { state = next; },
-  onError: (failure) => { console.error(failure); },
+  writeState: (next) => {
+    state = next;
+  },
+  onError: (failure) => {
+    console.error(failure);
+  },
 });
 await dispatch({ type: 'IncrementAction' });
 ```
@@ -201,7 +211,12 @@ storage or application schema is imported. The upstream API and serialization
 baseline is documented at https://openapi-ts.dev/openapi-fetch/api.
 
 ```ts
-import { createApiClient, createApiHandler, effecting, type ApiEffect } from '@gost-kit/common';
+import {
+  createApiClient,
+  createApiHandler,
+  effecting,
+  type ApiEffect,
+} from '@gost-kit/common';
 import type { paths } from './schema';
 
 type Action = { type: 'LoadedAction'; name: string } | { type: 'FailedAction' };
@@ -213,7 +228,9 @@ const result = await api.request('get', '/users/{id}', {
 
 type Effect = ApiEffect<paths, Action>;
 const handlers = createApiHandler<paths, Action>(api);
-const effector = effecting<Action, Effect, readonly [typeof handlers]>(handlers);
+const effector = effecting<Action, Effect, readonly [typeof handlers]>(
+  handlers,
+);
 ```
 
 Methods are lowercase (`get`, `post`, `put`, `patch`, `delete`, `head`, `options`,
@@ -258,7 +275,11 @@ const effect: Effect = {
   method: 'get',
   url: '/users/{id}',
   params: { path: { id: 1 } },
-  defaultError: { code: 'LOAD_FAILED', message: 'Could not load user', path: [] },
+  defaultError: {
+    code: 'LOAD_FAILED',
+    message: 'Could not load user',
+    path: [],
+  },
   onSuccess: (data) => ({ type: 'LoadedAction', name: data.name }),
   onError: () => ({ type: 'FailedAction' }),
 };

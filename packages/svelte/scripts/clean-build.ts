@@ -6,6 +6,6 @@ const paths = globSync([
   '.svelte-kit/__package__',
 ]);
 
-for (const path of paths) {
+paths.forEach((path) => {
   rmSync(path, { recursive: true, force: true });
-}
+});

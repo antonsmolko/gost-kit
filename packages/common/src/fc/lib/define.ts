@@ -21,12 +21,26 @@ export const define = {
     };
   },
   // Infer handler results first; NoInfer keeps validation from widening away extra keys.
-  reducer: <TState, TAction extends Trigger, TEffect extends Trigger = never, TRootState = TState>() =>
-    <THandlers extends ReducerHandlers<TState, TAction, TEffect, TRootState>>(
-      handlers: THandlers & (NoInfer<THandlers> extends CheckedReducerHandlers<TState, NoInfer<THandlers>>
-        ? unknown
-        : CheckedReducerHandlers<TState, NoInfer<THandlers>>),
-    ): ReducerHandlers<TState, TAction, TEffect, TRootState> => handlers,
+  reducer: <
+    TState,
+    TAction extends Trigger,
+    TEffect extends Trigger = never,
+    TRootState = TState,
+  >() => {
+    return <
+      THandlers extends ReducerHandlers<TState, TAction, TEffect, TRootState>,
+    >(
+      handlers: THandlers &
+        (NoInfer<THandlers> extends CheckedReducerHandlers<
+          TState,
+          NoInfer<THandlers>
+        >
+          ? unknown
+          : CheckedReducerHandlers<TState, NoInfer<THandlers>>),
+    ): ReducerHandlers<TState, TAction, TEffect, TRootState> => {
+      return handlers;
+    };
+  },
   effector: <TAction extends Trigger, TEffect extends Trigger>(
     handlers: EffectorHandlers<TAction, TEffect>,
   ) => {

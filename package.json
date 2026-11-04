@@ -9,14 +9,33 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @gost-kit/common && npm run build --workspace @gost-kit/svelte",
-    "check": "npm run build && npm run check --workspaces && npm test",
+    "build": "npm run build --workspace @gost-kit/common && npm run build --workspace @gost-kit/svelte && npm run build --workspace @gost-kit/prettier-config && npm run build --workspace @gost-kit/eslint-config",
+    "check": "npm run build && npm run check:tooling && npm run test:tooling && npm run lint && npm run format:check && npm run check --workspaces && npm test && npm --prefix examples/functional-core run check:code",
     "test": "npm run test --workspaces",
     "changeset": "changeset",
     "version:packages": "changeset version && npm install --package-lock-only --ignore-scripts && npm --prefix examples/functional-core install --package-lock-only --ignore-scripts",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "lint": "eslint . --max-warnings=0 && npm --prefix examples/functional-core run lint",
+    "lint:fix": "eslint . --fix --max-warnings=0 && npm --prefix examples/functional-core run lint:fix",
+    "format": "prettier . --write && npm --prefix examples/functional-core run format",
+    "format:check": "prettier . --check && npm --prefix examples/functional-core run format:check",
+    "fix": "npm run lint:fix && npm run format",
+    "test:tooling": "node --test tooling/*.test.ts",
+    "check:tooling": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "@changesets/cli": "3.0.3"
+    "@changesets/cli": "3.0.3",
+    "@gost-kit/eslint-config": "0.0.0",
+    "@gost-kit/prettier-config": "0.0.0",
+    "eslint": "10.14.0",
+    "eslint-plugin-svelte": "3.24.0",
+    "globals": "17.4.0",
+    "prettier": "3.9.10",
+    "prettier-plugin-svelte": "4.1.1",
+    "svelte": "5.57.2",
+    "typescript-eslint": "8.72.1",
+    "jiti": "2.7.0",
+    "typescript": "5.9.3",
+    "@types/node": "26.6.5"
   }
 }

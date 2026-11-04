@@ -38,10 +38,10 @@ describe('guard', () => {
     expect(guard.stringFilled('\u2003')).toBe(false);
 
     expect(guard.stringFilled(' 0 ')).toBe(true);
-    for (const value of ['0', '000', '42', String(Number.MAX_SAFE_INTEGER)]) {
+    ['0', '000', '42', String(Number.MAX_SAFE_INTEGER)].forEach((value) => {
       expect(guard.stringInt(value)).toBe(true);
-    }
-    for (const value of [
+    });
+    [
       '',
       ' 1',
       '+1',
@@ -50,9 +50,9 @@ describe('guard', () => {
       '1e2',
       '9007199254740992',
       '0'.repeat(20),
-    ]) {
+    ].forEach((value) => {
       expect(guard.stringInt(value)).toBe(false);
-    }
+    });
   });
 });
 
@@ -72,32 +72,23 @@ describe('guard for values and collections', () => {
   });
 
   it('accepts only positive safe integers', () => {
-    for (const value of [1, 17, Number.MAX_SAFE_INTEGER]) {
+    [1, 17, Number.MAX_SAFE_INTEGER].forEach((value) => {
       expect(guard.positiveSafeInteger(value)).toBe(true);
-    }
+    });
 
-    for (const value of [
-      0,
-      -1,
-      1.5,
-      NaN,
-      Infinity,
-      Number.MAX_SAFE_INTEGER + 1,
-      '1',
-    ]) {
-      expect(guard.positiveSafeInteger(value)).toBe(false);
-    }
+    [0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, '1'].forEach(
+      (value) => {
+        expect(guard.positiveSafeInteger(value)).toBe(false);
+      },
+    );
   });
 
   it('accepts only absolute HTTP(S) URLs', () => {
-    for (const value of [
-      'https://example.org/file',
-      'http://example.org/file',
-    ]) {
+    ['https://example.org/file', 'http://example.org/file'].forEach((value) => {
       expect(guard.httpURL(value)).toBe(true);
-    }
+    });
 
-    for (const value of [
+    [
       '',
       ' ',
       '/relative',
@@ -106,9 +97,9 @@ describe('guard for values and collections', () => {
       'javascript:alert(1)',
       'ftp://example.org/file',
       1,
-    ]) {
+    ].forEach((value) => {
       expect(guard.httpURL(value)).toBe(false);
-    }
+    });
   });
 });
 

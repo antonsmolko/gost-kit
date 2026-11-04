@@ -11,6 +11,7 @@ export const logger = (config?: Config): Logger => {
 
   const info = (message: string, payload?: Rec) => {
     const args = ['📟 %c%s', style, message];
+
     if (!guard.ulx(payload)) {
       console.log(...args, payload);
     } else {

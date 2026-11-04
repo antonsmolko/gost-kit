@@ -10,11 +10,16 @@
     "build": "vite build",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "check": "svelte-check --tsconfig ./tsconfig.json && tsc --noEmit && npm test"
+    "check": "npm run lint && npm run format:check && npm run check:code",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix --max-warnings=0",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "fix": "npm run lint:fix && npm run format",
+    "check:code": "svelte-check --tsconfig ./tsconfig.json && tsc --noEmit && npm test"
   },
   "dependencies": {
     "svelte": "5.57.2",
-
     "@gost-kit/common": "file:../../packages/common",
     "@gost-kit/svelte": "file:../../packages/svelte"
   },
@@ -25,6 +30,15 @@
     "svelte-check": "4.7.7",
     "typescript": "5.9.3",
     "vite": "8.3.5",
-    "vitest": "5.0.5"
+    "vitest": "5.0.5",
+    "@gost-kit/eslint-config": "file:../../packages/eslint-config",
+    "@gost-kit/prettier-config": "file:../../packages/prettier-config",
+    "eslint": "10.14.0",
+    "prettier": "3.9.10",
+    "globals": "17.4.0",
+    "eslint-plugin-svelte": "3.24.0",
+    "prettier-plugin-svelte": "4.1.1",
+    "typescript-eslint": "8.72.1",
+    "jiti": "2.7.0"
   }
 }
