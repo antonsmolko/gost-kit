@@ -10,9 +10,12 @@ export const observe = <TState, TView>(
     const state = $derived(read());
     const viewState = $derived(presenter(state));
 
-    $effect(() => { values.push(viewState); });
+    $effect(() => {
+      values.push(viewState);
+    });
   });
 
   flushSync();
+
   return { values, stop };
 };

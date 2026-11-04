@@ -14,8 +14,9 @@ import type { Trigger } from './trigger';
  *   root: { type: 'ShowAlertAction'; message: string };
  * }>;
  */
-export type ScopedActions<TActionMap extends Rec<Trigger & { scope?: never }>> = {
-  [TScope in Keyof<TActionMap>]: TScope extends 'root'
-    ? DispatchAction<TActionMap[TScope]>
-    : TActionMap[TScope] & { scope: TScope };
-}[Keyof<TActionMap>];
+export type ScopedActions<TActionMap extends Rec<Trigger & { scope?: never }>> =
+  {
+    [TScope in Keyof<TActionMap>]: TScope extends 'root'
+      ? DispatchAction<TActionMap[TScope]>
+      : TActionMap[TScope] & { scope: TScope };
+  }[Keyof<TActionMap>];

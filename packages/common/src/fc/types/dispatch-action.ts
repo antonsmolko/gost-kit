@@ -6,6 +6,8 @@ import type { Trigger } from './trigger';
  * dispatch passes the original object through without injecting a scope field.
  * Only root may have an optional scope; feature scopes must be required.
  */
-export type DispatchAction<TAction extends Trigger> = TAction extends { scope: string }
+export type DispatchAction<TAction extends Trigger> = TAction extends {
+  scope: string;
+}
   ? TAction
   : TAction & { scope?: 'root' };

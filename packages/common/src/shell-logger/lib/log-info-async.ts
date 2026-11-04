@@ -5,11 +5,13 @@ import type { Trigger } from '../../fc';
 
 const log = logger();
 
-export const logInfoAsync = <TPayload extends { trigger: Trigger }>(payload: TPayload) => {
-  safeRun.async(async () => {
+export const logInfoAsync = <TPayload extends { trigger: Trigger }>(
+  payload: TPayload,
+) => {
+  void safeRun.async(async () => {
     log.info(
       getTriggerName(payload.trigger),
       JSON.parse(JSON.stringify(payload)),
     );
   });
-}
+};

@@ -1,1 +1,2 @@
-export type Tables<THandlerTable> = readonly [] | readonly [THandlerTable, ...THandlerTable[]];
+export type Tables<THandlerTable> =
+  readonly [] | readonly [THandlerTable, ...THandlerTable[]];

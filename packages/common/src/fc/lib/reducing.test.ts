@@ -12,51 +12,112 @@ type Action = { type: 'SetAction'; count: number } | { type: 'IdleAction' };
 type Effect = { type: 'RecordEffect'; value: number } | { type: 'OtherEffect' };
 
 test('reducing composes root handlers and routes the narrowed action payload', () => {
-  const feature = define.reducer<State, Extract<Action, { type: 'SetAction' }>, Effect>()({
-    SetAction: ({ action }) => ({ state: { count: action.count } }),
+  const feature = define.reducer<
+    State,
+    Extract<Action, { type: 'SetAction' }>,
+    Effect
+  >()({
+    SetAction: ({ action }) => {
+      return { state: { count: action.count } };
+    },
   });
-  const other = define.reducer<State, Extract<Action, { type: 'IdleAction' }>, Effect>()({
-    IdleAction: ({ state }) => ({ state }),
+  const other = define.reducer<
+    State,
+    Extract<Action, { type: 'IdleAction' }>,
+    Effect
+  >()({
+    IdleAction: ({ state }) => {
+      return { state };
+    },
   });
-  const reducer: Reducer<State, Action, Effect> = reducing({ root: { ...feature, ...other } });
-  expect(reducer({ count: 0, previous: true }, { type: 'SetAction', count: 7 })).toEqual({
-    state: { count: 7 }, effects: [],
+  const reducer: Reducer<State, Action, Effect> = reducing({
+    root: { ...feature, ...other },
   });
+
+  expect(
+    reducer({ count: 0, previous: true }, { type: 'SetAction', count: 7 }),
+  ).toEqual({
+    state: { count: 7 },
+    effects: [],
+  });
+
   const state = { count: 7 };
+
   expect(reducer(state, { type: 'IdleAction' }).state).toBe(state);
 });
 
 test('an empty handler result keeps state and yields no effects', () => {
-  const reducer: Reducer<State, Extract<Action, { type: 'IdleAction' }>, Effect> = reducing({ root: { IdleAction: () => {} } });
+  const reducer: Reducer<
+    State,
+    Extract<Action, { type: 'IdleAction' }>,
+    Effect
+  > = reducing({ root: { IdleAction: () => {} } });
   const state = { count: 0 };
-  expect(reducer(state, { type: 'IdleAction' })).toEqual({ state, effects: [] });
+
+  expect(reducer(state, { type: 'IdleAction' })).toEqual({
+    state,
+    effects: [],
+  });
 });
 
 test('a handler can return the readonly input unchanged, including mutable array fields', () => {
   type ListState = { items: string[] };
-  const handlers = define.reducer<ListState, Extract<Action, { type: 'IdleAction' }>>()({
-    IdleAction: ({ state }) => ({ state }),
+
+  const handlers = define.reducer<
+    ListState,
+    Extract<Action, { type: 'IdleAction' }>
+  >()({
+    IdleAction: ({ state }) => {
+      return { state };
+    },
   });
-  const reducer: Reducer<ListState, Extract<Action, { type: 'IdleAction' }>, never> = reducing({ root: handlers });
+  const reducer: Reducer<
+    ListState,
+    Extract<Action, { type: 'IdleAction' }>,
+    never
+  > = reducing({ root: handlers });
   const state: ListState = { items: ['first'] };
+
   expect(reducer(state, { type: 'IdleAction' }).state).toBe(state);
 });
 
 test('effects-only results preserve state and normalize a single effect to an array', () => {
-  const reducer: Reducer<State, Extract<Action, { type: 'SetAction' }>, Effect> = reducing({
-    root: { SetAction: ({ action }) => ({ effects: { type: 'RecordEffect', value: action.count } }) },
+  const reducer: Reducer<
+    State,
+    Extract<Action, { type: 'SetAction' }>,
+    Effect
+  > = reducing({
+    root: {
+      SetAction: ({ action }) => {
+        return { effects: { type: 'RecordEffect', value: action.count } };
+      },
+    },
   });
   const state = { count: 0 };
+
   expect(reducer(state, { type: 'SetAction', count: 7 })).toEqual({
-    state, effects: [{ type: 'RecordEffect', value: 7 }],
+    state,
+    effects: [{ type: 'RecordEffect', value: 7 }],
   });
 });
 
 test('an effects array passes through without changing its reference', () => {
-  const effects: Effect[] = [{ type: 'RecordEffect', value: 7 }, { type: 'OtherEffect' }];
-  const reducer: Reducer<State, Extract<Action, { type: 'IdleAction' }>, Effect> = reducing({
-    root: { IdleAction: () => ({ effects }) },
+  const effects: Effect[] = [
+    { type: 'RecordEffect', value: 7 },
+    { type: 'OtherEffect' },
+  ];
+  const reducer: Reducer<
+    State,
+    Extract<Action, { type: 'IdleAction' }>,
+    Effect
+  > = reducing({
+    root: {
+      IdleAction: () => {
+        return { effects };
+      },
+    },
   });
+
   expect(reducer({ count: 0 }, { type: 'IdleAction' }).effects).toBe(effects);
 });
 
@@ -66,26 +127,36 @@ test('equal action names select their own namespace and retain distinct payloads
     roles: { type: 'LoadAction'; roleId: string };
     root: { type: 'LoadAction'; reason: string };
   }>;
+
   const received: ScopedAction[] = [];
   const reducer: Reducer<State, ScopedAction, Effect> = reducing({
     users: {
       LoadAction: ({ action }) => {
-        expectTypeOf(action).toEqualTypeOf<ActionsInScope<ScopedAction, 'users'>>();
+        expectTypeOf(action).toEqualTypeOf<
+          ActionsInScope<ScopedAction, 'users'>
+        >();
         received.push(action);
+
         return { state: { count: action.page } };
       },
     },
     roles: {
       LoadAction: ({ action }) => {
-        expectTypeOf(action).toEqualTypeOf<ActionsInScope<ScopedAction, 'roles'>>();
+        expectTypeOf(action).toEqualTypeOf<
+          ActionsInScope<ScopedAction, 'roles'>
+        >();
         received.push(action);
+
         return { state: { count: action.roleId.length } };
       },
     },
     root: {
       LoadAction: ({ action }) => {
-        expectTypeOf(action).toEqualTypeOf<ActionsInScope<ScopedAction, 'root'>>();
+        expectTypeOf(action).toEqualTypeOf<
+          ActionsInScope<ScopedAction, 'root'>
+        >();
         received.push(action);
+
         return { state: { count: action.reason.length } };
       },
     },
@@ -97,12 +168,25 @@ test('equal action names select their own namespace and retain distinct payloads
     { type: 'LoadAction', reason: 'refresh' },
     { scope: 'root', type: 'LoadAction', reason: 'again' },
   ];
-  expect(actions.map((action) => reducer(state, action).state.count)).toEqual([7, 5, 7, 5]);
-  actions.forEach((action, index) => expect(received[index]).toBe(action));
+
+  expect(
+    actions.map((action) => {
+      return reducer(state, action).state.count;
+    }),
+  ).toEqual([7, 5, 7, 5]);
+  actions.forEach((action, index) => {
+    return expect(received[index]).toBe(action);
+  });
   expect(received[2]).not.toHaveProperty('scope');
 
-  expectTypeOf<{ scope: 'users'; type: 'LoadAction'; roleId: string }>().not.toExtend<Parameters<typeof reducer>[1]>();
-  expectTypeOf<{ type: 'LoadAction'; page: number }>().not.toExtend<Parameters<typeof reducer>[1]>();
+  expectTypeOf<{
+    scope: 'users';
+    type: 'LoadAction';
+    roleId: string;
+  }>().not.toExtend<Parameters<typeof reducer>[1]>();
+  expectTypeOf<{ type: 'LoadAction'; page: number }>().not.toExtend<
+    Parameters<typeof reducer>[1]
+  >();
 });
 
 test('the action namespace is independent of its state key', () => {
@@ -110,15 +194,29 @@ test('the action namespace is independent of its state key', () => {
   type RootState = { user: FeatureState; alert: string };
   type UserAction = { type: 'SetAction'; name: string };
   type RootAction = ScopedActions<{ users: UserAction }>;
-  const handlers = define.reducer<FeatureState, UserAction, Effect, RootState>()({
-    SetAction: ({ action }, rootState) => ({
-      state: { name: `${rootState.alert}: ${action.name}` },
-      effects: { type: 'RecordEffect', value: action.name.length },
-    }),
+
+  const handlers = define.reducer<
+    FeatureState,
+    UserAction,
+    Effect,
+    RootState
+  >()({
+    SetAction: ({ action }, rootState) => {
+      return {
+        state: { name: `${rootState.alert}: ${action.name}` },
+        effects: { type: 'RecordEffect', value: action.name.length },
+      };
+    },
   });
-  const reducer: Reducer<RootState, RootAction, Effect> = reducing({ users: scope('user', handlers) });
+  const reducer: Reducer<RootState, RootAction, Effect> = reducing({
+    users: scope('user', handlers),
+  });
   const state: RootState = { user: { name: '' }, alert: 'hello' };
-  const commit = reducer(state, { scope: 'users', type: 'SetAction', name: 'Ada' });
+  const commit = reducer(state, {
+    scope: 'users',
+    type: 'SetAction',
+    name: 'Ada',
+  });
 
   expect(commit).toEqual({
     state: { user: { name: 'hello: Ada' }, alert: 'hello' },
@@ -128,60 +226,138 @@ test('the action namespace is independent of its state key', () => {
 });
 
 test('requires complete non-optional handler coverage in every namespace', () => {
-  type ScopedAction = ScopedActions<{ users: Action; root: { type: 'ResetAction' } }>;
+  type ScopedAction = ScopedActions<{
+    users: Action;
+    root: { type: 'ResetAction' };
+  }>;
+
   const users = define.reducer<State, Action, Effect>()({
-    SetAction: ({ action }) => ({ state: { count: action.count } }),
+    SetAction: ({ action }) => {
+      return { state: { count: action.count } };
+    },
     IdleAction: () => {},
   });
-  const root = define.reducer<State, { type: 'ResetAction' }, Effect>()({ ResetAction: () => ({ state: { count: 0 } }) });
+  const root = define.reducer<State, { type: 'ResetAction' }, Effect>()({
+    ResetAction: () => {
+      return { state: { count: 0 } };
+    },
+  });
 
   // @ts-expect-error The root namespace is missing.
-  const missingScope: Reducer<State, ScopedAction, Effect> = reducing({ users });
-  // @ts-expect-error IdleAction is missing in the users namespace.
-  const missingAction: Reducer<State, ScopedAction, Effect> = reducing({ users: { SetAction: users.SetAction }, root });
+  const missingScope: Reducer<State, ScopedAction, Effect> = reducing({
+    users,
+  });
+  const missingAction: Reducer<State, ScopedAction, Effect> = reducing({
+    // @ts-expect-error IdleAction is missing in the users namespace.
+    users: { SetAction: users.SetAction },
+    root,
+  });
   const optional: Partial<ReducerHandlers<State, Action, Effect>> = users;
-  // @ts-expect-error Optional handlers cannot guarantee coverage.
-  const optionalHandler: Reducer<State, ScopedAction, Effect> = reducing({ users: optional, root });
-  // @ts-expect-error A possibly undefined handler cannot guarantee coverage.
-  const undefinedHandler: Reducer<State, ScopedAction, Effect> = reducing({ users: { ...users, SetAction: undefined }, root });
-  const chooseUsers = (first: boolean) => first ? users : { SetAction: users.SetAction };
-  // @ts-expect-error Every table alternative must cover the namespace.
-  const tableUnion: Reducer<State, ScopedAction, Effect> = reducing({ users: chooseUsers(true), root });
-  const chooseMap = (first: boolean) => first ? { users, root } : { users };
-  // @ts-expect-error Every namespace-map alternative must be complete.
-  const mapUnion: Reducer<State, ScopedAction, Effect> = reducing(chooseMap(true));
-  // @ts-expect-error The users namespace cannot receive the root handler table.
-  const foreignTable: Reducer<State, ScopedAction, Effect> = reducing({ users: root, root });
+  const optionalHandler: Reducer<State, ScopedAction, Effect> = reducing({
+    // @ts-expect-error Optional handlers cannot guarantee coverage.
+    users: optional,
+    root,
+  });
+  const undefinedHandler: Reducer<State, ScopedAction, Effect> = reducing({
+    // @ts-expect-error A possibly undefined handler cannot guarantee coverage.
+    users: { ...users, SetAction: undefined },
+    root,
+  });
+  const chooseUsers = (first: boolean) => {
+    return first ? users : { SetAction: users.SetAction };
+  };
+  const tableUnion: Reducer<State, ScopedAction, Effect> = reducing({
+    // @ts-expect-error Every table alternative must cover the namespace.
+    users: chooseUsers(true),
+    root,
+  });
+  const chooseMap = (first: boolean) => {
+    return first ? { users, root } : { users };
+  };
+  const mapUnion: Reducer<State, ScopedAction, Effect> = reducing(
+    // @ts-expect-error Every namespace-map alternative must be complete.
+    chooseMap(true),
+  );
+  const foreignTable: Reducer<State, ScopedAction, Effect> = reducing({
+    // @ts-expect-error The users namespace cannot receive the root handler table.
+    users: root,
+    root,
+  });
   // @ts-expect-error No namespaces cover the declared actions.
   const empty: Reducer<State, ScopedAction, Effect> = reducing({});
-  // @ts-expect-error Unknown namespaces cannot own handlers.
-  const unknownScope: Reducer<State, ScopedAction, Effect> = reducing({ users, root, roles: users });
-  // @ts-expect-error Unknown actions cannot be added to a namespace.
-  const unknownAction: Reducer<State, ScopedAction, Effect> = reducing({ users: { ...users, ResetAction: root.ResetAction }, root });
+  const unknownScope: Reducer<State, ScopedAction, Effect> = reducing({
+    users,
+    root,
+    // @ts-expect-error Unknown namespaces cannot own handlers.
+    roles: users,
+  });
+  const unknownAction: Reducer<State, ScopedAction, Effect> = reducing({
+    // @ts-expect-error Unknown actions cannot be added to a namespace.
+    users: { ...users, ResetAction: root.ResetAction },
+    root,
+  });
   const noActions: Reducer<State, never, Effect> = reducing({});
+
   expectTypeOf(noActions).toEqualTypeOf<Reducer<State, never, Effect>>();
-  void [missingScope, missingAction, optionalHandler, undefinedHandler, tableUnion, mapUnion, foreignTable, empty, unknownScope, unknownAction];
+  void [
+    missingScope,
+    missingAction,
+    optionalHandler,
+    undefinedHandler,
+    tableUnion,
+    mapUnion,
+    foreignTable,
+    empty,
+    unknownScope,
+    unknownAction,
+  ];
 });
 
 test('one scope/type pair cannot be declared twice in a handler map', () => {
   const handlers = { IdleAction: () => {} };
-  // @ts-expect-error One namespace has one table; duplicate object keys are rejected by TypeScript.
-  const duplicateScope: Reducer<State, Extract<Action, { type: 'IdleAction' }>, never> = reducing({ root: handlers, root: handlers });
-  const duplicateAction: Reducer<State, Extract<Action, { type: 'IdleAction' }>, never> = reducing({ root: {
-    IdleAction: handlers.IdleAction,
-    // @ts-expect-error An action can have only one handler within its namespace.
-    IdleAction: handlers.IdleAction,
-  } });
+  const duplicateScope: Reducer<
+    State,
+    Extract<Action, { type: 'IdleAction' }>,
+    never
+    // @ts-expect-error One namespace has one table; duplicate object keys are rejected by TypeScript.
+  > = reducing({ root: handlers, root: handlers });
+  const duplicateAction: Reducer<
+    State,
+    Extract<Action, { type: 'IdleAction' }>,
+    never
+  > = reducing({
+    root: {
+      IdleAction: handlers.IdleAction,
+      // @ts-expect-error An action can have only one handler within its namespace.
+      IdleAction: handlers.IdleAction,
+    },
+  });
+
   void [duplicateScope, duplicateAction];
 });
 
 test('requires a result contract or explicit generics for nonempty namespace maps', () => {
-  // @ts-expect-error Without a contract, a nonempty map must not produce a broad reducer.
-  const untyped = reducing({ root: { IdleAction: () => ({ state: 1 }) } });
-  // @ts-expect-error A callback parameter does not supply the missing root contracts.
-  const withState = reducing({ root: { IdleAction: ({ state }) => ({ state }) } });
+  const untyped = reducing({
+    // @ts-expect-error Without a contract, a nonempty map must not produce a broad reducer.
+    root: {
+      IdleAction: () => {
+        return { state: 1 };
+      },
+    },
+  });
+  const withState = reducing({
+    // @ts-expect-error A callback parameter does not supply the missing root contracts.
+    root: {
+      // @ts-expect-error A callback parameter does not supply the missing root contracts.
+      IdleAction: ({ state }) => {
+        return { state };
+      },
+    },
+  });
   const handlers = define.reducer<State, Action, Effect>()({
-    SetAction: ({ action }) => ({ state: { count: action.count } }),
+    SetAction: ({ action }) => {
+      return { state: { count: action.count } };
+    },
     IdleAction: () => {},
   });
   // @ts-expect-error A table from a variable also requires a result contract.
@@ -192,12 +368,18 @@ test('requires a result contract or explicit generics for nonempty namespace map
   const explicit = reducing<State, Action, Effect>({
     root: {
       SetAction: ({ action }) => {
-        expectTypeOf(action).toEqualTypeOf<Extract<Action, { type: 'SetAction' }>>();
+        expectTypeOf(action).toEqualTypeOf<
+          Extract<Action, { type: 'SetAction' }>
+        >();
+
         return { state: { count: action.count } };
       },
       IdleAction: () => {},
     },
   });
-  expect(explicit({ count: 0 }, { type: 'SetAction', count: 7 }).state.count).toBe(7);
+
+  expect(
+    explicit({ count: 0 }, { type: 'SetAction', count: 7 }).state.count,
+  ).toBe(7);
   void [untyped, withState, fromVariable, noActions];
 });

@@ -12,10 +12,16 @@ export type ExactState<TState, TNextState> = TState extends unknown
   ? TNextState extends TState
     ? TNextState extends readonly unknown[]
       ? TState extends readonly (infer TItem)[]
-        ? { [TIndex in keyof TNextState]: ExactState<TItem, TNextState[TIndex]> }
+        ? {
+            [TIndex in keyof TNextState]: ExactState<TItem, TNextState[TIndex]>;
+          }
         : never
       : TNextState extends object
-        ? { [TKey in keyof TNextState]: TKey extends keyof TState ? ExactState<TState[TKey], TNextState[TKey]> : never }
+        ? {
+            [TKey in keyof TNextState]: TKey extends keyof TState
+              ? ExactState<TState[TKey], TNextState[TKey]>
+              : never;
+          }
         : TNextState
     : never
   : never;

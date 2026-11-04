@@ -2,7 +2,9 @@ import type { AnyFn } from '../../types';
 
 export const report = <TFailure>(
   failure: TFailure,
-  onError: AnyFn<[failure: TFailure], void> = (failure) => console.error(failure),
+  onError: AnyFn<[failure: TFailure], void> = (failure) => {
+    return console.error(failure);
+  },
 ): void => {
   try {
     onError(failure);

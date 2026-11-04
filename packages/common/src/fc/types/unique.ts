@@ -25,7 +25,8 @@ import type { DuplicateKeys } from './duplicate-keys';
  * он задаёт правило «у каждого объявленного action/effect ровно один владелец».
  */
 export type Unique<THandlerTables extends readonly unknown[]> = {
-  [TIndex in keyof THandlerTables]: THandlerTables[TIndex] & (
-    TIndex extends number ? never : { [TDuplicateKey in DuplicateKeys<THandlerTables>]: never }
-  );
+  [TIndex in keyof THandlerTables]: THandlerTables[TIndex] &
+    (TIndex extends number
+      ? never
+      : { [TDuplicateKey in DuplicateKeys<THandlerTables>]: never });
 };
