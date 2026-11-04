@@ -11,12 +11,14 @@ core execution, a typed API client and ApiEffect handler. `@gost-kit/svelte` pro
 
 ## Shared tooling configurations
 
-Two additional independently versioned development packages provide the shared
+Three independently versioned development packages provide the shared
 framework-independent baseline:
 
 - [@gost-kit/eslint-config](packages/eslint-config/README.md): JS/TS flat configs,
   type-aware checks and explicit readability policies; consumers supply globals
   and their own tsconfig root.
+- [@gost-kit/eslint-config-svelte](packages/eslint-config-svelte/README.md): shared
+  JS/TS baseline plus the selected Svelte 5 component/rune checks.
 - [@gost-kit/prettier-config](packages/prettier-config/README.md): shared formatting
   settings without framework plugins.
 
@@ -77,11 +79,10 @@ Run `npm run fix` during development, then `npm run check`. ESLint cannot fix
 all diagnostics; remaining errors require manual changes before the combined
 command can continue. The example provides the same style/fix commands locally.
 
-The shared packages own the agreed E/T/A and P policies. The local
-[ESLint adapter](tooling/eslint-config.ts) adds Svelte parsing and scoped globals,
-using the shared resolved TypeScript rules for component scripts. It adds no
-Svelte recommended rule policy. Prettier adds `prettier-plugin-svelte` locally.
-ESLint/Prettier configs, the project helper and its tests are TypeScript. ESLint loads them through
+The shared packages own the agreed E/T/A and P policies. The [Svelte package](packages/eslint-config-svelte/README.md) adds parsing and
+the selected Svelte policies, preserving the common TypeScript checks in component
+scripts. The local [adapter](tooling/eslint-config.ts) adds only project globals. Prettier adds `prettier-plugin-svelte` locally.
+ESLint/Prettier configs, the project helper and its tests are TypeScript. ESLint loads its configs through
 `jiti`; node:test and Prettier load TS natively on Node26.
 `npm run check:tooling` checks root configs/helper/tests with `tsc`, and
 the example tsconfig covers its own config. Tests retain error severity. Narrow inline exceptions explain intentional negative
@@ -104,7 +105,7 @@ and local dependencies on both workspace packages.
 ## Versioning and releases
 
 [Changesets](https://changesets.dev/guide/getting-started) manages independent
-versions and changelogs for all four packages.
+versions and changelogs for all five packages.
 For a change that needs a package release, run:
 
 ```sh

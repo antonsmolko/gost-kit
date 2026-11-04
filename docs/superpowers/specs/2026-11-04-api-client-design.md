@@ -281,3 +281,11 @@ import guard; оба воспроизведены, исправлены, пол�
 Свежий реальный common tarball установлен offline во внешний consumer:
 native request, ApiEffect dispatch, metadata stripping и NodeNext types проходят.
 Минимальная Node26.0.0 проверена common tsc и156tests. Публикация отдельно.
+
+После merge #21 повторный полный check на совместном дереве проходит:
+156 common +46 generic ESLint +34 Svelte ESLint +3 Prettier +6 Svelte,
+11 project-policy и26 example tests (282 всего). Source API и компонентов
+после этой интеграции не менялся. GitHub Actions задерживается в queued;
+локальные проверки и independent review являются приведёнными свидетельствами,
+удалённый CI не объявляется прошедшим. Релизный #14 не сливается: он запускает
+реальную npm publication и требует отдельного решения.

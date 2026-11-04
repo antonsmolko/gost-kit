@@ -12,8 +12,5 @@ export default [
       'docs-review/**',
     ],
   },
-  ...(await createProjectConfig(
-    import.meta.dirname,
-    'packages/common/src/index.ts',
-  )),
+  ...(await createProjectConfig(import.meta.dirname)),
 ] satisfies Linter.Config[];

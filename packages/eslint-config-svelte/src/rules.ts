@@ -1,0 +1,27 @@
+import type { Linter } from 'eslint';
+
+export const svelteRules = {
+  'svelte/no-dupe-else-if-blocks': 'error',
+  'svelte/no-not-function-handler': 'error',
+  'svelte/no-object-in-text-mustaches': 'error',
+  'svelte/require-each-key': 'error',
+  'svelte/valid-each-key': 'error',
+  'svelte/button-has-type': 'error',
+  'svelte/no-bind-value-on-checkable-inputs': 'error',
+  'svelte/no-dupe-style-properties': 'error',
+  'svelte/no-shorthand-style-property-overrides': 'error',
+  'svelte/no-unknown-style-directive-property': 'error',
+  'svelte/no-conflicting-module-names': 'error',
+  'svelte/no-svelte-internal': 'error',
+  'svelte/no-at-debug-tags': 'error',
+  'svelte/no-inspect': 'error',
+  'svelte/no-unused-svelte-ignore': 'error',
+  'svelte/no-unused-props': 'error',
+  'svelte/no-unnecessary-state-wrap': 'error',
+  'svelte/prefer-derived-over-derived-by': 'error',
+  'svelte/prefer-writable-derived': 'error',
+  'svelte/no-at-html-tags': 'error',
+  'svelte/block-lang': ['error', { script: 'ts', enforceScriptPresent: false }],
+  'svelte/no-store-async': 'error',
+  'svelte/no-ignored-unsubscribe': 'error',
+} satisfies Linter.RulesRecord;
