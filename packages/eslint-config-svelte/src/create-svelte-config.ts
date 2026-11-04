@@ -1,3 +1,4 @@
+import { plugin } from '@gost-kit/eslint-plugin';
 import { ESLint, type Linter } from 'eslint';
 import { createConfig, type ConfigOptions } from '@gost-kit/eslint-config';
 import svelte from 'eslint-plugin-svelte';
@@ -51,6 +52,12 @@ export const createSvelteConfig = async ({
           extraFileExtensions: ['.svelte'],
         },
       },
+    },
+    {
+      name: 'gost-svelte/architecture',
+      files: ['**/*.svelte', '**/*.svelte.ts'],
+      plugins: { gost: plugin },
+      rules: { 'gost/require-feature-state-selector': 'error' },
     },
     {
       name: 'gost-svelte/selected-rules',

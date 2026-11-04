@@ -11,14 +11,16 @@ core execution, a typed API client and ApiEffect handler. `@gost-kit/svelte` pro
 
 ## Shared tooling configurations
 
-Three independently versioned development packages provide the shared
-framework-independent baseline:
+Independently versioned development packages provide shared JavaScript,
+TypeScript and Svelte tooling:
 
 - [@gost-kit/eslint-config](packages/eslint-config/README.md): JS/TS flat configs,
   type-aware checks and explicit readability policies; consumers supply globals
   and their own tsconfig root.
 - [@gost-kit/eslint-config-svelte](packages/eslint-config-svelte/README.md): shared
   JS/TS baseline plus the selected Svelte 5 component/rune checks.
+- [@gost-kit/eslint-plugin](packages/eslint-plugin/README.md): typed architecture
+  checks, including reactive feature-state selection and conservative autofixes.
 - [@gost-kit/prettier-config](packages/prettier-config/README.md): shared formatting
   settings without framework plugins.
 
@@ -92,8 +94,9 @@ are excluded. ESLint and Prettier run as separate tools in CI.
 Automated checks cover braces, spacing, imports, promises and the selected rules
 in [the full inventory](packages/eslint-config/RULES.md). Domain semantics,
 immutability, common-helper reuse and architecture still require review.
-The feature-state selection rule is tracked separately in
-[#6](https://github.com/antonsmolko/gost-kit/issues/6) and is not enabled yet.
+The Svelte config enables `gost/require-feature-state-selector` from the
+[GOST plugin](packages/eslint-plugin/RULES.md), covering Store state and explicit
+local `$state.raw` bindings. Other component architecture policies remain separate tasks.
 
 ## Examples
 

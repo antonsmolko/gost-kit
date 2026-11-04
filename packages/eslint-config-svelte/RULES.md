@@ -38,8 +38,13 @@ and `**/*.svelte.js` where the upstream rule supports the corresponding syntax.
 
 Not enabled: AS04 DOM/listener restrictions, AS05 SSR browser-global restrictions,
 AS06 prefer-svelte-reactivity, legacy recommended/experimental rules and SvelteKit
-routing rules. Prettier owns HTML/CSS formatting. Custom architecture checks #6
-and #16–#19 are separate outcomes and are not bundled here.
+routing rules. Prettier owns HTML/CSS formatting. Architecture checks #16–#19 remain separate outcomes.
+
+The bundled GOST plugin additionally enables `gost/require-feature-state-selector`
+at error for TypeScript component scripts and `.svelte.ts`. It checks public
+Store state and explicit local `$state.raw` before reactive computation calls,
+with limited autofix. JS scripts and `.svelte.js` are excluded from this typed
+rule. See [the plugin inventory](../eslint-plugin/RULES.md) for its boundaries.
 
 Sources: [rule catalog](https://sveltejs.github.io/eslint-plugin-svelte/rules/),
 [configuration boundaries](https://sveltejs.github.io/eslint-plugin-svelte/user-guide/).

@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @gost-kit/common && npm run build --workspace @gost-kit/svelte && npm run build --workspace @gost-kit/prettier-config && npm run build --workspace @gost-kit/eslint-config && npm run build --workspace @gost-kit/eslint-config-svelte",
+    "build": "npm run build --workspace @gost-kit/common && npm run build --workspace @gost-kit/svelte && npm run build --workspace @gost-kit/prettier-config && npm run build --workspace @gost-kit/eslint-config && npm run build --workspace @gost-kit/eslint-plugin && npm run build --workspace @gost-kit/eslint-config-svelte",
     "check": "npm run build && npm run check:tooling && npm run test:tooling && npm run lint && npm run format:check && npm run check --workspaces && npm test && npm --prefix examples/functional-core run check:code",
     "test": "npm run test --workspaces",
     "changeset": "changeset",

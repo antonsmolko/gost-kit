@@ -348,3 +348,49 @@ test('component fixes merge value/type imports and converge with Prettier', asyn
   ).toBe(formatted);
   expect(formatted).toContain('prefix, type User');
 });
+
+test.each(['Reactive.svelte', 'reactive.svelte.ts'])(
+  'reports GOST selector diagnostics in %s',
+  async (file) => {
+    const script = `import type { Store } from '@gost-kit/common';
+  declare const root: Store<{ user: { name: string } }, { type: 'RefreshAction' }>;
+  const present = (user: { name: string }) => { return user.name; };
+  const view = $derived(present(root.state.user));`;
+    const source = file.endsWith('.svelte')
+      ? `<script lang="ts">${script}</script><p>{view}</p>`
+      : script;
+    const result = await lint(source, file);
+
+    expect(result.messages).toContainEqual(
+      expect.objectContaining({
+        ruleId: 'gost/require-feature-state-selector',
+        severity: 2,
+      }),
+    );
+  },
+);
+
+test('reports a local raw snapshot and autofixes a typed component idempotently', async () => {
+  const source =
+    '<script lang="ts">let model = $state.raw({ user: { name: "Ada" } }); const present = (user: { name: string }) => { return user.name; }; const view = $derived(present(model.user));</script><p>{view}</p>';
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    fix: true,
+    overrideConfig: await createSvelteConfig({ tsconfigRootDir: root }),
+  });
+  const first = await lint(source, 'AutoFixed.svelte', instance);
+
+  expect(first.output).toContain('const user = $derived(model.user);');
+  expect(first.output).toContain('$derived(present(user))');
+  expect(first.messages).toEqual([]);
+
+  const second = await lint(
+    first.output ?? source,
+    'AutoFixed.svelte',
+    instance,
+  );
+
+  expect(second.output).toBeUndefined();
+  expect(second.messages).toEqual([]);
+});

@@ -63,11 +63,19 @@ component scripts. Svelte formatting is delegated to Prettier; this config does
 not execute the formatter. Use `@gost-kit/prettier-config` with
 `prettier-plugin-svelte` in the consuming project's Prettier config.
 
-Architecture policies are separate work: component state ownership (#16),
-UI dispatch (#17), boolean conditions (#18), derived calculations (#19) and
-feature-state selection (#6). This package does not claim to enforce those
-contracts yet. Existing `$state.raw` shell bindings and feature selectors remain
-valid; the Svelte compiler/type checker still verifies compilation/accessibility.
+The bundled `@gost-kit/eslint-plugin` enables
+`gost/require-feature-state-selector` on typed components and `.svelte.ts`.
+It recognizes public GOST Store state and explicit local `$state.raw` bindings;
+select the branch with `$derived` before passing it to a reactive computation.
+Simple cases support conservative autofix with V2/V3 name collision suffixes.
+See the installed plugin's RULES.md or the [source inventory](../eslint-plugin/RULES.md)
+for exact supported forms and limitations. JS-script/stateless components are skipped;
+the typed architecture rule is not enabled for `.svelte.js`.
+
+Component state ownership (#16), UI dispatch (#17), boolean conditions (#18),
+and derived calculations (#19) remain separate work. Existing `$state.raw`
+shell bindings and feature selectors remain valid; the Svelte compiler/type
+checker still verifies compilation/accessibility.
 
 ## Overrides and verification
 
