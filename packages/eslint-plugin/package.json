@@ -1,0 +1,57 @@
+{
+  "name": "@gost-kit/eslint-plugin",
+  "version": "0.0.0",
+  "description": "Typed GOST architecture rules for agent-assisted frontend development.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": "^26.0.0"
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "RULES.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "npm run clean && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "prepack": "npm run build",
+    "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antonsmolko/gost-kit.git",
+    "directory": "packages/eslint-plugin"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "typescript": "5.9.3",
+    "tsc-alias": "1.9.9",
+    "vitest": "5.0.5",
+    "eslint": "10.14.0",
+    "svelte-eslint-parser": "1.10.1",
+    "typescript-eslint": "8.72.1",
+    "svelte": "5.57.2",
+    "@gost-kit/common": "0.2.0",
+    "@gost-kit/svelte": "0.1.1",
+    "@typescript-eslint/rule-tester": "8.72.1"
+  },
+  "dependencies": {
+    "@typescript-eslint/utils": "8.72.1"
+  },
+  "peerDependencies": {
+    "eslint": "^10.14.0",
+    "typescript": "^5.9.3"
+  }
+}

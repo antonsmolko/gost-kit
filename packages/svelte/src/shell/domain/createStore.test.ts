@@ -69,6 +69,12 @@ describe('createStore', () => {
     const observed = observe(() => {
       return store.state.user;
     }, userPresenter);
+    const directPresenter = vi.fn((state: RootState) => {
+      return { label: state.user.name.toUpperCase() };
+    });
+    const direct = observe(() => {
+      return store.state;
+    }, directPresenter);
 
     try {
       expect(userPresenter).toHaveBeenCalledTimes(1);
@@ -82,8 +88,21 @@ describe('createStore', () => {
 
       expect(userPresenter).toHaveBeenCalledTimes(1);
       expect(observed.values).toEqual([{ label: 'ADA' }]);
+      expect(directPresenter).toHaveBeenCalledTimes(2);
+      expect(direct.values).toEqual([{ label: 'ADA' }, { label: 'ADA' }]);
+
+      await store.dispatch({
+        type: 'ReplaceAction',
+        state: { user: { name: 'Grace' }, alert: 'Opened' },
+      });
+      flushSync();
+
+      expect(userPresenter).toHaveBeenCalledTimes(2);
+      expect(observed.values).toEqual([{ label: 'ADA' }, { label: 'GRACE' }]);
+      expect(directPresenter).toHaveBeenCalledTimes(3);
     } finally {
       observed.stop();
+      direct.stop();
     }
   });
 
