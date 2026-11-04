@@ -5,13 +5,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ESLint } from 'eslint';
 import { createJiti } from 'jiti';
+import type * as ProjectConfigModule from './eslint-config';
 
-const { createProjectConfig } = await createJiti(import.meta.url).import(
-  './eslint-config',
-);
+const { createProjectConfig } = await createJiti(import.meta.url).import<
+  typeof ProjectConfigModule
+>('./eslint-config');
 
-let root;
-let eslint;
+let root: string;
+let eslint: ESLint;
 
 before(async () => {
   root = await mkdtemp(join(tmpdir(), 'gost-project-lint-'));
@@ -33,7 +34,7 @@ after(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-const lint = async (file, source) => {
+const lint = async (file: string, source: string) => {
   const filePath = join(root, file);
 
   await writeFile(filePath, source);
@@ -75,7 +76,7 @@ const cases = [
 ];
 
 cases.forEach(([file, source, ruleId]) => {
-  test(`${file} retains ${ruleId} as an error`, async () => {
+  void test(`${file} retains ${ruleId} as an error`, async () => {
     const messages = await lint(file, source);
 
     assert.ok(
@@ -87,7 +88,7 @@ cases.forEach(([file, source, ruleId]) => {
   });
 });
 
-test('default exports remain scoped to known configurations', async () => {
+void test('default exports remain scoped to known configurations', async () => {
   assert.deepEqual(await lint('vite.config.ts', 'export default {};'), []);
 
   const messages = await lint('ordinary.ts', 'export default {};');
@@ -99,7 +100,7 @@ test('default exports remain scoped to known configurations', async () => {
   );
 });
 
-test('Svelte runes and component expressions parse with the shared policy', async () => {
+void test('Svelte runes and component expressions parse with the shared policy', async () => {
   assert.deepEqual(
     await lint(
       'valid.svelte.ts',
@@ -121,7 +122,7 @@ test('Svelte runes and component expressions parse with the shared policy', asyn
   '.svelte-kit/generated.js',
   'playwright-report/report.js',
 ].forEach((file) => {
-  test(`shared/project ignores exclude ${file}`, async () => {
+  void test(`shared/project ignores exclude ${file}`, async () => {
     const results = await eslint.lintText('export default 1;', {
       filePath: join(root, file),
       warnIgnored: false,

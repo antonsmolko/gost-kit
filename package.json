@@ -20,7 +20,7 @@
     "format": "prettier . --write && npm --prefix examples/functional-core run format",
     "format:check": "prettier . --check && npm --prefix examples/functional-core run format:check",
     "fix": "npm run lint:fix && npm run format",
-    "test:tooling": "node --test tooling/*.test.mjs",
+    "test:tooling": "node --test tooling/*.test.ts",
     "check:tooling": "tsc -p tsconfig.json"
   },
   "devDependencies": {

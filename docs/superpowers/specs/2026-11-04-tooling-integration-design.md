@@ -90,4 +90,4 @@ GHSA-gcqx-w48m-w2h4; новых advisory по сравнению с #12 нет.
 Root tsconfig.json включает eslint.config.ts и tooling/**/*.ts; check:tooling
 входит в общий check. Example config проверяется существующим tsconfig.
 Типы Linter.Config[] и параметры helper проверяются tsc; jiti не проверяет типы.
-Prettier configs остаются .mjs, их перенос не входил в запрос.
+Дополнение владельца: Prettier configs root/example и helper tests тоже переведены на TS. Prettier загружает TS нативно на Node26; node:test запускает TS нативно на Node26, сохраняя точечную типизированную загрузку helper через createJiti.import для extensionless imports. Глобальный jiti/register не используется: его wrapping CommonJS зависимостей несовместим с LazyLoadingRuleMap установленного ESLint (воспроизведено при проверке). Все root tooling/config TS-файлы входят в tsc, example configs покрыты его tsconfig.

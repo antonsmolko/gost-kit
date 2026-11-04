@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["eslint.config.ts", "tooling/**/*.ts"]
+  "include": ["eslint.config.ts", "prettier.config.ts", "tooling/**/*.ts"]
 }
