@@ -53,12 +53,26 @@ export const singleIntentDispatch = ESLintUtils.RuleCreator.withoutDocs({
             return;
           }
 
-          visitHandlerBody(handler.body, source, (node) => {
+          const inspect = (node: TSESTree.Node) => {
             if (
               node.type === AST_NODE_TYPES.CallExpression &&
               isDispatch(node.callee)
             ) {
               calls += 1;
+
+              // A Dispatch default argument runs conditionally at invocation,
+              // even though its AssignmentPattern is not a logical expression.
+              condition ??= source.getAncestors(node).find((ancestor) => {
+                return (
+                  ancestor.type === AST_NODE_TYPES.AssignmentPattern &&
+                  handler.params.some((parameter) => {
+                    return (
+                      ancestor.range[0] >= parameter.range[0] &&
+                      ancestor.range[1] <= parameter.range[1]
+                    );
+                  })
+                );
+              });
             }
 
             if (
@@ -70,11 +84,18 @@ export const singleIntentDispatch = ESLintUtils.RuleCreator.withoutDocs({
               node.type === AST_NODE_TYPES.WhileStatement ||
               node.type === AST_NODE_TYPES.DoWhileStatement ||
               node.type === AST_NODE_TYPES.ConditionalExpression ||
-              node.type === AST_NODE_TYPES.LogicalExpression
+              node.type === AST_NODE_TYPES.LogicalExpression ||
+              (node.type === AST_NODE_TYPES.AssignmentExpression &&
+                ['??=', '&&=', '||='].includes(node.operator))
             ) {
               condition ??= node;
             }
+          };
+
+          handler.params.forEach((parameter) => {
+            visitHandlerBody(parameter, source, inspect);
           });
+          visitHandlerBody(handler.body, source, inspect);
 
           if (calls > 1) {
             context.report({ node: handler, messageId: 'multipleDispatch' });

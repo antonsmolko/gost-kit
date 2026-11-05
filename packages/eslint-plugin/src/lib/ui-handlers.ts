@@ -32,6 +32,7 @@ export const createUiHandlerCollector = (
     }
 
     if (
+      node.type === AST_NODE_TYPES.TSSatisfiesExpression ||
       node.type === AST_NODE_TYPES.TSAsExpression ||
       node.type === AST_NODE_TYPES.TSTypeAssertion ||
       node.type === AST_NODE_TYPES.TSNonNullExpression ||

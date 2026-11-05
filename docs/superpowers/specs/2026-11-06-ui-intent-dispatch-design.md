@@ -61,7 +61,7 @@ Read-only эксперимент с TypeScript 5.9.3 подтвердил раз
   Forwarding `onconfirm={presenter.confirm}` не запрещается сам по себе;
   импортированный или вычисленный метод и произвольные helper-графы не
   анализируются межмодульно. Чистота presenter остаётся отдельным контрактом.
-- В собственном теле найденного handler считаются настоящие прямые Dispatch
+- В собственном теле и defaults параметров найденного handler считаются настоящие прямые Dispatch
   calls, включая await/void. Вложенная функция сама по себе не исполняется:
   её calls не прибавляются к handler, если только она отдельно не передана
   как обнаруживаемый callback. Поддержка произвольного call graph не обещается.
@@ -79,7 +79,7 @@ configuration error, как существующее typed selector rule. JS scr
    статический набор вызовов, а не максимальное число на одном executed path:
    `if (condition) dispatch(A); else dispatch(B)` также является нарушением.
 2. Handler с настоящим Dispatch и `if`, `switch`, циклом, тернарным выражением
-   или short-circuit управлением в его собственном теле — логика выбора в UI.
+   или short-circuit управлением (включая logical assignments) при его выполнении — логика выбора в UI.
    Вложенные функции исключаются из обхода. Ранний `return` по условию перед
    одним dispatch также диагностируется; browser-event guard не исключение.
 3. Условный выбор внутри переданного action (`type: condition ? 'A' : 'B'`)
@@ -155,3 +155,36 @@ Builder-check выполнен: уточнены поведение без type 
   nested common под Svelte. Inferred Store.dispatch продолжает диагностироваться.
   Публичные декларации прошли strict TypeScript consumer check; src/tests не
   попадают в tarballs.
+
+## Итог независимого ревью и решения исполнителя
+
+Ревью выявило два важных пропуска: прозрачный `satisfies` wrapper и logical
+assignments (`??=`, `&&=`, `||=`). Добавлены compiler-valid regressions:
+RED — 8 пропусков, включая уточнение defaults ниже; GREEN — 173 plugin tests.
+
+- Defaults параметров reviewer оставил за пределами формулировки «тело».
+  Исполнитель расценил прямой Dispatch в default как важный пропуск: он
+  выполняется при том же вызове handler и может создавать каскад. Проверка
+  включает defaults; одиночный Dispatch default условен, обычный ready-value
+  default разрешён. Цена неверного решения — дополнительные сообщения на
+  callbacks с побочными эффектами в defaults; автоматического изменения нет.
+- Template `{@const}` callback declarations остаются вне discovery первой версии;
+  поддержаны script-local и inline callbacks. Цена ограничения — скрытые в таком
+  template binding dispatches нужно проверять вручную; область не расширяется
+  через угадывание типа/роли template declarations.
+- Imported/member callbacks, spread props и helper/IIFE/constructor graphs
+  остаются за согласованной границей. Цена — скрытые вызовы требуют review.
+- Deferred функции и instance initializers не считаются выполнением внешнего
+  handler. Цена — фактические вызовы через helper/constructor не доказываются;
+  static evaluation остаётся в scope, ложные каскады для deferred кода исключены.
+- Полный browser API запрет, presentation logic и локальное UI-state ownership
+  остаются отдельными контрактами/задачами. Цена — успешный #17 lint не заменяет
+  архитектурное review и оставшиеся #18/#19/#27.
+- Reviewer не перепаковывал/не повторял общий check и browser suite по read-only
+  условиям. Эти gates и actual consumer проверены исполнителем; это не пропуск
+  проверки поставки.
+
+После fix pass полный `npm run check` проходит: 492 теста. Повторная установка
+актуальных tarballs проверяет также `satisfies`, logical assignment и Dispatch
+в default параметре, исходные opt-in/UI-Kit/shell сценарии и nested common.
+Strict consumer declarations проходят. Отложенных minor-находок нет.

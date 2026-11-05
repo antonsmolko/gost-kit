@@ -172,7 +172,8 @@ TS/rune modules are skipped before requesting services.
 Handlers are found through `on*` props/attributes (including `onConfirm` and `{onConfirm}` shorthand) and
 legacy `on:` directives, rather than function names. Inline functions, local
 function declarations, const function expressions and simple const aliases are
-supported. Reassigned callbacks, arbitrary member methods/imported functions,
+supported, including transparent TypeScript `satisfies`/`as` wrappers. Handlers
+declared in template `{@const}` tags are outside this first version's discovery. Reassigned callbacks, arbitrary member methods/imported functions,
 spread props and callback names without the `on` prefix are not traced.
 Forwarding `onconfirm={presenter.confirm}` is permitted without claiming to
 verify the method body or presenter purity.
@@ -185,13 +186,17 @@ metadata for structurally equal local callbacks. Name/shape alone, plain
 `AsyncTap`, any/unknown and mixed unions do not prove Dispatch; genuine nullable
 Dispatch is supported. No application runtime packages are installed by tooling.
 
-The handler's own body reports:
+The handler's own body and parameter defaults report:
 
 - `multipleDispatch`: two or more direct Dispatch calls, even in mutually
   exclusive branches. Send one intent and move selection to the reducer.
 - `conditionalDispatch`: one Dispatch plus `if`, `switch`, loops, a conditional
-  or logical expression in that body, including early guards and an action's
+  or logical expression/assignment (`??=`, `&&=`, `||=`), including early guards and an action's
   conditional `type`. Browser-event guards have no special exception.
+
+Dispatch in a parameter default is conditional on the argument being absent;
+it is counted and diagnosed accordingly. Ordinary ready-value defaults are
+permitted. Nested callback defaults are deferred like other nested functions.
 
 Multiple-call diagnostics take priority; one handler produces one report even
 if bound to several events. Direct/void/await calls with a ready action/value

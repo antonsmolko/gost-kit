@@ -74,6 +74,11 @@ RuleTester.itOnly = test.only;
 
 const valid = [
   fixture(
+    "const handle = (email = '') => { void send({type:'EmailAction', email}); };",
+  ),
+  fixture(`const handle = (deferred = () => { ${one} ${two} }) => { ${one} };`),
+
+  fixture(
     `const handle = () => { class Deferred { value = send({type:'OneAction'}); } ${one} };`,
   ),
   fixture(
@@ -139,6 +144,34 @@ const valid = [
   ),
 ];
 const invalid = [
+  [
+    'satisfies callback',
+    `const handle = (() => { ${one} ${two} }) satisfies (() => void);`,
+    'multipleDispatch',
+  ],
+  [
+    'satisfies alias',
+    `const original = () => { ${one} ${two} }; const handle = original satisfies (() => void);`,
+    'multipleDispatch',
+  ],
+  [
+    'default parameter cascade',
+    `const handle = (pending = send({type:'OneAction'})) => { ${two} };`,
+    'multipleDispatch',
+  ],
+  [
+    'default parameter conditional dispatch',
+    "const handle = (pending = send({type:'OneAction'})) => { void pending; };",
+    'conditionalDispatch',
+  ],
+  ...['??=', '&&=', '||='].map((operator) => {
+    return [
+      `logical assignment ${operator}`,
+      `let pending: Promise<void> | undefined; const handle = () => { pending ${operator} send({type:'OneAction'}); };`,
+      'conditionalDispatch',
+    ] as const;
+  }),
+
   [
     'static field executes',
     `const handle = () => { class Active { static value = send({type:'OneAction'}); } ${one} };`,
@@ -257,6 +290,15 @@ new RuleTester({
 }).run('single-intent-dispatch', singleIntentDispatch, {
   valid,
   invalid: [
+    {
+      ...fixture(
+        '',
+        `<Ui onConfirm={(() => { ${one} ${two} }) satisfies (() => void)} />`,
+      ),
+      name: 'inline satisfies callback',
+      output: null,
+      errors: [{ messageId: 'multipleDispatch' }],
+    },
     {
       ...fixture(
         `const onConfirm = () => { ${one} ${two} };`,
