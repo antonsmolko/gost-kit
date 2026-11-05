@@ -1,8 +1,8 @@
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { ESLint } from 'eslint';
 import { createJiti } from 'jiti';
 import type * as ProjectConfigModule from './eslint-config';
@@ -37,6 +37,7 @@ after(async () => {
 const lint = async (file: string, source: string) => {
   const filePath = join(root, file);
 
+  await mkdir(dirname(filePath), { recursive: true });
   await writeFile(filePath, source);
 
   const [result] = await eslint.lintText(source, { filePath });
@@ -130,4 +131,29 @@ void test('Svelte runes and component expressions parse with the shared policy',
 
     assert.deepEqual(results, []);
   });
+});
+
+void test('project explicitly enables the component policy for src components', async () => {
+  const messages = await lint(
+    'src/Local.svelte',
+    '<script lang="ts">const count = $state(1);</script><p>{count}</p>',
+  );
+
+  assert.ok(
+    messages.some((message) => {
+      return (
+        message.ruleId === 'gost/no-component-state' && message.severity === 2
+      );
+    }),
+    JSON.stringify(messages),
+  );
+});
+
+void test('component-only project override leaves shell rune modules available', async () => {
+  const messages = await lint(
+    'src/shell/local.svelte.ts',
+    'export const read = () => { const state = $state.raw(1);\n\nreturn state; };',
+  );
+
+  assert.deepEqual(messages, []);
 });

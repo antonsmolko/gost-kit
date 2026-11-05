@@ -96,7 +96,11 @@ in [the full inventory](packages/eslint-config/RULES.md). Domain semantics,
 immutability, common-helper reuse and architecture still require review.
 The Svelte config enables `gost/require-feature-state-selector` from the
 [GOST plugin](packages/eslint-plugin/RULES.md), covering Store state and explicit
-local `$state.raw` bindings. Other component architecture policies remain separate tasks.
+local `$state.raw` bindings. The optional `gost/no-component-state` rule checks
+component-owned state creation, with a simple browser-ref exception. The private
+project adapter enables it for `src/**/*.svelte`; consumers choose their own
+component/UI-Kit overrides. Dispatch, conditions and derived-computation policies
+remain separate tasks.
 
 ## Examples
 

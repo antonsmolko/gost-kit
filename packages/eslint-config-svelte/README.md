@@ -74,8 +74,16 @@ for exact supported forms and limitations. JS-script/stateless components are sk
 mixed components check only the scripts marked `lang="ts"`.
 The typed architecture rule is not enabled for `.svelte.js`.
 
-Component state ownership (#16), UI dispatch (#17), boolean conditions (#18),
-and derived calculations (#19) remain separate work. Existing `$state.raw`
+The bundled `gost/no-component-state` rule is off by default. Enable it for
+application components and exclude independent UI components with ordinary
+ESLint overrides, as shown in the plugin inventory. It diagnoses direct
+`$state`, `$state.raw` and `$bindable` creation, allowing simple empty `bind:this`
+refs. It has no autofix and does not analyze all mutations. The repository's
+private adapter explicitly enables it for `src/**/*.svelte`; the public factory
+does not impose that ownership policy.
+
+UI dispatch (#17), boolean conditions (#18) and derived calculations (#19)
+remain separate work. Existing `$state.raw`
 shell bindings and feature selectors remain valid; the Svelte compiler/type
 checker still verifies compilation/accessibility.
 

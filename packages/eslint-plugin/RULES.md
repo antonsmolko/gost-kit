@@ -76,3 +76,66 @@ prevent recomputation when the selected feature actually changes.
 Sources: [Svelte update propagation](https://svelte.dev/docs/svelte/$derived#Update-propagation),
 [Svelte state](https://svelte.dev/docs/svelte/$state),
 [typed ESLint rules](https://typescript-eslint.io/developers/custom-rules/).
+
+## gost/no-component-state
+
+Opt in for application components whose logical state belongs in root/feature
+state. The shared Svelte config registers this rule but leaves it off:
+
+```ts
+export default [
+  ...(await createSvelteConfig({ tsconfigRootDir: import.meta.dirname })),
+  {
+    files: ['src/**/*.svelte'],
+    rules: { 'gost/no-component-state': 'error' },
+  },
+  {
+    files: ['src/ui-kit/**/*.svelte'],
+    rules: { 'gost/no-component-state': 'off' },
+  },
+];
+```
+
+The UI-Kit path is illustrative: the consumer selects its own boundaries.
+Independent UI components may own local state. Disabling this rule preserves
+all other shared Svelte and TypeScript checks. No architecture flag, runtime
+Store dependency or type-aware parser services are required by this rule.
+
+Within selected files, direct intrinsic `$state(...)`, `$state.raw(...)` and
+`$bindable(...)` calls report `componentState`, including module scripts,
+nested helpers and class fields. Lexically shadowed ordinary functions are
+ignored. Use state selectors, read-only `$derived`, pure presenter calls and
+intent actions for application logic. `$props`, ordinary variables and temporary
+browser handles are permitted.
+
+A simple DOM/component ref is allowed when a rune initializes a direct identifier
+in the instance script with no argument, `null` or unshadowed `undefined`, and
+that same variable binding appears directly in `bind:this`:
+
+```svelte
+<script lang="ts">
+  let input = $state<HTMLInputElement>();
+</script>
+
+<input bind:this={input} />
+<button type="button" onclick={() => input?.focus()}>Focus</button>
+```
+
+An unused empty rune, nonempty initializer, module-script binding or same name
+in a different scope does not qualify. `bind:value` is not a ref exception.
+The exception identifies ref initialization; it does not verify every subsequent
+write to the ref.
+
+There is no autofix: state ownership, actions and lifecycle require design.
+This first rule checks the listed rune creations, not all mutations or state
+hidden behind imports/helpers. Props/derived values still require read-only
+usage in review. Dispatch composition (#17), boolean template conditions (#18)
+and presenter computations (#19) are separate checks. `.svelte.ts` shell modules
+remain available outside the component-only override.
+
+The shared config registers `gost` for `.svelte` and `.svelte.ts`, not `.svelte.js`.
+If deliberately extending this policy to `.svelte.js`, install `@gost-kit/eslint-plugin`
+explicitly in the consumer and register the plugin
+in that override (`plugins: { gost: plugin }`, with the named `plugin` import from
+`@gost-kit/eslint-plugin`). Enabling the rule alone for that extension fails plugin
+lookup. The default typed selector rule remains excluded from `.svelte.js`.

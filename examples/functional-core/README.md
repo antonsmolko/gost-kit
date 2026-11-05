@@ -290,7 +290,9 @@ npm run fix
 changes. `check` includes lint/format checks, type checking and tests; the root
 `check` performs the same coverage without repeating the style checks.
 The project consumes the Svelte ESLint configuration and the shared Prettier
-configuration; the Prettier Svelte plugin is connected locally. The repository's [adapter](../../tooling/eslint-config.ts) adds project globals;
+configuration; the Prettier Svelte plugin is connected locally. The repository's [adapter](../../tooling/eslint-config.ts) adds project globals
+and explicitly enables `gost/no-component-state` for `src/**/*.svelte`;
+`bind:this` refs remain permitted while logical state lives in root/features;
 the published Svelte config owns component parsing and shared policies. Dependencies/config
 exports must be prepared in the repository first; the example is not a standalone
 copy of the published packages.
