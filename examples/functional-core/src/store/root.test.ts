@@ -1,13 +1,13 @@
 import { expect, test } from 'vitest';
 import { createRootStore } from './root';
-import { createTestApi } from '../api/create-test-api.test-helper';
+import { createSyntheticApi } from '../api/create-synthetic-api';
 import type { User } from '../features/user/domain/entities/user';
 
 const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };
 
 test('dispatch applies an input action synchronously and returns a promise', async () => {
   const root = createRootStore(
-    createTestApi(async () => {
+    createSyntheticApi(async () => {
       return user;
     }),
   );
@@ -24,7 +24,7 @@ test('dispatch applies an input action synchronously and returns a promise', asy
 test('await dispatch waits for API and the success receiver action', async () => {
   const request = Promise.withResolvers<User>();
   const root = createRootStore(
-    createTestApi(() => {
+    createSyntheticApi(() => {
       return request.promise;
     }),
   );
@@ -46,7 +46,7 @@ test('await dispatch waits for API and the success receiver action', async () =>
 
 test('request rejection reaches a global alert through nested dispatch', async () => {
   const root = createRootStore(
-    createTestApi(() => {
+    createSyntheticApi(() => {
       return Promise.reject(new Error('Offline'));
     }),
   );
@@ -65,7 +65,7 @@ test('request rejection reaches a global alert through nested dispatch', async (
 test('retry clears the feature error and can succeed', async () => {
   let failed = true;
   const root = createRootStore(
-    createTestApi(async () => {
+    createSyntheticApi(async () => {
       if (failed) {
         throw new Error('Offline');
       }
@@ -83,12 +83,12 @@ test('retry clears the feature error and can succeed', async () => {
 
 test('root instances do not share state', async () => {
   const first = createRootStore(
-    createTestApi(async () => {
+    createSyntheticApi(async () => {
       return user;
     }),
   );
   const second = createRootStore(
-    createTestApi(async () => {
+    createSyntheticApi(async () => {
       return user;
     }),
   );

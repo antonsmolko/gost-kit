@@ -7,7 +7,7 @@ import { format } from 'prettier';
 import prettierConfig from '@gost-kit/prettier-config';
 import globals from 'globals';
 import { guard } from '@gost-kit/common';
-import { createConfig } from './index';
+import { createConfig, createTypeScriptPolicy } from './index';
 
 let root: string;
 let eslint: ESLint;
@@ -22,8 +22,9 @@ beforeAll(async () => {
         target: 'ES2024',
         module: 'ESNext',
         moduleResolution: 'Bundler',
+        jsx: 'preserve',
       },
-      include: ['**/*.ts', '**/*.mts', '**/*.cts'],
+      include: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
     }),
   );
   await writeFile(
@@ -417,3 +418,62 @@ test('variables and exports may share a declaration group', async () => {
 
   expect(result.messages).toEqual([]);
 });
+
+test.each(['jsx', 'tsx'])(
+  '%s receives syntax and general policy checks',
+  async (extension) => {
+    const argument = extension === 'tsx' ? 'value: number' : 'value';
+    const source = `export const render = (${argument}) => { if (value == 1) return <div />; return <span />; };`;
+    const result = await lint(source, `View.${extension}`);
+
+    expect(result.messages).toContainEqual(
+      expect.objectContaining({ ruleId: 'eqeqeq', severity: 2 }),
+    );
+    expect(result.messages).toContainEqual(
+      expect.objectContaining({ ruleId: 'curly', severity: 2 }),
+    );
+  },
+);
+
+test('public adapter policy includes recommended, shared and type-aware rules', async () => {
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      {
+        ...createTypeScriptPolicy({ tsconfigRootDir: root }),
+        files: ['**/*.ts'],
+      },
+    ],
+  });
+  const result = await lint(
+    'export type Empty = {};\nPromise.resolve();',
+    'Adapter.ts',
+    instance,
+  );
+
+  expect(result.messages).toContainEqual(
+    expect.objectContaining({
+      ruleId: '@typescript-eslint/no-empty-object-type',
+      severity: 2,
+    }),
+  );
+  expect(result.messages).toContainEqual(
+    expect.objectContaining({
+      ruleId: '@typescript-eslint/no-floating-promises',
+      severity: 2,
+    }),
+  );
+});
+
+test.each(['jsx', 'tsx'])(
+  '%s supports JSX component references without framework plugins',
+  async (extension) => {
+    const result = await lint(
+      'const Button = () => { return <div />; };\n\nexport const view = <Button />;',
+      `Components.${extension}`,
+    );
+
+    expect(result.messages).toEqual([]);
+  },
+);

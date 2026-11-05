@@ -247,7 +247,11 @@ The result is `ApiResult<TData>`:
 
 - `{ type: 'ok', data }`: JSON data, preserving JSON null; 204 and HEAD return
   undefined. Other successful empty or non-JSON responses are contract failures.
-  JSON and application/*+json content types are accepted. OpenAPI types do not
+  JSON and application/*+json content types are accepted. Combined Content-Type
+  values are rejected as contract failures, even when identical; commas in quoted
+  parameters remain valid. This singleton policy follows
+  [RFC 9110 section 8.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.3).
+  OpenAPI types do not
   validate actual response shapes; a later extension can add runtime validators.
 - `{ type: 'error', error }`: `ApiFailure` with kind http/network/contract/aborted,
   optional status and `errors: AppError[]`. HTTP errors take precedence over

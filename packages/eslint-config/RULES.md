@@ -933,3 +933,11 @@ They do not load or enable framework plugins or parsers.
 
 Regenerate via ESLint.calculateConfigForFile for JS and TS after changing pinned
 presets; review every rule/option delta before releasing a new config version.
+
+## Syntax coverage and framework adapters
+
+The base covers JS/JSX/MJS/CJS and TS/TSX/MTS/CTS. JSX parsing and general rules
+are provided without React or other framework-specific policy. TSX uses the
+consumer's TypeScript project and JSX configuration. Framework adapters consume
+`createTypeScriptPolicy` from the public package entry point; policy composition
+preserves preset precedence without normalizing a synthetic filename through ESLint.

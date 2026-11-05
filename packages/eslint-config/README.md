@@ -36,10 +36,12 @@ Relative roots throw an explicit error. TS files need a discoverable consumer
 A missing/excluded project file gives a parser diagnostic, not a policy finding.
 JS files do not require a tsconfig or type-aware linting.
 
-The base matches `**/*.{js,mjs,cjs}` and `**/*.{ts,mts,cts}` in any directory. It
-supplies no browser, Node or test globals. Framework component formats, JSX/TSX
-presets, generated-source ignores, aliases and framework rules remain with the
-project's additional configuration. No application directory layout is assumed.
+The base matches `**/*.{js,jsx,mjs,cjs}` and `**/*.{ts,tsx,mts,cts}` in any directory. It
+supports JSX/TSX syntax and general JS/TS rules, including JSX component
+references. TSX requires the consumer tsconfig to include the files and a suitable
+`jsx` setting. JSX works without a TypeScript project. Browser/Node/test globals,
+framework-specific JSX presets, aliases and application-generated ignores remain
+with the project's additional configuration. No application directory layout is assumed.
 
 ## Policies and overrides
 
@@ -111,3 +113,17 @@ untested local rule or require a particular framework/AI tool.
 
 Package tests use common guards only as a development dependency. They and test
 helpers are excluded from tarballs; published config execution is independent.
+
+## Framework adapters
+
+`createTypeScriptPolicy({ tsconfigRootDir })` returns a composed flat policy:
+recommended JS/TS rules, selected rules, Prettier compatibility, plugins and
+TypeScript parser options. It has no filename selectors; the adapter chooses
+its files/parser and preserves its own syntax and project options. Both the
+common config and Svelte adapter use this public factory. No ESLint instance or
+synthetic source filename is needed to extract the shared rules.
+
+Legacy import resolver options requiring `eslint-import-resolver-node` are
+consumer-owned: install that optional peer explicitly if using them. The default
+import-x resolver is bundled upstream; this package does not install the legacy
+fallback or declare unused utilities as direct runtime dependencies.

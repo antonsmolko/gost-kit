@@ -1,23 +1,19 @@
 import { plugin } from '@gost-kit/eslint-plugin';
-import { ESLint, type Linter } from 'eslint';
-import { createConfig, type ConfigOptions } from '@gost-kit/eslint-config';
+import type { Linter } from 'eslint';
+import {
+  createConfig,
+  createTypeScriptPolicy,
+  type ConfigOptions,
+} from '@gost-kit/eslint-config';
 import svelte from 'eslint-plugin-svelte';
 import ts from 'typescript-eslint';
-import { join } from 'node:path';
 import { svelteRules } from './rules';
 
 export const createSvelteConfig = async ({
   tsconfigRootDir,
 }: ConfigOptions): Promise<Linter.Config[]> => {
   const shared = createConfig({ tsconfigRootDir });
-  const eslint = new ESLint({
-    cwd: tsconfigRootDir,
-    overrideConfigFile: true,
-    overrideConfig: shared,
-  });
-  const policy: Linter.Config = await eslint.calculateConfigForFile(
-    join(tsconfigRootDir, '__gost_svelte_policy__.ts'),
-  );
+  const policy = createTypeScriptPolicy({ tsconfigRootDir });
 
   return [
     { name: 'gost-svelte/ignores', ignores: ['**/.svelte-kit/**'] },
@@ -26,7 +22,7 @@ export const createSvelteConfig = async ({
     ...svelte.configs.prettier,
     {
       name: 'gost-svelte/typescript-project',
-      files: ['**/*.{ts,mts,cts}', '**/*.svelte'],
+      files: ['**/*.{ts,tsx,mts,cts}', '**/*.svelte'],
       languageOptions: { parserOptions: { extraFileExtensions: ['.svelte'] } },
     },
     {
@@ -37,12 +33,7 @@ export const createSvelteConfig = async ({
     {
       name: 'gost-svelte/component-typescript',
       files: ['**/*.svelte'],
-      plugins: Object.fromEntries(
-        Object.entries(policy.plugins ?? {}).filter(([name]) => {
-          // ESLint owns this plugin; distinct consumer instances have different identities.
-          return name !== '@';
-        }),
-      ),
+      plugins: policy.plugins,
       rules: policy.rules,
       languageOptions: {
         parserOptions: {

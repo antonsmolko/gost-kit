@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { createEffector } from './effector';
-import { createTestApi } from '../../api/create-test-api.test-helper';
+import { createSyntheticApi } from '../../api/create-synthetic-api';
 import type { ApiEffect } from '../types/effect';
 import type { RootAction } from '../types/action';
 import type { User } from '../../features/user/domain/entities/user';
@@ -28,7 +28,7 @@ test('request failure dispatches the configured default error', async () => {
   const actions: RootAction[] = [];
   const requests: { email: string }[] = [];
   const effector = createEffector(
-    createTestApi(async (request) => {
+    createSyntheticApi(async (request) => {
       requests.push(request);
       throw new Error('Offline');
     }),
@@ -50,7 +50,7 @@ test('request failure dispatches the configured default error', async () => {
 test('unknown request failures are normalized for the error receiver', async () => {
   const actions: RootAction[] = [];
   const effector = createEffector(
-    createTestApi(() => {
+    createSyntheticApi(() => {
       return Promise.reject(null);
     }),
   );
@@ -81,7 +81,7 @@ test('success receiver exceptions reject without calling the error receiver', as
 
   await expect(
     createEffector(
-      createTestApi(async () => {
+      createSyntheticApi(async () => {
         return user;
       }),
     )(
@@ -108,7 +108,7 @@ test('dispatch failures reject without being reclassified as API failures', asyn
 
   await expect(
     createEffector(
-      createTestApi(async () => {
+      createSyntheticApi(async () => {
         return user;
       }),
     )(
@@ -133,7 +133,7 @@ test('error receiver exceptions propagate without retry', async () => {
 
   await expect(
     createEffector(
-      createTestApi(async () => {
+      createSyntheticApi(async () => {
         throw new Error('Offline');
       }),
     )(
@@ -153,7 +153,7 @@ test('DispatchActionEffect waits for the forwarded action', async () => {
   const actions: RootAction[] = [];
   let completed = false;
   const pending = createEffector(
-    createTestApi(async () => {
+    createSyntheticApi(async () => {
       return user;
     }),
   )(

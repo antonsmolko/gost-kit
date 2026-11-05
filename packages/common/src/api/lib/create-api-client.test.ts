@@ -196,3 +196,21 @@ test('clients keep independent configuration and no browser origin is needed', a
   expect(await a.api.request(...get)).toEqual({ type: 'ok', data: user });
   expect(await b.api.request(...get)).toEqual({ type: 'ok', data: null });
 });
+
+test.each(['application/json', 'text/plain'])(
+  'combined Content-Type after parameters remains a contract failure: %s',
+  async (second) => {
+    const headers = new Headers({
+      'Content-Type': 'application/json; charset=utf-8',
+    });
+
+    headers.append('Content-Type', second);
+
+    const response = new Response(JSON.stringify(user), { headers });
+
+    expect(await setup(response).api.request(...get)).toEqual({
+      type: 'error',
+      error: { kind: 'contract', status: 200, errors: [] },
+    });
+  },
+);

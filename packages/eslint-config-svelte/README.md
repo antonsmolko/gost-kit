@@ -34,8 +34,9 @@ not require a tsconfig. Component scripts use TypeScript (`lang="ts"`); componen
 without a script are permitted. TS/JS rune modules are supported. Globals are
 not supplied for browser, Node or test environments: scope them in the consumer.
 
-The asynchronous factory calculates the shared TypeScript policy using public
-ESLint APIs. It writes no files, invokes no application code and does not require
+The asynchronous factory consumes the public `createTypeScriptPolicy` export
+from `@gost-kit/eslint-config`. It does not instantiate ESLint, resolve a synthetic
+filename or depend on private config names. It writes no files, invokes no application code and does not require
 a placeholder source file. Config/compiler options remain consumer overrides,
 for example `languageOptions.parserOptions.svelteConfig` for component files.
 Do not append the common factory again: it is already included.

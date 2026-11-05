@@ -3,8 +3,8 @@ import type { User } from '../features/user/domain/entities/user';
 import type { ApiClient } from '../store/types/effect';
 import type { Paths } from './paths';
 
-export const createTestApi = (
-  operation: AsyncFn<[{ email: string }], User>,
+export const createSyntheticApi = (
+  operation: AsyncFn<[Pick<User, 'email'>], User>,
 ): ApiClient => {
   return createApiClient<Paths>({
     baseUrl: 'https://synthetic.invalid',
