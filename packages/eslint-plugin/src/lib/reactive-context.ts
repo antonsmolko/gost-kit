@@ -3,38 +3,14 @@ import {
   type TSESLint,
   type TSESTree,
 } from '@typescript-eslint/utils';
+import { runeCallee } from './rune-callee';
 import { memberKey } from './member-key';
 
 export const isDerived = (
   node: TSESTree.CallExpression,
   source: TSESLint.SourceCode,
 ): boolean => {
-  const identifier =
-    node.callee.type === AST_NODE_TYPES.Identifier
-      ? node.callee
-      : node.callee.type === AST_NODE_TYPES.MemberExpression &&
-          memberKey(node.callee) === 'by' &&
-          node.callee.object.type === AST_NODE_TYPES.Identifier
-        ? node.callee.object
-        : undefined;
-
-  if (identifier?.name !== '$derived') {
-    return false;
-  }
-
-  let scope: TSESLint.Scope.Scope | null = source.getScope(identifier);
-
-  while (scope) {
-    const variable = scope.set.get('$derived');
-
-    if (variable && variable.defs.length > 0) {
-      return false;
-    }
-
-    scope = scope.upper;
-  }
-
-  return true;
+  return !!runeCallee(node.callee, source, '$derived', 'by');
 };
 
 export const reactiveContext = (

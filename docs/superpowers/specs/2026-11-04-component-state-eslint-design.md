@@ -144,3 +144,19 @@ errors. Собранные plugin/config tarballs проверяются во в
   explicit on без fix, UI-Kit off с сохранением button rule, DOM ref и shell
   проверены. Публичные TypeScript-декларации проходят typecheck; artifacts не
   содержат исходники/тесты и не устанавливают `@gost-kit/common`/`@gost-kit/svelte`.
+
+## Исправления опубликованного ревью PR #29
+
+- Selector-rule использует тот же value-namespace resolver: type-only aliases,
+  interfaces и оба синтаксиса type imports не скрывают `$derived`/`$derived.by`
+  и `$state.raw`. Реальные value bindings продолжают затенять rune.
+- Сопоставление rune callee и извлечение/атрибуты/range Svelte scripts вынесены
+  в общие helpers. Фильтры instance refs и typed selector scripts сохраняются
+  раздельными; нет расширения области включения правил.
+- Для `.svelte.js` задокументирована явная регистрация плагина при расширении
+  consumer scope; публичная фабрика сохраняет прежний набор registrations.
+- Метаданные package.json синхронизированы с README: плагин содержит также
+  правило без обязательных type services.
+- Новые regression tests: RED — 7 пропусков диагностики; GREEN — 111 plugin tests,
+  включая три сценария автофикса с type-only `$derived`. Полный check: 426 тестов.
+- Независимое повторное ревью исправлений: важных замечаний нет.

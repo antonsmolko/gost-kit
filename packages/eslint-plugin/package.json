@@ -1,7 +1,7 @@
 {
   "name": "@gost-kit/eslint-plugin",
   "version": "0.0.0",
-  "description": "Typed GOST architecture rules for agent-assisted frontend development.",
+  "description": "GOST architecture rules for agent-assisted frontend development.",
   "type": "module",
   "license": "MIT",
   "engines": {

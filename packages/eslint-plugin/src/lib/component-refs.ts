@@ -1,3 +1,4 @@
+import { svelteScripts, scriptHasAttribute, inScript } from './svelte-scripts';
 import { findValueVariable } from './value-variable';
 import type { AST } from 'svelte-eslint-parser';
 import {
@@ -8,27 +9,11 @@ import {
 
 export const createComponentRefCheck = (source: TSESLint.SourceCode) => {
   const variables = new Set<TSESLint.Scope.Variable>();
-  const services = source.parserServices;
-  // Svelte extends ESTree with script elements; only its parser supplies these.
-  const scripts =
-    services && 'isSvelte' in services && services.isSvelte === true
-      ? (source.ast as unknown as AST.SvelteProgram).body.filter(
-          (node): node is AST.SvelteScriptElement => {
-            return node.type === 'SvelteScriptElement';
-          },
-        )
-      : [];
-  const instanceScripts = scripts.filter((script) => {
-    return !script.startTag.attributes.some((attribute) => {
-      return (
-        attribute.type === 'SvelteAttribute' &&
-        (attribute.key.name === 'module' ||
-          (attribute.key.name === 'context' &&
-            attribute.value.some((value) => {
-              return value.type === 'SvelteLiteral' && value.value === 'module';
-            })))
-      );
-    });
+  const instanceScripts = (svelteScripts(source) ?? []).filter((script) => {
+    return (
+      !scriptHasAttribute(script, 'module') &&
+      !scriptHasAttribute(script, 'context', 'module')
+    );
   });
 
   const isEmpty = (call: TSESTree.CallExpression): boolean => {
@@ -93,13 +78,7 @@ export const createComponentRefCheck = (source: TSESLint.SourceCode) => {
         return false;
       }
 
-      if (
-        !instanceScripts.some((script) => {
-          return (
-            call.range[0] >= script.range[0] && call.range[1] <= script.range[1]
-          );
-        })
-      ) {
+      if (!inScript(call, instanceScripts)) {
         return false;
       }
 

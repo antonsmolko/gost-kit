@@ -132,3 +132,10 @@ hidden behind imports/helpers. Props/derived values still require read-only
 usage in review. Dispatch composition (#17), boolean template conditions (#18)
 and presenter computations (#19) are separate checks. `.svelte.ts` shell modules
 remain available outside the component-only override.
+
+The shared config registers `gost` for `.svelte` and `.svelte.ts`, not `.svelte.js`.
+If deliberately extending this policy to `.svelte.js`, install `@gost-kit/eslint-plugin`
+explicitly in the consumer and register the plugin
+in that override (`plugins: { gost: plugin }`, with the named `plugin` import from
+`@gost-kit/eslint-plugin`). Enabling the rule alone for that extension fails plugin
+lookup. The default typed selector rule remains excluded from `.svelte.js`.

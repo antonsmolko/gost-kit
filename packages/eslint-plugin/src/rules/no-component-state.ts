@@ -3,8 +3,7 @@ import {
   ESLintUtils,
   type TSESTree,
 } from '@typescript-eslint/utils';
-import { findValueVariable } from '../lib/value-variable';
-import { memberKey } from '../lib/member-key';
+import { runeCallee } from '../lib/rune-callee';
 import { createComponentRefCheck } from '../lib/component-refs';
 
 export const noComponentState = ESLintUtils.RuleCreator.withoutDocs({
@@ -31,28 +30,10 @@ export const noComponentState = ESLintUtils.RuleCreator.withoutDocs({
       CallExpression(node) {
         const callee = node.callee;
         const identifier =
-          callee.type === AST_NODE_TYPES.Identifier
-            ? callee
-            : callee.type === AST_NODE_TYPES.MemberExpression &&
-                memberKey(callee) === 'raw' &&
-                callee.object.type === AST_NODE_TYPES.Identifier &&
-                callee.object.name === '$state'
-              ? callee.object
-              : undefined;
+          runeCallee(callee, source, '$state', 'raw') ??
+          runeCallee(callee, source, '$bindable');
 
-        if (
-          !identifier ||
-          (identifier.name !== '$state' && identifier.name !== '$bindable')
-        ) {
-          return;
-        }
-
-        const variable = findValueVariable(
-          source.getScope(identifier),
-          identifier.name,
-        );
-
-        if (variable && variable.defs.length > 0) {
+        if (!identifier) {
           return;
         }
 

@@ -50,6 +50,12 @@ declare const pagePresenter: (user: User, config: State['config']) => object;
 declare const consume: (value: unknown) => unknown;
 declare const readName: (user: User) => string;
 `;
+
+writeFileSync(
+  join(root, 'rune-types.ts'),
+  'export type $state = number; export type $derived = number;',
+);
+
 let counter = 0;
 const fixture = (source: string) => {
   const filename = join(root, `Case${counter}.svelte.ts`);
@@ -63,6 +69,9 @@ const fixture = (source: string) => {
   return { filename, code };
 };
 const valid = [
+  'const $derived = { by: (fn: () => unknown) => fn() }; const view = $derived.by(() => userPresenter(root.state.user));',
+  'const $state = { raw: (value: State) => value }; function read() { type $state = number; const model = $state.raw(root.state); return $derived.by(() => userPresenter(model.user)); }',
+
   'const view = $derived.by(function* () { yield userPresenter(root.state.user); });',
   'const view = $derived(class { value = userPresenter(root.state.user); });',
   'const { user } = $state.raw({ user: { name: "Ada" } }); const view = $derived(consume(user.name));',
@@ -85,6 +94,18 @@ const valid = [
   'const $derived = (value: unknown) => value; const view = $derived(userPresenter(root.state.user));',
 ];
 const autofixCases = [
+  ...[
+    'type $derived = number;',
+    'import type { $derived } from "./rune-types";',
+    'import { type $derived } from "./rune-types";',
+  ].map((declaration) => {
+    return [
+      `derived type shadow fix: ${declaration}`,
+      `${declaration}\nconst view = $derived(userPresenter(root.state.user));`,
+      `${declaration}\nconst user = $derived(root.state.user);\nconst view = $derived(userPresenter(user));`,
+    ];
+  }),
+
   [
     'raw snapshot',
     'let model = $state.raw({ user: { name: "Ada" } });\nconst view = $derived(userPresenter(model.user));',
@@ -132,6 +153,30 @@ const autofixCases = [
   ],
 ];
 const noFixCases = [
+  ...[
+    'type $derived = number;',
+    'interface $derived { value: number }',
+    'import type { $derived } from "./rune-types";',
+    'import { type $derived } from "./rune-types";',
+  ].map((declaration) => {
+    return [
+      `derived type shadow: ${declaration}`,
+      `${declaration} const view = $derived.by(() => userPresenter(root.state.user));`,
+      1,
+    ];
+  }),
+  ...[
+    'type $state = number;',
+    'import type { $state } from "./rune-types";',
+    'import { type $state } from "./rune-types";',
+  ].map((declaration) => {
+    return [
+      `raw type shadow: ${declaration}`,
+      `${declaration} let model = $state.raw({ user: { name: "Ada" } }); const view = $derived.by(() => userPresenter(model.user));`,
+      1,
+    ];
+  }),
+
   [
     'constructor',
     'declare const Badge: new (user: User) => object; const view = $derived(new Badge(root.state.user));',

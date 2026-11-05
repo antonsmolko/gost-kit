@@ -1,4 +1,8 @@
-import type { AST } from 'svelte-eslint-parser';
+import {
+  svelteScripts,
+  scriptHasAttribute,
+  inScript,
+} from '../lib/svelte-scripts';
 import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 import { memberKey } from '../lib/member-key';
 import { createStoreStateCheck } from '../lib/store-state';
@@ -19,37 +23,12 @@ export const requireFeatureStateSelector = ESLintUtils.RuleCreator.withoutDocs({
   },
   defaultOptions: [],
   create(context) {
-    const parserServices = context.sourceCode.parserServices;
+    const typedScripts = svelteScripts(context.sourceCode)?.filter((script) => {
+      return scriptHasAttribute(script, 'lang', 'ts');
+    });
 
-    let typedScripts: AST.SvelteScriptElement[] | undefined;
-
-    if (
-      parserServices &&
-      'isSvelte' in parserServices &&
-      parserServices.isSvelte === true
-    ) {
-      // Svelte extends ESTree with script elements that TSESTree does not model.
-      const program = context.sourceCode.ast as unknown as AST.SvelteProgram;
-
-      typedScripts = program.body
-        .filter((node): node is AST.SvelteScriptElement => {
-          return node.type === 'SvelteScriptElement';
-        })
-        .filter((node) => {
-          return node.startTag.attributes.some((attribute) => {
-            return (
-              attribute.type === 'SvelteAttribute' &&
-              attribute.key.name === 'lang' &&
-              attribute.value.some((value) => {
-                return value.type === 'SvelteLiteral' && value.value === 'ts';
-              })
-            );
-          });
-        });
-
-      if (typedScripts.length === 0) {
-        return {};
-      }
+    if (typedScripts?.length === 0) {
+      return {};
     }
 
     const services = ESLintUtils.getParserServices(context);
@@ -58,15 +37,7 @@ export const requireFeatureStateSelector = ESLintUtils.RuleCreator.withoutDocs({
 
     return {
       MemberExpression(node) {
-        if (
-          typedScripts &&
-          !typedScripts.some((script) => {
-            return (
-              node.range[0] >= script.range[0] &&
-              node.range[1] <= script.range[1]
-            );
-          })
-        ) {
+        if (typedScripts && !inScript(node, typedScripts)) {
           return;
         }
 
