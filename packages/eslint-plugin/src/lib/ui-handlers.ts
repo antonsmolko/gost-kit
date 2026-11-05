@@ -110,6 +110,16 @@ export const createUiHandlerCollector = (
         }
       });
     },
+    shorthand(node: TSESTree.Node) {
+      const attribute = node as unknown as AST.SvelteShorthandAttribute;
+
+      if (
+        attribute.key.name.startsWith('on') &&
+        attribute.key.name.length > 2
+      ) {
+        add(attribute.value as TSESTree.Node);
+      }
+    },
     directive(node: TSESTree.Node) {
       const directive = node as unknown as AST.SvelteDirective;
 

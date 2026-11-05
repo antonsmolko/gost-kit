@@ -42,6 +42,7 @@ export const singleIntentDispatch = ESLintUtils.RuleCreator.withoutDocs({
 
     return {
       SvelteAttribute: collector.attribute,
+      SvelteShorthandAttribute: collector.shorthand,
       SvelteDirective: collector.directive,
       'Program:exit'() {
         collector.handlers.forEach((handler) => {

@@ -82,8 +82,15 @@ refs. It has no autofix and does not analyze all mutations. The repository's
 private adapter explicitly enables it for `src/**/*.svelte`; the public factory
 does not impose that ownership policy.
 
-UI dispatch (#17), boolean conditions (#18) and derived calculations (#19)
-remain separate work. Existing `$state.raw`
+The bundled `gost/single-intent-dispatch` rule is also off by default. It checks
+real GOST Dispatch calls in typed instance callbacks passed through `on*` props
+or legacy events: one intent per handler, without conditional selection. UI-Kit
+owns browser-event adaptation and may opt out through file overrides. This is
+not a blanket browser API detector, and there is no autofix. Consult the plugin
+inventory for supported aliases and scope limits.
+
+Boolean conditions (#18) and presentation computations in derived/template
+expressions (#19) remain separate work. Existing `$state.raw`
 shell bindings and feature selectors remain valid; the Svelte compiler/type
 checker still verifies compilation/accessibility.
 

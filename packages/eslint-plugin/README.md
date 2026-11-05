@@ -8,7 +8,8 @@ ESLint ^10.14.0 and TypeScript ^5.9.3.
 
 `@gost-kit/eslint-config-svelte` installs and enables the plugin for typed Svelte
 components and `.svelte.ts` modules. The selector rule is enabled by default;
-`gost/no-component-state` is available but requires an explicit consumer override.
+`gost/no-component-state` and `gost/single-intent-dispatch` require explicit
+consumer overrides for business component paths. UI-Kit paths can opt out.
 No separate plugin registration is needed.
 Other consumers may register the named public export in their flat config:
 

@@ -257,6 +257,15 @@ new RuleTester({
 }).run('single-intent-dispatch', singleIntentDispatch, {
   valid,
   invalid: [
+    {
+      ...fixture(
+        `const onConfirm = () => { ${one} ${two} };`,
+        '<Ui {onConfirm} />',
+      ),
+      name: 'shorthand callback prop',
+      output: null,
+      errors: [{ messageId: 'multipleDispatch' }],
+    },
     ...invalid.map(([name, script, messageId]) => {
       return {
         ...fixture(script),

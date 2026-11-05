@@ -129,9 +129,29 @@ browser-механизма нужен библиотечный компонен�
 
 Требования владельца о границе UI-Kit/бизнес-фичи закреплены в issue #17;
 расширение #19 на шаблоны также записано в задаче. Технические границы первой
-версии выше предложены исполнителем и ожидают подтверждения дизайна до
-реализации. Нормативные документы gost-spec не объявляются автоматически
+версии выше утверждены владельцем 2026-11-06 перед реализацией. Нормативные документы gost-spec не объявляются автоматически
 утверждёнными этим локальным дизайном.
 
 Builder-check выполнен: уточнены поведение без type services и отказ от
 распознавания смешанных unions; иных важных вопросов для плана не осталось.
+
+## Свидетельства реализации
+
+- Первые тесты дали RED по 22 отсутствующим диагностическим сценариям и
+  отсутствующей ошибке type services; реальные Svelte fixtures компилируются.
+- Проверка generic aliases выявила сохранение alias metadata в TypeScript;
+  локальный одноимённый тип — переиспользование метаданных публичного Dispatch.
+  В реализации проверяются цепочка type-reference symbols и происхождение
+  call signature. Никаких runtime contract/type изменений для обхода этого нет.
+- Shorthand callback props `{onConfirm}` проверяются так же, как полная запись.
+  Добавлен отдельный regression RED→GREEN; одинаковый handler не репортится дважды.
+- `npm run check`: 482 теста (163 plugin, включая 52 новых), типы, lint/format,
+  Svelte diagnostics проходят. Production build и оба browser tests проходят.
+- Во внешний consumer установлены настоящие tarballs generic/plugin/Svelte
+  configs. Tooling отдельно не подтягивает GOST application runtimes.
+  После явной установки runtime проверены default off, opt-in/aliases/guard,
+  отсутствие fix, UI-Kit override с сохранением button rule и shell вне scope.
+- Отдельная consumer-фаза убирает common из корневого resolution: остаётся
+  nested common под Svelte. Inferred Store.dispatch продолжает диагностироваться.
+  Публичные декларации прошли strict TypeScript consumer check; src/tests не
+  попадают в tarballs.
