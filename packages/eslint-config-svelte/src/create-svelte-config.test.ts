@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { ESLint } from 'eslint';
-import { mkdtemp, writeFile, symlink, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, symlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -415,4 +415,90 @@ test('a JS module script does not disable the typed rule in a TS instance script
   expect(result.messages).toContainEqual(
     expect.objectContaining({ ruleId: 'gost/require-feature-state-selector' }),
   );
+});
+
+test('component state policy is off by default and explicit for the caller file glob', async () => {
+  await mkdir(join(root, 'src/features'), { recursive: true });
+
+  const source =
+    '<script lang="ts">let open = $state(false);</script><p>{open}</p>';
+  const ordinary = await lint(source, 'src/features/Panel.svelte');
+
+  expect(
+    ordinary.messages.filter((message) => {
+      return message.ruleId === 'gost/no-component-state';
+    }),
+  ).toEqual([]);
+
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      ...(await createSvelteConfig({ tsconfigRootDir: root })),
+      {
+        files: ['src/**/*.svelte'],
+        rules: { 'gost/no-component-state': 'error' },
+      },
+    ],
+  });
+  const strict = await lint(source, 'src/features/Panel.svelte', instance);
+
+  expect(strict.messages).toContainEqual(
+    expect.objectContaining({ ruleId: 'gost/no-component-state', severity: 2 }),
+  );
+  expect(
+    strict.messages.find((message) => {
+      return message.ruleId === 'gost/no-component-state';
+    })?.fix,
+  ).toBeUndefined();
+});
+
+test('UI-Kit override allows its local state while preserving ordinary Svelte checks', async () => {
+  await mkdir(join(root, 'src/ui-kit'), { recursive: true });
+
+  const source =
+    '<script lang="ts">let open = $state(false);</script><button>{open}</button>';
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      ...(await createSvelteConfig({ tsconfigRootDir: root })),
+      {
+        files: ['src/**/*.svelte'],
+        rules: { 'gost/no-component-state': 'error' },
+      },
+      {
+        files: ['src/ui-kit/**/*.svelte'],
+        rules: { 'gost/no-component-state': 'off' },
+      },
+    ],
+  });
+  const result = await lint(source, 'src/ui-kit/Toggle.svelte', instance);
+
+  expect(
+    result.messages.filter((message) => {
+      return message.ruleId === 'gost/no-component-state';
+    }),
+  ).toEqual([]);
+  expect(result.messages).toContainEqual(
+    expect.objectContaining({ ruleId: 'svelte/button-has-type', severity: 2 }),
+  );
+});
+
+test('explicit component policy preserves a simple DOM ref binding', async () => {
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      ...(await createSvelteConfig({ tsconfigRootDir: root })),
+      { files: ['**/*.svelte'], rules: { 'gost/no-component-state': 'error' } },
+    ],
+  });
+  const result = await lint(
+    '<script lang="ts">let input: HTMLInputElement | undefined = $state(); const focus = () => { input?.focus(); };</script><input aria-label="Query" bind:this={input} /><button type="button" onclick={focus}>Focus</button>',
+    'Ref.svelte',
+    instance,
+  );
+
+  expect(result.messages).toEqual([]);
 });
