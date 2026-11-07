@@ -1,13 +1,18 @@
-import type { ApiClient, ApiMethod, ApiResult } from '../../api';
+import type { ApiClient, ApiMethod, ApiResult, ApiOperation } from '../../api';
 import type { Ulx } from '../../types';
 import type { ApiEffect } from '../types/api-effect';
 import type { DispatchAction } from '../types/dispatch-action';
 import type { Dispatch } from '../types/dispatch';
 import type { Trigger } from '../types/trigger';
+import type { apiOperationSchema } from '../../api/types/api-operation-schema';
+import { mapApiResult } from './map-api-result';
 
 export const createApiHandler = <
   TPaths extends object,
   TAction extends Trigger,
+  TOperations extends ApiOperation & {
+    readonly [apiOperationSchema]?: TPaths;
+  } = never,
 >(
   api: ApiClient<TPaths>,
 ) => {
@@ -16,12 +21,13 @@ export const createApiHandler = <
       effect,
       dispatch,
     }: {
-      effect: ApiEffect<TPaths, TAction>;
+      effect: ApiEffect<TPaths, TAction, TOperations>;
       dispatch: Dispatch<TAction>;
     }): Promise<void> => {
       const {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Omit the effect discriminator from native request options.
         type,
+        operation,
         defaultError,
         onSuccess: success,
         onError,
@@ -32,13 +38,17 @@ export const createApiHandler = <
 
       // The effect union validates method/url/init together. Its dynamic dispatch
       // cannot retain one concrete endpoint's generics; erase only this adapter.
-      const result = await (
+      const response = await (
         api.request as (
           method: ApiMethod,
           url: string,
           init: object,
         ) => Promise<ApiResult<unknown>>
       )(method, url, init);
+      const result = await mapApiResult(
+        response,
+        Object.hasOwn(effect, 'operation') ? operation : undefined,
+      );
 
       if (result.type === 'ok') {
         // The public effect union correlates the callback with the request. A
