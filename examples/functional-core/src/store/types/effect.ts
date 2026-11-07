@@ -10,9 +10,9 @@ export type DispatchActionEffect = {
   type: 'DispatchActionEffect';
   action: RootAction;
 };
-export type ApiOperations = typeof loadUser;
+export type ApiOperation = typeof loadUser;
 export type ApiEffect = CommonApiEffect<
-  ApiOperations,
+  ApiOperation,
   Extract<RootAction, { scope: 'users'; type: 'SuccessReceiveAction' }>,
   Extract<RootAction, { scope: 'users'; type: 'ErrorReceiveAction' }>
 >;

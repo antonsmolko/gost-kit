@@ -32,7 +32,7 @@ type RuntimeApiEffect<TAction extends Trigger> = Rec & {
 export const createApiHandler = <
   TPaths extends object,
   TAction extends Trigger,
-  TOperations extends ApiOperation & {
+  TOperation extends ApiOperation & {
     readonly [apiOperationSchema]?: TPaths;
   },
 >(
@@ -43,7 +43,7 @@ export const createApiHandler = <
       effect,
       dispatch,
     }: {
-      effect: ApiEffect<TOperations, TAction, TAction>;
+      effect: ApiEffect<TOperation, TAction, TAction>;
       dispatch: Dispatch<TAction>;
     }): Promise<void> => {
       const {

@@ -292,8 +292,8 @@ type SuccessAction = {
 };
 type ErrorAction = { type: 'UserLoadFailedAction'; errors: AppError[] };
 type Action = SuccessAction | ErrorAction;
-type Operations = typeof loadUser;
-type Effect = ApiEffect<Operations, SuccessAction, ErrorAction>;
+type Operation = typeof loadUser;
+type Effect = ApiEffect<Operation, SuccessAction, ErrorAction>;
 
 const effect: Effect = createApiEffect(loadUser, {
   body: { email: 'ada@example.test' },
@@ -312,7 +312,7 @@ const effect: Effect = createApiEffect(loadUser, {
 
 // In a reducer: return { state: loadingState, effects: [effect] }.
 // Supply the same shared schema-typed api used by the rest of the application.
-const handlers = createApiHandler<paths, Action, Operations>(api);
+const handlers = createApiHandler<paths, Action, Operation>(api);
 ```
 
 `api` is your configured
@@ -335,8 +335,8 @@ defaultError and callbacks. Method/url come from the operation. Reducer tests ca
 check `commit.effects[0].type`, operation identity and request payload.
 
 Declare operations as `typeof loadUser | typeof updateUser` and use that union
-in `ApiEffect<Operations, SuccessAction, ErrorAction>` and
-`createApiHandler<paths, Action, Operations>(api)`. Every effect has a required
+in `ApiEffect<Operation, SuccessAction, ErrorAction>` and
+`createApiHandler<paths, Action, Operation>(api)`. Every effect has a required
 operation; omitting mapResponse selects identity mapping. SuccessAction and
 ErrorAction are checked separately: onSuccess returns only SuccessAction,
 onError returns only ErrorAction. Each can be a union. Callbacks remain optional;

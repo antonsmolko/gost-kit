@@ -18,9 +18,9 @@ const checkEffectTypes = () => {
     url: '/empty',
   });
 
-  type Operations = typeof postOperation | typeof emptyOperation;
+  type Operation = typeof postOperation | typeof emptyOperation;
 
-  const post: ApiEffect<Operations, Action, never> = createApiEffect(
+  const post: ApiEffect<Operation, Action, never> = createApiEffect(
     postOperation,
     {
       params: { path: { id: 1 } },
@@ -33,7 +33,7 @@ const checkEffectTypes = () => {
       },
     },
   );
-  const empty: ApiEffect<Operations, Action, never> = createApiEffect(
+  const empty: ApiEffect<Operation, Action, never> = createApiEffect(
     emptyOperation,
     {
       defaultError: fallback,
@@ -44,14 +44,14 @@ const checkEffectTypes = () => {
       },
     },
   );
-  const wrong: ApiEffect<Operations, Action, never> = {
+  const wrong: ApiEffect<Operation, Action, never> = {
     ...post,
     // @ts-expect-error response must correspond to the selected operation
     onSuccess: (_data: string) => {
       return { type: 'DoneAction' };
     },
   };
-  const handler = createApiHandler<TestPaths, Action, Operations>(
+  const handler = createApiHandler<TestPaths, Action, Operation>(
     createApiClient<TestPaths>({ baseUrl: 'https://example.test' }),
   );
 
@@ -63,7 +63,7 @@ const checkEffectTypes = () => {
   });
 
   // @ts-expect-error required body must not disappear in effect union
-  const missingBody: ApiEffect<Operations, Action, never> = {
+  const missingBody: ApiEffect<Operation, Action, never> = {
     type: 'ApiEffect',
     operation: postOperation,
     method: 'post',

@@ -112,13 +112,13 @@ callback отсутствует, можно указать never. Handler про
 результатов входят в RootAction:
 
 ```ts
-type ApiOperations = typeof loadUser;
+type ApiOperation = typeof loadUser;
 type SuccessAction = Extract<RootAction, { type: 'SuccessReceiveAction' }>;
 type ErrorAction = Extract<RootAction, { type: 'ErrorReceiveAction' }>;
-type AppApiEffect = ApiEffect<ApiOperations, SuccessAction, ErrorAction>;
+type AppApiEffect = ApiEffect<ApiOperation, SuccessAction, ErrorAction>;
 
 // Один общеприкладной handler, без runtime реестра endpoint handlers.
-const handlers = createApiHandler<Paths, RootAction, ApiOperations>(api);
+const handlers = createApiHandler<Paths, RootAction, ApiOperation>(api);
 ```
 
 Несколько операций агрегируются union типов: `typeof loadUser | typeof updateUser`.

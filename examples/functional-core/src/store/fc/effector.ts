@@ -8,7 +8,7 @@ import type { Paths } from '../../api/paths';
 import type { RootAction } from '../types/action';
 import type {
   ApiClient,
-  ApiOperations,
+  ApiOperation,
   DispatchActionEffect,
   RootEffect,
 } from '../types/effect';
@@ -23,7 +23,7 @@ export const createEffector = (
   api: ApiClient,
 ): Effector<RootAction, RootEffect> => {
   return effecting(
-    createApiHandler<Paths, RootAction, ApiOperations>(api),
+    createApiHandler<Paths, RootAction, ApiOperation>(api),
     shellEffector,
   );
 };

@@ -100,7 +100,7 @@ provides the entire current root state, including other features, auth and globa
 configuration when present. Both state inputs are deeply readonly at compile time.
 The handler returns complete `UserState`, not `RootState`. Its inferred result is
 checked for extra state keys without a return annotation.
-`createApiHandler<Paths, RootAction, ApiOperations>(api)` supplies the common API effect table.
+`createApiHandler<Paths, RootAction, ApiOperation>(api)` supplies the common API effect table.
 `define.effector<RootAction, DispatchActionEffect>` defines the remaining table;
 handlers receive `{ effect, dispatch }`. Each table covers its declared effect union.
 
@@ -113,7 +113,7 @@ const reducer: Reducer<RootState, RootAction, RootEffect> = reducing({
 });
 
 const effector: Effector<RootAction, RootEffect> = effecting(
-  createApiHandler<Paths, RootAction, ApiOperations>(api),
+  createApiHandler<Paths, RootAction, ApiOperation>(api),
   shellEffector,
 );
 ```
@@ -173,7 +173,7 @@ has no transport or Svelte dependencies.
 `defineApiOperation<Paths>()`. In the reducer, `createApiEffect(loadUser, options)`
 returns a plain effect object. Its onSuccess receives User and returns a scoped
 action; the reducer then applies it to state. No mapper or HTTP executes while
-the reducer describes the effect. The root declares `ApiOperations = typeof loadUser`
+the reducer describes the effect. The root declares `ApiOperation = typeof loadUser`
 and includes it in ApiEffect and the single shared createApiHandler.
 
 The direction is FC → data/api → mapper → domain/entities. Data/API does not
@@ -214,7 +214,7 @@ dispatch reports its own failures and resolves, so the parent does not report th
 same failure again. The Svelte adapter includes the callback in
 `createDispatch(config)`.
 
-`ApiEffect<ApiOperations, SuccessAction, ErrorAction>` comes from `@gost-kit/common`. It describes a
+`ApiEffect<ApiOperation, SuccessAction, ErrorAction>` comes from `@gost-kit/common`. It describes a
 lowercase `method`, a schema path in `url`, typed `params`/`body`, `defaultError`
 and optional `onSuccess`/`onError` action factories. This example always supplies
 both callbacks so the feature leaves loading. Its effect type selects the
