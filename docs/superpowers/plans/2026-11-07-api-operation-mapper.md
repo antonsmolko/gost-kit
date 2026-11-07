@@ -1,6 +1,6 @@
 # API Operation Mapper Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Добавить переиспользуемую API-операцию и объектную фабрику эффекта с типизированным доменным результатом.
 
@@ -42,11 +42,11 @@
 - Consumes: ApiResponse/ApiMethod, upstream FetchOptions, Trigger/DispatchAction/AppError.
 - Produces: `defineApiOperation<Paths>()(definition)` с readonly method/url/mapResponse и типовой связью с Paths; `createApiEffect(operation, options)` с inferred independent success/error actions; `ApiEffect<Paths, Action, Operations = never>` сохраняет legacy ветку.
 
-- [ ] Написать runtime tests identity/mapped operation, construction purity и effect.type/operation/payload/callback identity; type tests endpoint DTO, required body/path/query, bad method/route/parseAs, inferred domain/async result, identity/null/HEAD, wrong actions, same-route different mappers.
-- [ ] Запустить `npm run check --workspace @gost-kit/common` и `npm test --workspace @gost-kit/common -- --run src/api/lib/define-api-operation.test.ts src/fc/lib/create-api-effect.test.ts`; ожидать ошибки отсутствующего API.
-- [ ] Реализовать API и type helpers; использовать endpoint lookup вместо повторного разворачивания ApiRequest, phantom witness без runtime поля. options не переопределяют operation/type/method/url.
-- [ ] Повторить typecheck и тесты; ожидать PASS, включая legacy type regressions.
-- [ ] Проверить форматирование/lint изменённых TS; закоммитить `[gost-kit-35] feat: define typed API operations and effect factory`.
+- [x] Написать runtime tests identity/mapped operation, construction purity и effect.type/operation/payload/callback identity; type tests endpoint DTO, required body/path/query, bad method/route/parseAs, inferred domain/async result, identity/null/HEAD, wrong actions, same-route different mappers.
+- [x] Запустить `npm run check --workspace @gost-kit/common` и `npm test --workspace @gost-kit/common -- --run src/api/lib/define-api-operation.test.ts src/fc/lib/create-api-effect.test.ts`; ожидать ошибки отсутствующего API.
+- [x] Реализовать API и type helpers; использовать endpoint lookup вместо повторного разворачивания ApiRequest, phantom witness без runtime поля. options не переопределяют operation/type/method/url.
+- [x] Повторить typecheck и тесты; ожидать PASS, включая legacy type regressions.
+- [x] Проверить форматирование/lint изменённых TS; закоммитить `[gost-kit-35] feat: define typed API operations and effect factory`.
 
 ### Task 2: Единый handler
 
@@ -58,12 +58,12 @@
 - Consumes: Task 1 ApiEffect/ApiOperation/factory, ApiClient/ApiResult/ApiFailure.
 - Produces: `createApiHandler<Paths, Action, Operations = never>(api)` принимает обе формы, dispatch получает mapped action.
 
-- [ ] Добавить реальные client+injected-fetch tests: snake_case DTO → domain → action → dispatch; operation metadata отсутствует в request. По одному legacy и operation эффекту одинакового маршрута.
-- [ ] Добавить tests identity/null/204/HEAD; async mapper; sync/rejected mapper → `{kind: 'contract', errors: []}` + `[defaultError]`; mapper без onSuccess всё равно исполняется, без onError failure throws.
-- [ ] Проверить failure kinds http/network/aborted/contract без mapper; callback/dispatch exceptions и unexpected client throws не переклассифицируются. Проверить ожидание mapper и dispatch.
-- [ ] Запустить `npm test --workspace @gost-kit/common -- --run src/fc/lib/create-api-handler.test.ts`; новые assertions должны FAIL до реализации.
-- [ ] Добавить optional Operations generic. Различать по собственному operation, strip metadata, transport один раз; await mapResponse внутри узкого catch, callbacks снаружи.
-- [ ] Выполнить common typecheck/full tests и lint; ожидать PASS; закоммитить `[gost-kit-35] feat: map API operation results in shared handler`.
+- [x] Добавить реальные client+injected-fetch tests: snake_case DTO → domain → action → dispatch; operation metadata отсутствует в request. По одному legacy и operation эффекту одинакового маршрута.
+- [x] Добавить tests identity/null/204/HEAD; async mapper; sync/rejected mapper → `{kind: 'contract', errors: []}` + `[defaultError]`; mapper без onSuccess всё равно исполняется, без onError failure throws.
+- [x] Проверить failure kinds http/network/aborted/contract без mapper; callback/dispatch exceptions и unexpected client throws не переклассифицируются. Проверить ожидание mapper и dispatch.
+- [x] Запустить `npm test --workspace @gost-kit/common -- --run src/fc/lib/create-api-handler.test.ts`; новые assertions должны FAIL до реализации.
+- [x] Добавить optional Operations generic. Различать по собственному operation, strip metadata, transport один раз; await mapResponse внутри узкого catch, callbacks снаружи.
+- [x] Выполнить common typecheck/full tests и lint; ожидать PASS; закоммитить `[gost-kit-35] feat: map API operation results in shared handler`.
 
 ### Task 3: Пример и поставляемый публичный API
 
@@ -77,12 +77,12 @@
 - Consumes: Task 1 factories и Task 2 handler.
 - Produces: пример distinct DTO/domain, один глобальный handler и документированная публичная установка.
 
-- [ ] Обновить reducer/mapper tests под snake_case DTO и User domain; reducer проверяет массив effects, operation identity, payload и callbacks, без HTTP/mapper при construction. Запустить example tests: новые ожидания FAIL.
-- [ ] Обновить synthetic Paths/transport/fake DTO, добавить mapper/operation, заменить raw effect на createApiEffect, добавить typeof loadUser в RootEffect/handler generic. UI и поведение загрузки/ошибки/retry сохраняются.
-- [ ] Описать API, error path, JSON-only и совместимость в README; добавить common minor changeset.
-- [ ] Выполнить `npm run check`, `npm --prefix examples/functional-core run build`, `npm --prefix examples/functional-core run test:browser`; ожидать PASS.
-- [ ] Выполнить npm pack common в scratch и установить tarball во внешний consumer; проверить root exports/runtime mapper+handler и TS positive/negative contracts. Проверить отсутствие tests/src в tarball.
-- [ ] Закоммитить `[gost-kit-35] docs: demonstrate API operation mapping`.
+- [x] Обновить reducer/mapper tests под snake_case DTO и User domain; reducer проверяет массив effects, operation identity, payload и callbacks, без HTTP/mapper при construction. Запустить example tests: новые ожидания FAIL.
+- [x] Обновить synthetic Paths/transport/fake DTO, добавить mapper/operation, заменить raw effect на createApiEffect, добавить typeof loadUser в RootEffect/handler generic. UI и поведение загрузки/ошибки/retry сохраняются.
+- [x] Описать API, error path, JSON-only и совместимость в README; добавить common minor changeset.
+- [x] Выполнить `npm run check`, `npm --prefix examples/functional-core run build`, `npm --prefix examples/functional-core run test:e2e`; ожидать PASS.
+- [x] Выполнить npm pack common в scratch и установить tarball во внешний consumer; проверить root exports/runtime mapper+handler и TS positive/negative contracts. Проверить отсутствие tests/src в tarball.
+- [x] Закоммитить `[gost-kit-35] docs: demonstrate API operation mapping`.
 
 ### Task 4: Финальная проверка
 

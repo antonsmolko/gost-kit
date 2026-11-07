@@ -23,7 +23,7 @@ test('demo user response preserves the 400ms delay', async () => {
 
   expect(await pending).toEqual({
     type: 'ok',
-    data: { id: '1', name: 'Ada Lovelace', email: 'ada@example.test' },
+    data: { user_id: 1, full_name: 'Ada Lovelace', email: 'ada@example.test' },
   });
 });
 

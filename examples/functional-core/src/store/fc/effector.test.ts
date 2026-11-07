@@ -1,15 +1,18 @@
 import { expect, test } from 'vitest';
+import { createApiEffect } from '@gost-kit/common';
+import { loadUser } from '../../features/user/data/api/load-user';
 import { createEffector } from './effector';
 import { createSyntheticApi } from '../../api/create-synthetic-api';
 import type { ApiEffect } from '../types/effect';
 import type { RootAction } from '../types/action';
-import type { User } from '../../features/user/domain/entities/user';
+import type { UserDto } from '../../features/user/data/dto/user-dto';
 
-const user: User = { id: '1', name: 'Ada', email: 'ada@example.test' };
-const effect: ApiEffect = {
-  type: 'ApiEffect',
-  method: 'post',
-  url: '/user',
+const user: UserDto = {
+  user_id: 1,
+  full_name: 'Ada',
+  email: 'ada@example.test',
+};
+const effect: ApiEffect = createApiEffect(loadUser, {
   body: { email: user.email },
   defaultError: {
     code: 'USER_LOAD_FAILED',
@@ -22,7 +25,7 @@ const effect: ApiEffect = {
   onError: (errors) => {
     return { scope: 'users', type: 'ErrorReceiveAction', errors };
   },
-};
+});
 
 test('request failure dispatches the configured default error', async () => {
   const actions: RootAction[] = [];

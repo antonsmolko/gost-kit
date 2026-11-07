@@ -9,5 +9,5 @@ export const fakeApi = createSyntheticApi(async ({ email }) => {
     throw new Error('Synthetic API failure');
   }
 
-  return { id: '1', name: 'Ada Lovelace', email };
+  return { user_id: 1, full_name: 'Ada Lovelace', email };
 });

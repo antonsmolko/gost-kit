@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { createSyntheticApi } from './create-synthetic-api';
 
-const user = { id: '1', name: 'Ada', email: 'ada@example.test' };
+const user = { user_id: 1, full_name: 'Ada', email: 'ada@example.test' };
 
 test('synthetic transport parses the email once and returns the operation result', async () => {
   const received: { email: string }[] = [];

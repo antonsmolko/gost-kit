@@ -13,6 +13,9 @@ export type DefinedApiOperation<
     dto: ApiResponse<TPaths, TDefinition>,
   ) => TDefinition extends { mapResponse: AnyFn<never[], infer TData> }
     ? TData
-    : ApiResponse<TPaths, TDefinition>;
+    : 'mapResponse' extends keyof TDefinition
+      ? | ReturnType<NonNullable<TDefinition['mapResponse']>>
+        | ApiResponse<TPaths, TDefinition>
+      : ApiResponse<TPaths, TDefinition>;
   readonly [apiOperationSchema]?: TPaths;
 };

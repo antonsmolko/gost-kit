@@ -1,8 +1,9 @@
-import { define } from '@gost-kit/common';
+import { createApiEffect, define } from '@gost-kit/common';
 import type { RootState } from '../../../../store/types/state';
 import type { RootEffect } from '../../../../store/types/effect';
 import type { UserAction } from './action';
 import type { UserState } from './state';
+import { loadUser } from '../../data/api/load-user';
 
 export const userReducer = define.reducer<
   UserState,
@@ -22,23 +23,22 @@ export const userReducer = define.reducer<
         status: 'loading',
         errors: [],
       },
-      effects: {
-        type: 'ApiEffect',
-        method: 'post',
-        url: '/user',
-        body: { email: state.email },
-        defaultError: {
-          code: 'USER_LOAD_FAILED',
-          message: 'Could not load user',
-          path: [],
-        },
-        onSuccess: (response) => {
-          return { scope: 'users', type: 'SuccessReceiveAction', response };
-        },
-        onError: (errors) => {
-          return { scope: 'users', type: 'ErrorReceiveAction', errors };
-        },
-      },
+      effects: [
+        createApiEffect(loadUser, {
+          body: { email: state.email },
+          defaultError: {
+            code: 'USER_LOAD_FAILED',
+            message: 'Could not load user',
+            path: [],
+          },
+          onSuccess: (response) => {
+            return { scope: 'users', type: 'SuccessReceiveAction', response };
+          },
+          onError: (errors) => {
+            return { scope: 'users', type: 'ErrorReceiveAction', errors };
+          },
+        }),
+      ],
     };
   },
   SuccessReceiveAction: ({ state, action }) => {

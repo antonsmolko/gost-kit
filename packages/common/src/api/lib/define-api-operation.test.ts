@@ -1,5 +1,6 @@
 import { expect, expectTypeOf, test, vi } from 'vitest';
 import { defineApiOperation } from './define-api-operation';
+import type { ApiOperationDefinition } from '../types/api-operation-definition';
 import type { TestPaths, TestUser } from '../types/api-request.test';
 
 const checkTypes = () => {
@@ -30,6 +31,31 @@ const checkTypes = () => {
   const empty = defineOperation({ method: 'delete', url: '/empty' });
 
   expectTypeOf(empty.mapResponse(undefined)).toEqualTypeOf<undefined>();
+
+  const optionalMapper: {
+    method: 'post';
+    url: '/users/{id}';
+    mapResponse?: (dto: TestUser) => string;
+  } = { method: 'post', url: '/users/{id}' };
+  const optional = defineOperation(optionalMapper);
+
+  expectTypeOf(optional.mapResponse({ id: 1, name: 'Ada' })).toEqualTypeOf<
+    TestUser | string
+  >();
+
+  const widened: ApiOperationDefinition<TestPaths> = {
+    method: 'post',
+    url: '/users/{id}',
+    mapResponse: (dto) => {
+      return dto.name;
+    },
+  };
+  const unknownResult = defineOperation(widened);
+
+  expectTypeOf(
+    unknownResult.mapResponse({ id: 1, name: 'Ada' }),
+  ).toEqualTypeOf<unknown>();
+
   // @ts-expect-error unknown route
   defineOperation({ method: 'get', url: '/missing' });
   // @ts-expect-error invalid method for route
