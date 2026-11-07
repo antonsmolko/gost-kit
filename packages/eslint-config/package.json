@@ -1,6 +1,6 @@
 {
   "name": "@gost-kit/eslint-config",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Framework-independent shared ESLint rules.",
   "type": "module",
   "license": "MIT",
@@ -43,7 +43,7 @@
     "prettier": "3.9.10",
     "@gost-kit/prettier-config": "0.1.0",
     "globals": "17.4.0",
-    "@gost-kit/common": "0.2.0"
+    "@gost-kit/common": "0.2.1"
   },
   "dependencies": {
     "@eslint/js": "10.0.1",
