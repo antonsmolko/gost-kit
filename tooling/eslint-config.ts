@@ -9,7 +9,10 @@ export const createProjectConfig = async (
     ...(await createSvelteConfig({ tsconfigRootDir: root })),
     {
       files: ['src/**/*.svelte'],
-      rules: { 'gost/no-component-state': 'error' },
+      rules: {
+        'gost/no-component-state': 'error',
+        'gost/single-intent-dispatch': 'error',
+      },
     },
     {
       files: [

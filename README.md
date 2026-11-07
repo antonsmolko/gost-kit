@@ -99,8 +99,10 @@ The Svelte config enables `gost/require-feature-state-selector` from the
 local `$state.raw` bindings. The optional `gost/no-component-state` rule checks
 component-owned state creation, with a simple browser-ref exception. The private
 project adapter enables it for `src/**/*.svelte`; consumers choose their own
-component/UI-Kit overrides. Dispatch, conditions and derived-computation policies
-remain separate tasks.
+component/UI-Kit overrides. The optional `gost/single-intent-dispatch` checks typed business callbacks for
+multiple dispatches and conditional intent selection; the private adapter also
+enables it for `src/**/*.svelte`. Consumers choose UI-Kit exclusions. Boolean
+conditions and presentation calculations in derived/templates remain separate tasks.
 
 ## Examples
 

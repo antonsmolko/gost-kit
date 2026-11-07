@@ -157,3 +157,11 @@ void test('component-only project override leaves shell rune modules available',
 
   assert.deepEqual(messages, []);
 });
+
+void test('project explicitly enables single intent policy for business components', async () => {
+  const config = await eslint.calculateConfigForFile(
+    join(root, 'src/Business.svelte'),
+  );
+
+  assert.deepEqual(config?.rules?.['gost/single-intent-dispatch'], [2]);
+});

@@ -502,3 +502,101 @@ test('explicit component policy preserves a simple DOM ref binding', async () =>
 
   expect(result.messages).toEqual([]);
 });
+
+const intentSource = `<script lang="ts">
+import type { Dispatch } from '@gost-kit/common';
+type Action = {type: 'OneAction'} | {type: 'TwoAction'};
+declare const send: Dispatch<Action>;
+const handle = () => { void send({type:'OneAction'}); void send({type:'TwoAction'}); };
+</script><button type="button" onclick={handle}>Send</button>`;
+
+test('intent policy is default off and requires an explicit consumer override', async () => {
+  const ordinary = await lint(intentSource, 'IntentDefault.svelte');
+
+  expect(
+    ordinary.messages.some((message) => {
+      return message.ruleId === 'gost/single-intent-dispatch';
+    }),
+  ).toBe(false);
+
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      ...(await createSvelteConfig({ tsconfigRootDir: root })),
+      {
+        files: ['**/*.svelte'],
+        rules: { 'gost/single-intent-dispatch': 'error' },
+      },
+    ],
+  });
+  const strict = await lint(intentSource, 'IntentOn.svelte', instance);
+
+  expect(strict.messages).toContainEqual(
+    expect.objectContaining({
+      ruleId: 'gost/single-intent-dispatch',
+      messageId: 'multipleDispatch',
+      severity: 2,
+    }),
+  );
+  expect(
+    strict.messages.find((message) => {
+      return message.ruleId === 'gost/single-intent-dispatch';
+    })?.fix,
+  ).toBeUndefined();
+});
+
+test('UI-Kit may opt out of business intent policy while retaining Svelte checks', async () => {
+  await mkdir(join(root, 'src/ui-kit'), { recursive: true });
+
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      ...(await createSvelteConfig({ tsconfigRootDir: root })),
+      {
+        files: ['src/**/*.svelte'],
+        rules: { 'gost/single-intent-dispatch': 'error' },
+      },
+      {
+        files: ['src/ui-kit/**/*.svelte'],
+        rules: { 'gost/single-intent-dispatch': 'off' },
+      },
+    ],
+  });
+  const result = await lint(
+    intentSource.replace('type="button"', ''),
+    'src/ui-kit/Editor.svelte',
+    instance,
+  );
+
+  expect(
+    result.messages.some((message) => {
+      return message.ruleId === 'gost/single-intent-dispatch';
+    }),
+  ).toBe(false);
+  expect(result.messages).toContainEqual(
+    expect.objectContaining({ ruleId: 'svelte/button-has-type', severity: 2 }),
+  );
+});
+
+test('component intent override does not constrain a shell effector module', async () => {
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      ...(await createSvelteConfig({ tsconfigRootDir: root })),
+      {
+        files: ['**/*.svelte'],
+        rules: { 'gost/single-intent-dispatch': 'error' },
+      },
+    ],
+  });
+  const result = await lint(
+    "import type { Dispatch } from '@gost-kit/common'; type Action = {type: 'OneAction'};\n\nexport const effect = async (send: Dispatch<Action>) => { await send({type:'OneAction'}); await send({type:'OneAction'}); };",
+    'Effector.svelte.ts',
+    instance,
+  );
+
+  expect(result.messages).toEqual([]);
+});

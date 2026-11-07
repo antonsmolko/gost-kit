@@ -139,3 +139,111 @@ explicitly in the consumer and register the plugin
 in that override (`plugins: { gost: plugin }`, with the named `plugin` import from
 `@gost-kit/eslint-plugin`). Enabling the rule alone for that extension fails plugin
 lookup. The default typed selector rule remains excluded from `.svelte.js`.
+
+## gost/single-intent-dispatch
+
+Business UI callbacks forward one intent action. The reducer chooses business
+transitions/effects from current state. UI-Kit owns local state, browser events
+and their conditional processing. When a business feature needs such a mechanism,
+extract a library component and consume ready values/semantic callbacks.
+
+The shared config registers this typed rule but leaves it off. Enable it for
+business component files and exclude UI-Kit with ordinary late overrides:
+
+```ts
+export default [
+  ...(await createSvelteConfig({ tsconfigRootDir: import.meta.dirname })),
+  {
+    files: ['src/**/*.svelte'],
+    rules: { 'gost/single-intent-dispatch': 'error' },
+  },
+  {
+    files: ['src/ui-kit/**/*.svelte'],
+    rules: { 'gost/single-intent-dispatch': 'off' },
+  },
+];
+```
+
+Paths are illustrative. Other Svelte/TypeScript rules keep their configured
+levels. Type services are required for TypeScript instance scripts; a missing
+project is a configuration error. JS/stateless/module-only scripts and ordinary
+TS/rune modules are skipped before requesting services.
+
+Handlers are found through `on*` props/attributes (including `onConfirm` and `{onConfirm}` shorthand) and
+legacy `on:` directives, rather than function names. This is a lexical prefix
+heuristic, not event-prop type discovery: a function-valued prop named `once` or
+`only` is also treated as a handler. Such non-event props can produce false
+positives; use an appropriate consumer scope or a targeted ESLint exception.
+Lowercase custom callbacks such as `onemailchange` remain supported. Inline functions, local
+function declarations, const function expressions and simple const aliases are
+supported, including transparent TypeScript `satisfies`/`as` wrappers. Handlers
+declared in template `{@const}` tags are outside this first version's discovery. Reassigned callbacks, arbitrary member methods/imported functions,
+spread props and callback names without the `on` prefix are not traced.
+Forwarding `onconfirm={presenter.confirm}` is permitted without claiming to
+verify the method body or presenter purity.
+
+A dispatch is recognized by declaration provenance of the public
+`@gost-kit/common` `Dispatch` type and its call signature, including simple type
+aliases/reexports, const/destructured aliases, `Store.dispatch` and inferred
+`createStore` returns. Signature ownership matters: TypeScript may reuse alias
+metadata for structurally equal local callbacks. Name/shape alone, plain
+`AsyncTap`, any/unknown and mixed unions do not prove Dispatch; genuine nullable
+Dispatch is supported. Optional invocation/access that can suppress that
+Dispatch (`send?.(action)`, `store?.dispatch(action)` or `store.dispatch?.(action)`)
+is conditional intent delivery and reports `conditionalDispatch` for a single call.
+This includes a Dispatch evaluated in skipped arguments/computed keys of an
+outer optional expression, such as `consume?.(dispatch(action))` or
+`values?.[String(dispatch(action))]`.
+Ordinary optional data reads and optional accesses after the Dispatch result are
+not treated as a dispatch gate. Parenthesized chains that end before an
+unconditional call follow JavaScript chain boundaries, not optional-call semantics.
+No application runtime packages are installed by tooling.
+
+The handler's own body and parameter defaults report:
+
+- `multipleDispatch`: two or more direct Dispatch calls, even in mutually
+  exclusive branches. Send one intent and move selection to the reducer.
+- `conditionalDispatch`: one Dispatch plus `if`, `switch`, loops, a conditional
+  or logical expression/assignment (`??=`, `&&=`, `||=`), including early guards and an action's
+  conditional `type`. Browser-event guards have no special exception.
+
+This is a syntactic whole-handler policy, not control-flow dependence analysis:
+a listed condition anywhere in the handler's own evaluation is reported when
+that handler contains a Dispatch, including a condition after an unconditional
+Dispatch and a condition unrelated to choosing its action. The diagnostic directs
+conditional logic to the reducer/UI-Kit; it does not prove that a particular
+condition selected the dispatched action.
+
+Dispatch in a parameter default is conditional on the argument being absent;
+it is counted and diagnosed accordingly. Ordinary ready-value defaults are
+permitted. Nested callback defaults are deferred like other nested functions.
+
+Multiple-call diagnostics take priority; one handler produces one report even
+if bound to several events. Direct/void/await calls with a ready action/value
+are permitted. Nested function bodies and nonstatic instance initializers are
+not part of the enclosing handler's evaluation. Static initialization/computed
+keys remain included. Helper/constructor call graphs are not followed.
+
+```ts
+// Reported: business choice remains in the component.
+const handleSubmit = () => {
+  if (hasUser) {
+    void dispatch({ type: 'UpdateUserAction' });
+  } else {
+    void dispatch({ type: 'CreateUserAction' });
+  }
+};
+
+// Use an intent callback supplied to a UI-Kit component.
+const handleSubmit = () => {
+  void dispatch({ type: 'SubmitUserAction' });
+};
+```
+
+There is no autofix: action/reducer/UI component contracts require design.
+This rule does not prove absence of all browser APIs, hidden dispatches or
+business logic. A lone `preventDefault()` without a branch is not automatically
+a dispatch diagnostic, although it violates the business-component boundary.
+Event adaptation belongs in UI-Kit. Effects outside discovered UI callbacks may
+perform several dispatches. Presentation computations (including templates) are
+#19, boolean template conditions #18, and testable local UI-state #27.

@@ -8,7 +8,8 @@ ESLint ^10.14.0 and TypeScript ^5.9.3.
 
 `@gost-kit/eslint-config-svelte` installs and enables the plugin for typed Svelte
 components and `.svelte.ts` modules. The selector rule is enabled by default;
-`gost/no-component-state` is available but requires an explicit consumer override.
+`gost/no-component-state` and `gost/single-intent-dispatch` require explicit
+consumer overrides for business component paths. UI-Kit paths can opt out.
 No separate plugin registration is needed.
 Other consumers may register the named public export in their flat config:
 
@@ -34,6 +35,12 @@ For `require-feature-state-selector`, type information is required; an enabled t
 reports a configuration error. Stateless and JavaScript-script components are
 skipped. Mixed components are checked per script: a typed module script does
 not enable the rule for a JavaScript instance script. The Svelte config does not enable this typed rule for `.svelte.js`.
+
+`single-intent-dispatch` uses an `on*` name heuristic, including function-valued
+non-event props such as `once`/`only`. Its whole-handler condition policy also
+reports conditions after an unconditional Dispatch, without control-flow proof.
+Optional invocation/access that gates a genuine Dispatch is conditional delivery;
+ordinary optional data reads remain outside that gate check.
 
 See [RULES.md](RULES.md) for diagnostics, autofix boundaries and examples.
 Tests and test helpers are excluded from published artifacts.

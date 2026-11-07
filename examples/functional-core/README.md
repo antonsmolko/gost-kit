@@ -291,7 +291,8 @@ changes. `check` includes lint/format checks, type checking and tests; the root
 `check` performs the same coverage without repeating the style checks.
 The project consumes the Svelte ESLint configuration and the shared Prettier
 configuration; the Prettier Svelte plugin is connected locally. The repository's [adapter](../../tooling/eslint-config.ts) adds project globals
-and explicitly enables `gost/no-component-state` for `src/**/*.svelte`;
+and explicitly enables `gost/no-component-state` and
+`gost/single-intent-dispatch` for `src/**/*.svelte`;
 `bind:this` refs remain permitted while logical state lives in root/features;
 the published Svelte config owns component parsing and shared policies. Dependencies/config
 exports must be prepared in the repository first; the example is not a standalone
@@ -307,3 +308,10 @@ Reactivity and instance access use supported Svelte
 Tests follow [Svelte's Vitest/Playwright guidance](https://svelte.dev/docs/svelte/testing).
 The small shell demonstrates the awaited-dispatch contract and keeps effect
 execution outside the pure reducers.
+
+The example demonstrates FC/shell integration using native DOM controls. Its
+`SubmitEvent`/input adaptation is not a reference for the business/UI-Kit boundary:
+in application business features, library components own browser events and
+expose semantic callbacks/ready values. The intent rule catches direct dispatch
+cascades/branches; it does not prove the absence of every browser API. A UI-Kit
+component extraction and local-state design are separate work (#27).
