@@ -36,5 +36,11 @@ reports a configuration error. Stateless and JavaScript-script components are
 skipped. Mixed components are checked per script: a typed module script does
 not enable the rule for a JavaScript instance script. The Svelte config does not enable this typed rule for `.svelte.js`.
 
+`single-intent-dispatch` uses an `on*` name heuristic, including function-valued
+non-event props such as `once`/`only`. Its whole-handler condition policy also
+reports conditions after an unconditional Dispatch, without control-flow proof.
+Optional invocation/access that gates a genuine Dispatch is conditional delivery;
+ordinary optional data reads remain outside that gate check.
+
 See [RULES.md](RULES.md) for diagnostics, autofix boundaries and examples.
 Tests and test helpers are excluded from published artifacts.

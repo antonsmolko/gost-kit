@@ -188,3 +188,34 @@ RED — 8 пропусков, включая уточнение defaults ниж�
 актуальных tarballs проверяет также `satisfies`, logical assignment и Dispatch
 в default параметре, исходные opt-in/UI-Kit/shell сценарии и nested common.
 Strict consumer declarations проходят. Отложенных minor-находок нет.
+
+## Опубликованное ревью PR #30 — 2026-11-07
+
+Три комментария проверены по исходникам и реальным fixtures.
+
+1. `on*` остаётся согласованной эвристикой, включая lowercase custom callbacks:
+   поэтому function-valued non-event props `once`/`only` также попадают в scope.
+   Это возможный false positive, теперь явно описанный в README/RULES; фильтрация
+   по camelCase/списку DOM events сломала бы `onemailchange` и другие UI-Kit APIs.
+2. Условие после безусловного Dispatch также остаётся диагностикой: контракт
+   whole-handler, без доказательства control-flow зависимости условия и action.
+   Явное описание добавлено в RULES/README, эвристика не сужена задним числом.
+3. Optional invocation/access может условно подавлять сам Dispatch, как `&&`.
+   Добавлены regressions для `maybe?.dispatch`, `dispatch?.`, optional member call
+   и optional участка раньше в цепочке. RED: 4 пропуска диагностики. Optional
+   чтение данных, optional действия с результатом и законченные parenthesized
+   chains проверяются отдельно, без blanket-запрета всех ChainExpression.
+
+Независимая проверка исправления выявила optional gates во внешних аргументах
+и computed keys. Они входят в ту же условную доставку Dispatch. Добавлены четыре
+regressions (RED), включая `consume?.(dispatch(action))` и
+`values?.[String(dispatch(action))]`; GREEN — 187 plugin tests. Обход ограничен
+текущим выполнением handler: deferred function boundary и закончившаяся цепочка
+не переносят optional gating на уже выполненный либо отложенный вызов.
+
+После исправлений опубликованного ревью `npm run check` проходит: 506 тестов,
+из них 187 plugin tests. Actual tarball consumer подтверждает optional gates,
+обычные optional reads/result access, default off и отсутствие fix. Отдельные
+consumer-пробы подтвердили задокументированные `once` и trailing-condition
+эвристики. Публичные declarations проходят strict typecheck; tooling не
+подтягивает GOST runtime, а tarballs исключают src/tests.

@@ -170,7 +170,11 @@ project is a configuration error. JS/stateless/module-only scripts and ordinary
 TS/rune modules are skipped before requesting services.
 
 Handlers are found through `on*` props/attributes (including `onConfirm` and `{onConfirm}` shorthand) and
-legacy `on:` directives, rather than function names. Inline functions, local
+legacy `on:` directives, rather than function names. This is a lexical prefix
+heuristic, not event-prop type discovery: a function-valued prop named `once` or
+`only` is also treated as a handler. Such non-event props can produce false
+positives; use an appropriate consumer scope or a targeted ESLint exception.
+Lowercase custom callbacks such as `onemailchange` remain supported. Inline functions, local
 function declarations, const function expressions and simple const aliases are
 supported, including transparent TypeScript `satisfies`/`as` wrappers. Handlers
 declared in template `{@const}` tags are outside this first version's discovery. Reassigned callbacks, arbitrary member methods/imported functions,
@@ -184,7 +188,16 @@ aliases/reexports, const/destructured aliases, `Store.dispatch` and inferred
 `createStore` returns. Signature ownership matters: TypeScript may reuse alias
 metadata for structurally equal local callbacks. Name/shape alone, plain
 `AsyncTap`, any/unknown and mixed unions do not prove Dispatch; genuine nullable
-Dispatch is supported. No application runtime packages are installed by tooling.
+Dispatch is supported. Optional invocation/access that can suppress that
+Dispatch (`send?.(action)`, `store?.dispatch(action)` or `store.dispatch?.(action)`)
+is conditional intent delivery and reports `conditionalDispatch` for a single call.
+This includes a Dispatch evaluated in skipped arguments/computed keys of an
+outer optional expression, such as `consume?.(dispatch(action))` or
+`values?.[String(dispatch(action))]`.
+Ordinary optional data reads and optional accesses after the Dispatch result are
+not treated as a dispatch gate. Parenthesized chains that end before an
+unconditional call follow JavaScript chain boundaries, not optional-call semantics.
+No application runtime packages are installed by tooling.
 
 The handler's own body and parameter defaults report:
 
@@ -193,6 +206,13 @@ The handler's own body and parameter defaults report:
 - `conditionalDispatch`: one Dispatch plus `if`, `switch`, loops, a conditional
   or logical expression/assignment (`??=`, `&&=`, `||=`), including early guards and an action's
   conditional `type`. Browser-event guards have no special exception.
+
+This is a syntactic whole-handler policy, not control-flow dependence analysis:
+a listed condition anywhere in the handler's own evaluation is reported when
+that handler contains a Dispatch, including a condition after an unconditional
+Dispatch and a condition unrelated to choosing its action. The diagnostic directs
+conditional logic to the reducer/UI-Kit; it does not prove that a particular
+condition selected the dispatched action.
 
 Dispatch in a parameter default is conditional on the argument being absent;
 it is counted and diagnosed accordingly. Ordinary ready-value defaults are

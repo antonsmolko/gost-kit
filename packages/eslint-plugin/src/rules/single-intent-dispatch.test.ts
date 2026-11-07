@@ -74,6 +74,26 @@ RuleTester.itOnly = test.only;
 
 const valid = [
   fixture(
+    "declare const consume: (value: Promise<void>) => (() => void) | undefined; const handle = () => { consume(send({type:'OneAction'}))?.(); };",
+  ),
+  fixture(
+    "declare const data: {name: string} | undefined; const handle = () => { void send({type:'EmailAction', email: String(data?.name)}); };",
+  ),
+  fixture(
+    "declare const accept: (value: Promise<void>) => unknown; const handle = () => { (store?.state, accept)(send({type:'OneAction'})); };",
+  ),
+
+  fixture(
+    `declare const details: {name: string} | undefined; const handle = () => { const value = details?.name; void value; ${one} };`,
+  ),
+  fixture(
+    "const handle = () => { void send({type:'OneAction'})?.then(() => {}); };",
+  ),
+  fixture(
+    "const handle = () => { void (store?.dispatch)({type:'OneAction'}); };",
+  ),
+
+  fixture(
     "const handle = (email = '') => { void send({type:'EmailAction', email}); };",
   ),
   fixture(`const handle = (deferred = () => { ${one} ${two} }) => { ${one} };`),
@@ -144,6 +164,48 @@ const valid = [
   ),
 ];
 const invalid = [
+  [
+    'optional outer call argument',
+    "declare const maybe: ((value: Promise<void>) => unknown) | undefined; const handle = () => { void maybe?.(send({type:'OneAction'})); };",
+    'conditionalDispatch',
+  ],
+  [
+    'optional member argument',
+    "declare const maybe: { consume: (value: Promise<void>) => unknown } | undefined; const handle = () => { void maybe?.consume(send({type:'OneAction'})); };",
+    'conditionalDispatch',
+  ],
+  [
+    'optional computed key',
+    "declare const maybe: Record<string, unknown> | undefined; const handle = () => { void maybe?.[String(send({type:'OneAction'}))]; };",
+    'conditionalDispatch',
+  ],
+  [
+    'earlier optional access before computed key',
+    "declare const maybe: { values: Record<string, unknown> } | undefined; const handle = () => { void maybe?.values[String(send({type:'OneAction'}))]; };",
+    'conditionalDispatch',
+  ],
+
+  [
+    'optional store access',
+    "declare const maybe: Store<{value:number}, Action> | undefined; const handle = () => { void maybe?.dispatch({type:'OneAction'}); };",
+    'conditionalDispatch',
+  ],
+  [
+    'optional dispatch call',
+    "declare const maybe: Dispatch<Action> | undefined; const handle = () => { void maybe?.({type:'OneAction'}); };",
+    'conditionalDispatch',
+  ],
+  [
+    'optional member call',
+    "const handle = () => { void store.dispatch?.({type:'OneAction'}); };",
+    'conditionalDispatch',
+  ],
+  [
+    'optional earlier call in chain',
+    "declare const locator: {getStore: () => Store<{value:number}, Action>} | undefined; const handle = () => { void locator?.getStore().dispatch({type:'OneAction'}); };",
+    'conditionalDispatch',
+  ],
+
   [
     'satisfies callback',
     `const handle = (() => { ${one} ${two} }) satisfies (() => void);`,

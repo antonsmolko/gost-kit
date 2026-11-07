@@ -3,6 +3,7 @@ import {
   ESLintUtils,
   type TSESTree,
 } from '@typescript-eslint/utils';
+import { isOptionalCall } from '../lib/optional-call';
 import { createDispatchCheck } from '../lib/dispatch-type';
 import { createUiHandlerCollector } from '../lib/ui-handlers';
 import { visitHandlerBody } from '../lib/handler-body';
@@ -59,6 +60,10 @@ export const singleIntentDispatch = ESLintUtils.RuleCreator.withoutDocs({
               isDispatch(node.callee)
             ) {
               calls += 1;
+
+              if (isOptionalCall(node)) {
+                condition ??= node;
+              }
 
               // A Dispatch default argument runs conditionally at invocation,
               // even though its AssignmentPattern is not a logical expression.
