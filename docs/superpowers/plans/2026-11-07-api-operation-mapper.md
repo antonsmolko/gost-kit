@@ -112,4 +112,4 @@
 - [x] Написать RED type tests для отдельных action roles, перепутанных callbacks и inferred factory → declared effect.
 - [x] Разделить типы ApiEffect и сохранить независимый вывод фабрики; обновить внутренний тип handler и эффекты примера.
 - [x] Проверить optional callbacks/never, scoped feature actions, payloads, unions, schema requirements и отрицательные случаи внешнего consumer.
-- [ ] Обновить docs/changeset, выполнить root check и проверить tarball; ревью, commit/push и обновление PR #36.
+- [x] Обновить docs/changeset, выполнить root check и проверить tarball; ревью, commit/push и обновление PR #36.
