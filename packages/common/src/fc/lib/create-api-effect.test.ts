@@ -32,7 +32,7 @@ const checkTypes = () => {
       return { type: 'FailedAction', errors };
     },
   });
-  const rootEffect: ApiEffect<TestPaths, Action, typeof operation> = effect;
+  const rootEffect: ApiEffect<typeof operation, Action> = effect;
 
   // @ts-expect-error missing required body
   createApiEffect(operation, {
@@ -87,9 +87,7 @@ const checkTypes = () => {
     },
   });
   // @ts-expect-error RootAction validation
-  const invalid: ApiEffect<TestPaths, Action, typeof operation> = wrongAction;
-  // @ts-expect-error mapped effects require explicit operation union
-  const legacy: ApiEffect<TestPaths, Action> = effect;
+  const invalid: ApiEffect<typeof operation, Action> = wrongAction;
   const other = defineApiOperation<TestPaths>()({
     method: 'post',
     url: '/users/{id}',
@@ -107,10 +105,9 @@ const checkTypes = () => {
       return { type: 'LoadedAction', label: String(id) };
     },
   });
-  const union: ApiEffect<TestPaths, Action, typeof operation | typeof other> =
-    otherEffect;
+  const union: ApiEffect<typeof operation | typeof other, Action> = otherEffect;
   // @ts-expect-error callback input must correlate with the selected operation
-  const mixed: ApiEffect<TestPaths, Action, typeof operation | typeof other> = {
+  const mixed: ApiEffect<typeof operation | typeof other, Action> = {
     ...otherEffect,
     onSuccess: (_user: { label: string }) => {
       return {
@@ -134,13 +131,6 @@ const checkTypes = () => {
   });
   // @ts-expect-error required query
   createApiEffect(queryOperation, { defaultError: fallback });
-
-  // @ts-expect-error operation belongs to another schema
-  type WrongSchema = ApiEffect<TestPaths, Action, typeof queryOperation>;
-
-  const wrongSchema = (value: WrongSchema) => {
-    return value;
-  };
 
   createApiEffect(operation, {
     params: { path: { id: 1 } },
@@ -171,7 +161,7 @@ const checkTypes = () => {
     },
   });
 
-  return [rootEffect, invalid, legacy, union, mixed, wrongSchema];
+  return [rootEffect, invalid, union, mixed];
 };
 
 test('factory describes one effect without executing mapper or callbacks', () => {

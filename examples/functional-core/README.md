@@ -214,7 +214,7 @@ dispatch reports its own failures and resolves, so the parent does not report th
 same failure again. The Svelte adapter includes the callback in
 `createDispatch(config)`.
 
-`ApiEffect<Paths, RootAction, ApiOperations>` comes from `@gost-kit/common`. It describes a
+`ApiEffect<ApiOperations, RootAction>` comes from `@gost-kit/common`. It describes a
 lowercase `method`, a schema path in `url`, typed `params`/`body`, `defaultError`
 and optional `onSuccess`/`onError` action factories. This example always supplies
 both callbacks so the feature leaves loading. The handler awaits the returned

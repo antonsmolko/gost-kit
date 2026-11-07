@@ -1,6 +1,7 @@
 import { expect, expectTypeOf, test } from 'vitest';
-import { createApiClient } from '../../api';
+import { createApiClient, defineApiOperation } from '../../api';
 import { createApiHandler } from '../lib/create-api-handler';
+import { createApiEffect } from '../lib/create-api-effect';
 import type { ApiEffect } from './api-effect';
 import type { TestPaths, TestUser } from '../../api/types/api-request.test';
 
@@ -8,10 +9,18 @@ type Action = { type: 'DoneAction' };
 
 const checkEffectTypes = () => {
   const fallback = { code: 'FAILED', message: 'Failed', path: [] };
-  const post: ApiEffect<TestPaths, Action> = {
-    type: 'ApiEffect',
+  const postOperation = defineApiOperation<TestPaths>()({
     method: 'post',
     url: '/users/{id}',
+  });
+  const emptyOperation = defineApiOperation<TestPaths>()({
+    method: 'delete',
+    url: '/empty',
+  });
+
+  type Operations = typeof postOperation | typeof emptyOperation;
+
+  const post: ApiEffect<Operations, Action> = createApiEffect(postOperation, {
     params: { path: { id: 1 } },
     body: { name: 'Ada' },
     defaultError: fallback,
@@ -20,26 +29,23 @@ const checkEffectTypes = () => {
 
       return { type: 'DoneAction' };
     },
-  };
-  const empty: ApiEffect<TestPaths, Action> = {
-    type: 'ApiEffect',
-    method: 'delete',
-    url: '/empty',
+  });
+  const empty: ApiEffect<Operations, Action> = createApiEffect(emptyOperation, {
     defaultError: fallback,
     onSuccess: (data) => {
       expectTypeOf(data).toEqualTypeOf<undefined>();
 
       return { type: 'DoneAction' };
     },
-  };
-  const wrong: ApiEffect<TestPaths, Action> = {
+  });
+  const wrong: ApiEffect<Operations, Action> = {
     ...post,
-    // @ts-expect-error response must correspond to the selected endpoint
+    // @ts-expect-error response must correspond to the selected operation
     onSuccess: (_data: string) => {
       return { type: 'DoneAction' };
     },
   };
-  const handler = createApiHandler<TestPaths, Action>(
+  const handler = createApiHandler<TestPaths, Action, Operations>(
     createApiClient<TestPaths>({ baseUrl: 'https://example.test' }),
   );
 
@@ -50,16 +56,41 @@ const checkEffectTypes = () => {
     dispatch: async () => {},
   });
 
-  // @ts-expect-error required request body must not disappear in effect union
-  const missingBody: ApiEffect<TestPaths, Action> = {
+  // @ts-expect-error required body must not disappear in effect union
+  const missingBody: ApiEffect<Operations, Action> = {
     type: 'ApiEffect',
+    operation: postOperation,
     method: 'post',
     url: '/users/{id}',
     params: { path: { id: 1 } },
     defaultError: fallback,
   };
 
-  return [post, empty, wrong, missingBody];
+  void handler.ApiEffect({
+    // @ts-expect-error an API effect must carry its operation
+    effect: {
+      type: 'ApiEffect',
+      method: 'post',
+      url: '/users/{id}',
+      params: { path: { id: 1 } },
+      body: { name: 'Ada' },
+      defaultError: fallback,
+    },
+    dispatch: async () => {},
+  });
+
+  const other = defineApiOperation<{
+    '/other': {
+      get: { responses: { 200: { content: { 'application/json': string } } } };
+    };
+  }>()({ method: 'get', url: '/other' });
+
+  // @ts-expect-error handler operations belong to its client schema
+  createApiHandler<TestPaths, Action, typeof other>(
+    createApiClient<TestPaths>({ baseUrl: 'https://example.test' }),
+  );
+
+  return [post, empty, wrong, missingBody, other];
 };
 
 test('effect type assertions are checked by tsc', () => {

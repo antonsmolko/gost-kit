@@ -1,12 +1,12 @@
 import type { ApiOperation, ApiResult } from '../../api';
-import type { AnyFn, Ulx } from '../../types';
+import type { AnyFn } from '../../types';
 
 /** Catch only response mapping; callbacks and dispatch retain their own errors. */
 export const mapApiResult = async (
   result: ApiResult<unknown>,
-  operation: Ulx<ApiOperation>,
+  operation: ApiOperation,
 ): Promise<ApiResult<unknown>> => {
-  if (result.type === 'error' || !operation) {
+  if (result.type === 'error') {
     return result;
   }
 

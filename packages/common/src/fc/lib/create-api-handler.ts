@@ -1,5 +1,12 @@
-import type { ApiClient, ApiMethod, ApiResult, ApiOperation } from '../../api';
-import type { Ulx } from '../../types';
+import type {
+  ApiClient,
+  ApiMethod,
+  ApiResult,
+  ApiOperation,
+  ApiFailure,
+} from '../../api';
+import type { Rec } from '../../types';
+import type { AppError } from '../../app-error';
 import type { ApiEffect } from '../types/api-effect';
 import type { DispatchAction } from '../types/dispatch-action';
 import type { Dispatch } from '../types/dispatch';
@@ -7,12 +14,27 @@ import type { Trigger } from '../types/trigger';
 import type { apiOperationSchema } from '../../api/types/api-operation-schema';
 import { mapApiResult } from './map-api-result';
 
+// The public effect retains endpoint correlation; execution needs one uniform
+// shape after the caller's schema/operation/action contracts have been checked.
+type RuntimeApiEffect<TAction extends Trigger> = Rec & {
+  type: 'ApiEffect';
+  operation: ApiOperation;
+  method: ApiMethod;
+  url: string;
+  defaultError: AppError;
+  onSuccess?: (data: unknown) => DispatchAction<TAction>;
+  onError?: (
+    errors: AppError[],
+    failure: ApiFailure,
+  ) => DispatchAction<TAction>;
+};
+
 export const createApiHandler = <
   TPaths extends object,
   TAction extends Trigger,
   TOperations extends ApiOperation & {
     readonly [apiOperationSchema]?: TPaths;
-  } = never,
+  },
 >(
   api: ApiClient<TPaths>,
 ) => {
@@ -21,7 +43,7 @@ export const createApiHandler = <
       effect,
       dispatch,
     }: {
-      effect: ApiEffect<TPaths, TAction, TOperations>;
+      effect: ApiEffect<TOperations, TAction>;
       dispatch: Dispatch<TAction>;
     }): Promise<void> => {
       const {
@@ -29,12 +51,12 @@ export const createApiHandler = <
         type,
         operation,
         defaultError,
-        onSuccess: success,
+        onSuccess,
         onError,
         method,
         url,
         ...init
-      } = effect;
+      } = effect as unknown as RuntimeApiEffect<TAction>;
 
       // The effect union validates method/url/init together. Its dynamic dispatch
       // cannot retain one concrete endpoint's generics; erase only this adapter.
@@ -45,18 +67,9 @@ export const createApiHandler = <
           init: object,
         ) => Promise<ApiResult<unknown>>
       )(method, url, init);
-      const result = await mapApiResult(
-        response,
-        Object.hasOwn(effect, 'operation') ? operation : undefined,
-      );
+      const result = await mapApiResult(response, operation);
 
       if (result.type === 'ok') {
-        // The public effect union correlates the callback with the request. A
-        // dynamic union call loses that correlation, as in effecting's lookup.
-        const onSuccess = success as Ulx<
-          (data: unknown) => DispatchAction<TAction>
-        >;
-
         if (onSuccess) {
           await dispatch(onSuccess(result.data));
         }

@@ -79,7 +79,7 @@ test('shared effector maps DTO and dispatches a domain action without leaking ef
   });
   const effector = effecting<
     Action,
-    ApiEffect<TestPaths, Action, typeof operation>,
+    ApiEffect<typeof operation, Action>,
     readonly [typeof handler]
   >(handler);
 
@@ -94,40 +94,6 @@ test('shared effector maps DTO and dispatches a domain action without leaking ef
   });
   expect(seen[0].url).toBe('https://example.test/users/1');
   expect(await seen[0].json()).toEqual({ name: 'Ada' });
-});
-
-test('legacy and operation effects of the same route use different success paths', async () => {
-  const mapper = vi.fn((dto: TestUser) => {
-    return { label: dto.name.toUpperCase() };
-  });
-  const { operation, handler } = setup(mapper);
-  const dispatch = vi.fn(async () => {});
-  const legacy: ApiEffect<TestPaths, Action> = {
-    ...request,
-    type: 'ApiEffect',
-    method: 'post',
-    url: '/users/{id}',
-    onSuccess: (dto) => {
-      return { type: 'LoadedAction', label: dto.name };
-    },
-  };
-
-  await handler.ApiEffect({ effect: legacy, dispatch });
-  expect(mapper).not.toHaveBeenCalled();
-  await handler.ApiEffect({
-    effect: createApiEffect(operation, {
-      ...request,
-      onSuccess: (user) => {
-        return { type: 'LoadedAction', label: user.label };
-      },
-    }),
-    dispatch,
-  });
-  expect(mapper).toHaveBeenCalledExactlyOnceWith({ id: 1, name: 'Ada' });
-  expect(dispatch.mock.calls).toEqual([
-    [{ type: 'LoadedAction', label: 'Ada' }],
-    [{ type: 'LoadedAction', label: 'ADA' }],
-  ]);
 });
 
 test.each(['sync', 'async'] as const)(
@@ -480,31 +446,4 @@ test('unexpected API client rejection bypasses mapper and API callbacks', async 
   ).rejects.toBe(problem);
   expect(mapper).not.toHaveBeenCalled();
   expect(error).not.toHaveBeenCalled();
-});
-
-test('an inherited operation field does not activate mapping on a legacy effect', async () => {
-  const mapper = vi.fn((dto: TestUser) => {
-    return { label: dto.name };
-  });
-  const { operation, handler } = setup(mapper);
-  const legacy: ApiEffect<TestPaths, Action> = {
-    ...request,
-    type: 'ApiEffect',
-    method: 'post',
-    url: '/users/{id}',
-    onSuccess: (dto) => {
-      return { type: 'LoadedAction', label: dto.name };
-    },
-  };
-
-  Object.setPrototypeOf(legacy, { operation });
-
-  const dispatch = vi.fn(async () => {});
-
-  await handler.ApiEffect({ effect: legacy, dispatch });
-  expect(mapper).not.toHaveBeenCalled();
-  expect(dispatch).toHaveBeenCalledExactlyOnceWith({
-    type: 'LoadedAction',
-    label: 'Ada',
-  });
 });

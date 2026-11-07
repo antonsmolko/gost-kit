@@ -31,4 +31,3 @@ export type { Unique } from './types/unique';
 export { createApiHandler } from './lib/create-api-handler';
 export type { ApiEffect } from './types/api-effect';
 export { createApiEffect } from './lib/create-api-effect';
-export type { ApiOperationEffect } from './types/api-operation-effect';

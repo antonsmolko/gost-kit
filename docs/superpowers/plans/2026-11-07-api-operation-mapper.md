@@ -4,7 +4,7 @@
 
 **Goal:** Добавить переиспользуемую API-операцию и объектную фабрику эффекта с типизированным доменным результатом.
 
-**Architecture:** `api` определяет маршрут и mapResponse, `fc` связывает операцию с actions. Один существующий handler исполняет legacy и operation эффекты; исключения mapper проходят через onError как contract failure.
+**Architecture:** `api` определяет маршрут и mapResponse, `fc` связывает операцию с actions. Один handler исполняет эффекты с обязательной operation; исключения mapper проходят через onError как contract failure.
 
 **Tech Stack:** Node 26, TypeScript 5.9.3, openapi-fetch 0.17.0, Vitest.
 
@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Эффекты — обычные объекты с `type: 'ApiEffect'`; фабрика возвращает один эффект, Commit.effects — массив.
-- Legacy ApiEffect/прямой api.request сохраняют прежние контракты; третий generic операций по умолчанию never.
+- Единственный формат — ApiEffect<Operations, Action>; handler требует union операций и проверяет схему клиента. Прямой api.request возвращает DTO.
 - JSON-only, схема определяет DTO/параметры; mapper определяет доменный callback, свободного response generic нет.
 - Common не зависит от Svelte; API не зависит от FC; публичный тип — отдельный файл, тесты рядом, imports без расширений.
 - Никаких запросов/mapper/callbacks при создании операции, эффекта и вызове reducer.
@@ -24,7 +24,7 @@
 - Две операции одного маршрута с разными mapper: callbacks коррелируют с конкретной операцией, не с общим DTO.
 - Опциональные callbacks не меняют обязательность body/path/query и не запускают запрос при construction.
 - Rejected async mapper и исключения callbacks/dispatch должны попадать в разные error paths.
-- Legacy и operation эффекты одного method/url различаются по operation, metadata не утекает в транспорт.
+- Эффект без operation отклоняется типами; metadata не утекает в транспорт.
 - Потребитель установленного tarball получает те же типы и runtime exports, без исходников/tests.
 
 ---
@@ -35,17 +35,17 @@
 - Create: `packages/common/src/api/lib/define-api-operation.ts` и colocated test.
 - Create: `packages/common/src/api/types/api-operation.ts`, `api-operation-definition.ts`, `api-operation-options.ts`, `api-operation-data.ts` и внутренние type helpers по необходимости.
 - Create: `packages/common/src/fc/lib/create-api-effect.ts` и colocated test.
-- Create: `packages/common/src/fc/types/api-operation-effect.ts` и type tests.
+- Create: `packages/common/src/fc/types/api-effect.ts` и type tests.
 - Modify: `packages/common/src/api/index.ts`, `packages/common/src/fc/index.ts`, `packages/common/src/fc/types/api-effect.ts`.
 
 **Interfaces:**
 - Consumes: ApiResponse/ApiMethod, upstream FetchOptions, Trigger/DispatchAction/AppError.
-- Produces: `defineApiOperation<Paths>()(definition)` с readonly method/url/mapResponse и типовой связью с Paths; `createApiEffect(operation, options)` с inferred independent success/error actions; `ApiEffect<Paths, Action, Operations = never>` сохраняет legacy ветку.
+- Produces: `defineApiOperation<Paths>()(definition)` с readonly method/url/mapResponse и типовой связью с Paths; `createApiEffect(operation, options)` с inferred independent success/error actions; `ApiEffect<Operations, Action>` описывает только эффекты с operation.
 
 - [x] Написать runtime tests identity/mapped operation, construction purity и effect.type/operation/payload/callback identity; type tests endpoint DTO, required body/path/query, bad method/route/parseAs, inferred domain/async result, identity/null/HEAD, wrong actions, same-route different mappers.
 - [x] Запустить `npm run check --workspace @gost-kit/common` и `npm test --workspace @gost-kit/common -- --run src/api/lib/define-api-operation.test.ts src/fc/lib/create-api-effect.test.ts`; ожидать ошибки отсутствующего API.
 - [x] Реализовать API и type helpers; использовать endpoint lookup вместо повторного разворачивания ApiRequest, phantom witness без runtime поля. options не переопределяют operation/type/method/url.
-- [x] Повторить typecheck и тесты; ожидать PASS, включая legacy type regressions.
+- [x] Повторить typecheck и тесты; ожидать PASS, включая запрет эффекта без operation.
 - [x] Проверить форматирование/lint изменённых TS; закоммитить `[gost-kit-35] feat: define typed API operations and effect factory`.
 
 ### Task 2: Единый handler
@@ -56,13 +56,13 @@
 
 **Interfaces:**
 - Consumes: Task 1 ApiEffect/ApiOperation/factory, ApiClient/ApiResult/ApiFailure.
-- Produces: `createApiHandler<Paths, Action, Operations = never>(api)` принимает обе формы, dispatch получает mapped action.
+- Produces: `createApiHandler<Paths, Action, Operations>(api)` принимает эффекты с operation, dispatch получает mapped action.
 
-- [x] Добавить реальные client+injected-fetch tests: snake_case DTO → domain → action → dispatch; operation metadata отсутствует в request. По одному legacy и operation эффекту одинакового маршрута.
+- [x] Добавить реальные client+injected-fetch tests: snake_case DTO → domain → action → dispatch; operation metadata отсутствует в request. Операция с mapper и identity-операция.
 - [x] Добавить tests identity/null/204/HEAD; async mapper; sync/rejected mapper → `{kind: 'contract', errors: []}` + `[defaultError]`; mapper без onSuccess всё равно исполняется, без onError failure throws.
 - [x] Проверить failure kinds http/network/aborted/contract без mapper; callback/dispatch exceptions и unexpected client throws не переклассифицируются. Проверить ожидание mapper и dispatch.
 - [x] Запустить `npm test --workspace @gost-kit/common -- --run src/fc/lib/create-api-handler.test.ts`; новые assertions должны FAIL до реализации.
-- [x] Добавить optional Operations generic. Различать по собственному operation, strip metadata, transport один раз; await mapResponse внутри узкого catch, callbacks снаружи.
+- [x] Требовать Operations generic и operation; strip metadata, transport один раз; await mapResponse внутри узкого catch, callbacks снаружи.
 - [x] Выполнить common typecheck/full tests и lint; ожидать PASS; закоммитить `[gost-kit-35] feat: map API operation results in shared handler`.
 
 ### Task 3: Пример и поставляемый публичный API
@@ -79,7 +79,7 @@
 
 - [x] Обновить reducer/mapper tests под snake_case DTO и User domain; reducer проверяет массив effects, operation identity, payload и callbacks, без HTTP/mapper при construction. Запустить example tests: новые ожидания FAIL.
 - [x] Обновить synthetic Paths/transport/fake DTO, добавить mapper/operation, заменить raw effect на createApiEffect, добавить typeof loadUser в RootEffect/handler generic. UI и поведение загрузки/ошибки/retry сохраняются.
-- [x] Описать API, error path, JSON-only и совместимость в README; добавить common minor changeset.
+- [x] Описать API, error path, JSON-only и обязательную operation в README; добавить common minor changeset.
 - [x] Выполнить `npm run check`, `npm --prefix examples/functional-core run build`, `npm --prefix examples/functional-core run test:e2e`; ожидать PASS.
 - [x] Выполнить npm pack common в scratch и установить tarball во внешний consumer; проверить root exports/runtime mapper+handler и TS positive/negative contracts. Проверить отсутствие tests/src в tarball.
 - [x] Закоммитить `[gost-kit-35] docs: demonstrate API operation mapping`.
@@ -93,3 +93,13 @@
 - [x] Проверить весь diff против спецификации, запросить одно независимое ревью всей ветки.
 - [x] Для существенных находок написать RED regression, исправить, получить GREEN и повторить нужные checks.
 - [x] Проверить git status, итоговые commits/checks и подготовить отчёт с ограничениями. Не мержить и не публиковать.
+
+
+### Task 5: Удаление прежнего формата по уточнению владельца
+
+**Interfaces:** `ApiEffect<Operations, Action>`; `createApiHandler<Paths, Action, Operations>(api)`.
+
+- [x] Зафиксировать RED type test: handler должен отклонять эффект без operation.
+- [x] Удалить прежний тип/ветку, объединить operation effect в ApiEffect, убрать fallback проверки operation, перевести тесты на фабрику и обновить пример.
+- [ ] Обновить документацию и changeset; проверить common/example/full check, собранный tarball и внешний consumer.
+- [ ] Провести независимое ревью изменения; исправить подтверждённые находки, commit/push и обновить PR #36.

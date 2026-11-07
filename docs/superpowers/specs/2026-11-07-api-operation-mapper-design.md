@@ -81,7 +81,7 @@ Method/url задаёт операция, они не переопределяю
 возвращает `effects: [createApiEffect(...)]`, а тест проверяет
 `result.effects[0].type`, ссылку operation и параметры этого элемента.
 
-## Типизация и совместимость — техническое предложение
+## Типизация
 
 Публичный `ApiOperation` связывает схему Paths, маршрут и mapResponse на уровне
 типов. Paths передаётся generic-параметром; пользователь не задаёт поле schema,
@@ -98,27 +98,26 @@ options выводятся из того же upstream FetchOptions для вы�
 проверяет required body/params, mapper input и доменный callback без этой ошибки.
 
 Поддерживается только JSON (`parseAs` отсутствует либо равен `'json'`). Это
-ограничение уже действует и для `ApiClient.request`, и для legacy `ApiEffect`;
-операции не добавляют поддержку blob/text и raw-эффект не является обходом этого
-ограничения. Другие форматы ответа потребуют отдельного изменения API.
+ограничение действует для `ApiClient.request` и `ApiEffect`.
+Операции не добавляют поддержку blob/text. Другие форматы ответа потребуют отдельного изменения API.
 Термин mapper ниже обозначает именно функцию поля `mapResponse`.
 
-Старый `ApiEffect<Paths, Action>` сохраняет DTO-callback и прежние поля. Для
-операционных эффектов предлагается дополнительный необязательный type parameter:
+Единственный формат эффекта содержит обязательную operation. Владелец уточнил,
+что модуль находится в разработке: сохранять прежний формат не требуется.
+Публичный тип связывает операции с actions без отдельного generic Paths:
 
 ```ts
 type ApiOperations = typeof loadUser;
-type AppApiEffect = ApiEffect<Paths, RootAction, ApiOperations>;
+type AppApiEffect = ApiEffect<ApiOperations, RootAction>;
 
 // Один общеприкладной handler, без runtime реестра endpoint handlers.
 const handlers = createApiHandler<Paths, RootAction, ApiOperations>(api);
 ```
 
 Несколько операций агрегируются union типов: `typeof loadUser | typeof updateUser`.
-Третий параметр по умолчанию never; потребители только старого API не меняются.
-При подключении новых operations приложение намеренно добавляет их типы в общие
-RootEffect/handler aliases. Это шаг принятия нового API, а не миграция всех
-существующих raw ApiEffect. Общий клиент по-прежнему знает только Paths.
+Handler проверяет соответствие операций схеме клиента. Общий клиент по-прежнему
+знает только Paths. Операция без mapResponse использует identity-преобразование;
+прямой api.request возвращает DTO и не зависит от FC.
 
 Это сохраняет корреляцию operation/params/mapper/onSuccess и проверку actions
 в рамках RootAction, без публичного стирания callback до any/never. Type erasure
@@ -133,13 +132,9 @@ RootEffect/handler продолжают принимать union уже корр
 
 ## Исполнение и ошибки
 
-1. Обе формы имеют `type: 'ApiEffect'` и попадают в один handler. Внутри него
-   наличие собственного поля `operation` различает операционный эффект и legacy:
-   фабрика всегда добавляет обязательную ссылку operation, legacy-эффекты этого
-   зарезервированного поля не имеют. Method/url для различения не используются,
-   потому что они есть в обеих формах. Ветка legacy сохраняет прежнее исполнение
-   без mapResponse; ветка operation использует её mapResponse. Handler отделяет
-   operation/callback metadata от native request options.
+1. Все API-эффекты имеют `type: 'ApiEffect'` и обязательную operation. Handler
+   отделяет operation/callback metadata от native request options; альтернативных
+   форматов и проверки наличия operation нет.
 2. Выполняет один запрос через внедрённый общий ApiClient.
 3. ApiResult error сразу направляется в существующий error path: mapper и
    onSuccess не вызываются; классификация http/network/contract/aborted сохраняется.
@@ -190,10 +185,8 @@ validation library. Mapper не объявляется автоматическ�
 - Compile-time: route/method, required path/query/body, JSON-only parsing,
   schema-derived mapper input, mapped callback result, optional identity,
   несколько разных action variants, неверные actions в RootEffect и handler.
-- Legacy/direct request type/runtime regression без переписывания потребителей;
-  raw ApiEffect не получает mapper автоматически. Один handler принимает обе
-  формы с одинаковыми method/url, различает их по operation и не передаёт это
-  поле в API-клиент. Type tests отклоняют не-JSON parseAs в обеих формах.
+- Type tests отклоняют эффект без operation и не-JSON parseAs. Прямой request
+  сохраняет DTO-контракт. Operation metadata не передаётся в API-клиент.
 - Runtime: mapped success, identity, null/204/HEAD, sync/async mapper failure,
   все transport kinds, optional callbacks, fallback AppErrors, awaited dispatch.
 - Mapper не вызывается для failure; callbacks/dispatch errors не переклассифицируются;

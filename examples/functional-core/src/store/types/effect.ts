@@ -11,6 +11,6 @@ export type DispatchActionEffect = {
   action: RootAction;
 };
 export type ApiOperations = typeof loadUser;
-export type ApiEffect = CommonApiEffect<Paths, RootAction, ApiOperations>;
+export type ApiEffect = CommonApiEffect<ApiOperations, RootAction>;
 export type RootEffect = ApiEffect | DispatchActionEffect;
 export type ApiClient = CommonApiClient<Paths>;
