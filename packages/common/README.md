@@ -381,6 +381,11 @@ The optional parameter defaults to never: existing two-parameter ApiEffect and
 createApiHandler retain their DTO contracts. One handler handles both forms;
 its own `operation` property selects mapping. No runtime endpoint registry or
 per-feature API client is needed, and effect metadata is removed before request.
+If an operation is selected at runtime, narrow it to one operation before calling
+createApiEffect (for example, branch on operation.url). Alternatively, construct
+the effect in each selection branch. An unresolved union could otherwise pair
+one route with another route's options. The handler and RootEffect accept the
+union of the resulting correctly constructed effects.
 
 HTTP/network/aborted/contract failures skip the mapper and use the existing
 onError path. A mapper throw or rejection becomes `{ kind: 'contract', errors: [] }`:

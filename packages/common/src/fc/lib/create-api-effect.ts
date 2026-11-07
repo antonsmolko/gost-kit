@@ -6,6 +6,7 @@ import type {
 } from '../../api';
 import type { AppError } from '../../app-error';
 import type { Trigger } from '../types/trigger';
+import type { SingleApiOperation } from '../../api/types/single-api-operation';
 
 export const createApiEffect = <
   const TOperation extends ApiOperation,
@@ -22,6 +23,11 @@ export const createApiEffect = <
     onSuccess?: (data: ApiOperationData<NoInfer<TOperation>>) => TSuccess;
     onError?: (errors: AppError[], failure: ApiFailure) => TFailure;
   },
+  // Keep inference on the first argument: an unresolved operation union cannot
+  // be paired with request options that satisfy only one possible endpoint.
+  ..._operationCheck: [SingleApiOperation<TOperation>] extends [never]
+    ? [unresolvedOperation: never]
+    : []
 ) => {
   const { method, url }: Pick<TOperation, 'method' | 'url'> = operation;
 
