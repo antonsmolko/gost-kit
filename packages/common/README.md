@@ -271,7 +271,7 @@ the reducer. For a schema whose POST `/user` returns
 ```ts
 import {
   createApiEffect,
-  createApiHandler,
+  createApiEffector,
   defineApiOperation,
   type ApiEffect,
   type AppError,
@@ -312,7 +312,7 @@ const effect: Effect = createApiEffect(loadUser, {
 
 // In a reducer: return { state: loadingState, effects: [effect] }.
 // Supply the same shared schema-typed api used by the rest of the application.
-const handlers = createApiHandler<paths, Action, Operation>(api);
+const handlers = createApiEffector<paths, Action, Operation>(api);
 ```
 
 `api` is your configured
@@ -336,21 +336,25 @@ check `commit.effects[0].type`, operation identity and request payload.
 
 Declare operations as `typeof loadUser | typeof updateUser` and use that union
 in `ApiEffect<Operation, SuccessAction, ErrorAction>` and
-`createApiHandler<paths, Action, Operation>(api)`. Every effect has a required
+`createApiEffector<paths, Action, Operation>(api)`. Every effect has a required
 operation; omitting mapResponse selects identity mapping. SuccessAction and
 ErrorAction are checked separately: onSuccess returns only SuccessAction,
 onError returns only ErrorAction. Each can be a union. Callbacks remain optional;
 use never for a role with no callback. The factory infers each callback result
 independently; annotating the application's effect union enforces their roles.
 The shared handler accepts both results only within its Action union.
-One handler executes
-all API effects. No runtime endpoint registry or per-feature API client is needed,
+The factory defines its table through define.effector, just like application
+effectors. effecting composes those definitions into the executable Effector.
+One handler executes all API effects. No runtime endpoint registry or per-feature API client is needed,
 and effect metadata is removed before request.
 If an operation is selected at runtime, narrow it to one operation before calling
 createApiEffect (for example, branch on operation.url). Alternatively, construct
 the effect in each selection branch. An unresolved union could otherwise pair
 one route with another route's options. The handler and RootEffect accept the
 union of the resulting correctly constructed effects.
+`SingleApiOperation<Operation>` is exported for typed wrappers: it preserves a
+single operation type and resolves an unresolved union to never. It performs
+no runtime narrowing; select the concrete branch before constructing an effect.
 
 HTTP/network/aborted/contract failures skip the mapper and use the existing
 onError path. A mapper throw or rejection becomes `{ kind: 'contract', errors: [] }`:

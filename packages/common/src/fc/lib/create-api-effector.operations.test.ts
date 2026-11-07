@@ -5,9 +5,9 @@ import {
   type ApiFailure,
 } from '../../api';
 import type { AppError } from '../../app-error';
-import type { TestPaths, TestUser } from '../../api/types/api-request.test';
+import type { TestPaths, TestUser } from '../../api/types/api-client.test';
 import { createApiEffect } from './create-api-effect';
-import { createApiHandler } from './create-api-handler';
+import { createApiEffector } from './create-api-effector';
 import { effecting } from './effecting';
 import type { ApiEffect } from '../types/api-effect';
 
@@ -54,7 +54,7 @@ const setup = <TMap extends (dto: TestUser) => unknown>(
   return {
     operation,
     api,
-    handler: createApiHandler<TestPaths, Action, typeof operation>(api),
+    handler: createApiEffector<TestPaths, Action, typeof operation>(api),
   };
 };
 
@@ -331,7 +331,7 @@ test('identity operations preserve null, 204 and HEAD undefined', async () => {
     method: 'head',
     url: '/head-json',
   });
-  const handler = createApiHandler<
+  const handler = createApiEffector<
     TestPaths,
     Action,
     typeof get | typeof empty | typeof head

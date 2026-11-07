@@ -6,9 +6,9 @@ import {
 } from '../../api';
 import type { AppError } from '../../app-error';
 import { createApiEffect } from '../lib/create-api-effect';
-import { createApiHandler } from '../lib/create-api-handler';
+import { createApiEffector } from '../lib/create-api-effector';
 import type { ApiEffect } from './api-effect';
-import type { TestPaths } from '../../api/types/api-request.test';
+import type { TestPaths } from '../../api/types/api-client.test';
 
 type SuccessAction =
   { type: 'LoadedAction'; label: string } | { type: 'EmptyAction' };
@@ -135,7 +135,7 @@ const checkActionRoles = () => {
       },
     });
   const api = createApiClient<TestPaths>({ baseUrl: 'https://example.test' });
-  const handler = createApiHandler<TestPaths, Action, typeof operation>(api);
+  const handler = createApiEffector<TestPaths, Action, typeof operation>(api);
 
   void handler.ApiEffect({ effect: valid, dispatch: async () => {} });
   void handler.ApiEffect({ effect: secondSuccess, dispatch: async () => {} });
@@ -146,7 +146,7 @@ const checkActionRoles = () => {
     dispatch: async () => {},
   });
 
-  const featureHandler = createApiHandler<
+  const featureHandler = createApiEffector<
     TestPaths,
     FeatureSuccessAction | FeatureErrorAction,
     typeof operation

@@ -1,9 +1,9 @@
 import { expect, expectTypeOf, test } from 'vitest';
 import { createApiClient, defineApiOperation } from '../../api';
-import { createApiHandler } from '../lib/create-api-handler';
+import { createApiEffector } from '../lib/create-api-effector';
 import { createApiEffect } from '../lib/create-api-effect';
 import type { ApiEffect } from './api-effect';
-import type { TestPaths, TestUser } from '../../api/types/api-request.test';
+import type { TestPaths, TestUser } from '../../api/types/api-client.test';
 
 type Action = { type: 'DoneAction' };
 
@@ -51,7 +51,7 @@ const checkEffectTypes = () => {
       return { type: 'DoneAction' };
     },
   };
-  const handler = createApiHandler<TestPaths, Action, Operation>(
+  const handler = createApiEffector<TestPaths, Action, Operation>(
     createApiClient<TestPaths>({ baseUrl: 'https://example.test' }),
   );
 
@@ -92,7 +92,7 @@ const checkEffectTypes = () => {
   }>()({ method: 'get', url: '/other' });
 
   // @ts-expect-error handler operations belong to its client schema
-  createApiHandler<TestPaths, Action, typeof other>(
+  createApiEffector<TestPaths, Action, typeof other>(
     createApiClient<TestPaths>({ baseUrl: 'https://example.test' }),
   );
 

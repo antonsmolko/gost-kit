@@ -5,7 +5,7 @@ import {
   type ApiOperationDefinition,
 } from '../../api';
 import { createApiEffect } from '../lib/create-api-effect';
-import { createApiHandler } from '../lib/create-api-handler';
+import { createApiEffector } from '../lib/create-api-effector';
 import type { ApiEffect } from './api-effect';
 
 type Paths = {
@@ -37,7 +37,7 @@ const checkUnionTypes = (search: boolean) => {
     defaultError: fallback,
   });
 
-  const handler = createApiHandler<Paths, Action, typeof operation>(
+  const handler = createApiEffector<Paths, Action, typeof operation>(
     createApiClient<Paths>({ baseUrl: 'https://example.test' }),
   );
 

@@ -51,17 +51,17 @@
 ### Task 2: Единый handler
 
 **Files:**
-- Modify: `packages/common/src/fc/lib/create-api-handler.ts`, `create-api-handler.test.ts`.
+- Modify: `packages/common/src/fc/lib/create-api-effector.ts`, `create-api-effector.test.ts`.
 - Create: `packages/common/src/fc/lib/map-api-result.ts` с colocated test, если выделение помогает сохранить catch только вокруг mapResponse.
 
 **Interfaces:**
 - Consumes: Task 1 ApiEffect/ApiOperation/factory, ApiClient/ApiResult/ApiFailure.
-- Produces: `createApiHandler<Paths, Action, Operation>(api)` принимает эффекты с operation, dispatch получает mapped action.
+- Produces: `createApiEffector<Paths, Action, Operation>(api)` принимает эффекты с operation, dispatch получает mapped action.
 
 - [x] Добавить реальные client+injected-fetch tests: snake_case DTO → domain → action → dispatch; operation metadata отсутствует в request. Операция с mapper и identity-операция.
 - [x] Добавить tests identity/null/204/HEAD; async mapper; sync/rejected mapper → `{kind: 'contract', errors: []}` + `[defaultError]`; mapper без onSuccess всё равно исполняется, без onError failure throws.
 - [x] Проверить failure kinds http/network/aborted/contract без mapper; callback/dispatch exceptions и unexpected client throws не переклассифицируются. Проверить ожидание mapper и dispatch.
-- [x] Запустить `npm test --workspace @gost-kit/common -- --run src/fc/lib/create-api-handler.test.ts`; новые assertions должны FAIL до реализации.
+- [x] Запустить `npm test --workspace @gost-kit/common -- --run src/fc/lib/create-api-effector.test.ts`; новые assertions должны FAIL до реализации.
 - [x] Требовать Operation generic и operation; strip metadata, transport один раз; await mapResponse внутри узкого catch, callbacks снаружи.
 - [x] Выполнить common typecheck/full tests и lint; ожидать PASS; закоммитить `[gost-kit-35] feat: map API operation results in shared handler`.
 
@@ -97,7 +97,7 @@
 
 ### Task 5: Удаление прежнего формата по уточнению владельца
 
-**Interfaces:** `ApiEffect<Operation, SuccessAction, ErrorAction>`; `createApiHandler<Paths, Action, Operation>(api)`.
+**Interfaces:** `ApiEffect<Operation, SuccessAction, ErrorAction>`; `createApiEffector<Paths, Action, Operation>(api)`.
 
 - [x] Зафиксировать RED type test: handler должен отклонять эффект без operation.
 - [x] Удалить прежний тип/ветку, объединить operation effect в ApiEffect, убрать fallback проверки operation, перевести тесты на фабрику и обновить пример.
@@ -113,3 +113,21 @@
 - [x] Разделить типы ApiEffect и сохранить независимый вывод фабрики; обновить внутренний тип handler и эффекты примера.
 - [x] Проверить optional callbacks/never, scoped feature actions, payloads, unions, schema requirements и отрицательные случаи внешнего consumer.
 - [x] Обновить docs/changeset, выполнить root check и проверить tarball; ревью, commit/push и обновление PR #36.
+
+
+### Task 7: Исправления опубликованного ревью PR #36
+
+**Interfaces:** публичный контракт эффекта сохранён; ApiEffectFields — внутренняя общая декларация полей, SingleApiOperation экспортирован, неиспользуемый ApiRequest удалён.
+
+- [x] Проверить шесть замечаний по коду. Удалить ApiRequest и дублирование endpoint-options; перенести type-тесты к ApiClient.
+- [x] Убрать полный cast эффекта; проверить mutation-сценарий переименования defaultError → ошибка компиляции handler.
+- [x] Добавить прямые mapApiResult tests и доказать мутациями покрытие ветвей transport failure/mapper exception.
+- [x] Экспортировать SingleApiOperation, проверить типовой контракт и описать удаление raw-формата/путь миграции в changeset.
+- [x] Выполнить полный check и browser/build; проверить пакет и внешний consumer после удаления ApiRequest.
+- [x] Commit/push и обновить PR #36 с результатами проверок.
+
+
+### Task 8: Имена таблиц обработчиков
+
+- [x] Переименовать фабрику в createApiEffector, таблицу shell — в shellEffector; обновить imports/exports, tests/docs и changeset без старого alias.
+- [x] Проверить полный check и внешний consumer с новым именем; commit/push в PR #36.

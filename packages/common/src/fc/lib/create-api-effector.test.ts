@@ -1,10 +1,10 @@
 import { expect, test, vi } from 'vitest';
 import { createApiClient, defineApiOperation } from '../../api';
 import { createApiEffect } from './create-api-effect';
-import { createApiHandler } from './create-api-handler';
+import { createApiEffector } from './create-api-effector';
 import { effecting } from './effecting';
 import type { AppError } from '../../app-error';
-import type { TestPaths } from '../../api/types/api-request.test';
+import type { TestPaths } from '../../api/types/api-client.test';
 import type { ApiEffect } from '../types/api-effect';
 
 type SuccessAction = { type: 'LoadedAction'; name: string };
@@ -34,7 +34,7 @@ const effect: ApiEffect<typeof operation, SuccessAction, ErrorAction> =
     },
   });
 const setup = (response: Response, mapErrors?: () => AppError[]) => {
-  return createApiHandler<TestPaths, TestAction, typeof operation>(
+  return createApiEffector<TestPaths, TestAction, typeof operation>(
     createApiClient<TestPaths>({
       baseUrl: 'https://example.test',
       fetch: async () => {
@@ -161,7 +161,7 @@ test('dispatch errors are not reclassified as request failures', async () => {
 test('client implementation exceptions propagate without invoking onError', async () => {
   const error = new Error('Client bug');
   const onError = vi.fn(effect.onError);
-  const handler = createApiHandler<TestPaths, TestAction, typeof operation>({
+  const handler = createApiEffector<TestPaths, TestAction, typeof operation>({
     request: async () => {
       throw error;
     },
@@ -202,7 +202,7 @@ test('effect callbacks and fallback metadata never reach the injected client', a
   const request = vi.fn(async () => {
     throw error;
   });
-  const handler = createApiHandler<TestPaths, TestAction, typeof operation>({
+  const handler = createApiEffector<TestPaths, TestAction, typeof operation>({
     request,
   });
 

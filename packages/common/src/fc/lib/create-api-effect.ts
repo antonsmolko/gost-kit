@@ -3,10 +3,10 @@ import type {
   ApiOperation,
   ApiOperationData,
   ApiOperationOptions,
+  SingleApiOperation,
 } from '../../api';
 import type { AppError } from '../../app-error';
 import type { Trigger } from '../types/trigger';
-import type { SingleApiOperation } from '../../api/types/single-api-operation';
 
 export const createApiEffect = <
   const TOperation extends ApiOperation,

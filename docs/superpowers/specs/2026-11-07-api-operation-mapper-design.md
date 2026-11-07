@@ -93,7 +93,7 @@ Method/url задаёт операция, они не переопределяю
 Definition — discriminated union method/url с contextual DTO mapper. Request
 options выводятся из того же upstream FetchOptions для выбранной операции,
 с сохранением required params/body и JSON-only parseAs. Повторное разворачивание
-всей тяжёлой ApiRequest union ради одного endpoint избегается: read-only TS 5.9.3
+тяжёлого union всех endpoint-запросов ради одного маршрута избегается: read-only TS 5.9.3
 эксперимент показал union-too-complex у наивного Extract, а endpoint lookup
 проверяет required body/params, mapper input и доменный callback без этой ошибки.
 
@@ -118,18 +118,22 @@ type ErrorAction = Extract<RootAction, { type: 'ErrorReceiveAction' }>;
 type AppApiEffect = ApiEffect<ApiOperation, SuccessAction, ErrorAction>;
 
 // Один общеприкладной handler, без runtime реестра endpoint handlers.
-const handlers = createApiHandler<Paths, RootAction, ApiOperation>(api);
+const apiEffector = createApiEffector<Paths, RootAction, ApiOperation>(api);
 ```
 
 Несколько операций агрегируются union типов: `typeof loadUser | typeof updateUser`.
-Handler проверяет соответствие операций схеме клиента. Общий клиент по-прежнему
+Фабрика createApiEffector определяет таблицу через define.effector; effecting
+собирает её с shellEffector в исполняемый Effector. Handler проверяет соответствие
+операций схеме клиента. Общий клиент по-прежнему
 знает только Paths. Операция без mapResponse использует identity-преобразование;
 прямой api.request возвращает DTO и не зависит от FC.
 
 Это сохраняет корреляцию operation/params/mapper/onSuccess и проверку actions
 в рамках RootAction, без публичного стирания callback до any/never. Type erasure
 разрешён только в едином внутреннем runtime-adapter handler, как у существующей
-динамической отправки request; несовместимые публичные запросы/callbacks должны
+динамической отправки request. Общие поля описаны единой внутренней декларацией
+ApiEffectFields и деструктурируются исполнителем без каста всего эффекта. Локальное
+приведение данных разрешено на границе вызова callback. Несовместимые публичные запросы/callbacks должны
 отклоняться TypeScript. Compile-time tests проверяют также прямой вызов handler.
 При runtime выборе definition из union сохраняется union отдельных операций,
 а не один объект с объединёнными method/url. Перед createApiEffect такая
@@ -200,7 +204,7 @@ validation library. Mapper не объявляется автоматическ�
   operation/callback metadata никогда не доходит до injected client.
 - Spy-tests подтверждают отсутствие HTTP/mapper при definition/effect construction
   и вызове reducer. Reducer tests проверяют type/operation identity/request payload;
-  поведение mapper/callback/action/dispatch — через настоящий createApiHandler.
+  поведение mapper/callback/action/dispatch — через настоящий createApiEffector.
 - Pure mapper/example tests и существующие browser tests подтверждают различные
   DTO/domain shape и сохранение интерфейсного результата.
 - Полный root check, production example build, public exports/docs, actual
@@ -211,7 +215,7 @@ validation library. Mapper не объявляется автоматическ�
 ## Основания и статус
 
 Источник — gost-kit #35 и согласованная архитектура gost-spec #88. Изучены
-существующие createApiClient/ApiEffect/createApiHandler, установленный
+существующие createApiClient/ApiEffect/createApiEffector, установленный
 openapi-fetch 0.17.0 и его официальная API-документация:
 https://openapi-ts.dev/openapi-fetch/api . Upstream отвечает за route/options/DTO,
 а operation mapper — добавляемая прикладная граница домена.

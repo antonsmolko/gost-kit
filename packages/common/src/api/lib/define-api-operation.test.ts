@@ -1,7 +1,7 @@
 import { expect, expectTypeOf, test, vi } from 'vitest';
 import { defineApiOperation } from './define-api-operation';
 import type { ApiOperationDefinition } from '../types/api-operation-definition';
-import type { TestPaths, TestUser } from '../types/api-request.test';
+import type { TestPaths, TestUser } from '../types/api-client.test';
 
 const checkTypes = () => {
   const defineOperation = defineApiOperation<TestPaths>();

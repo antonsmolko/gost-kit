@@ -1,7 +1,7 @@
 import { expect, expectTypeOf, test, vi } from 'vitest';
 import { defineApiOperation } from '../../api';
 import { createApiEffect } from './create-api-effect';
-import type { TestPaths, TestUser } from '../../api/types/api-request.test';
+import type { TestPaths, TestUser } from '../../api/types/api-client.test';
 import type { ApiEffect } from '../types/api-effect';
 import type { AppError } from '../../app-error';
 

@@ -100,7 +100,7 @@ provides the entire current root state, including other features, auth and globa
 configuration when present. Both state inputs are deeply readonly at compile time.
 The handler returns complete `UserState`, not `RootState`. Its inferred result is
 checked for extra state keys without a return annotation.
-`createApiHandler<Paths, RootAction, ApiOperation>(api)` supplies the common API effect table.
+`createApiEffector<Paths, RootAction, ApiOperation>(api)` supplies the common API effect table.
 `define.effector<RootAction, DispatchActionEffect>` defines the remaining table;
 handlers receive `{ effect, dispatch }`. Each table covers its declared effect union.
 
@@ -113,7 +113,7 @@ const reducer: Reducer<RootState, RootAction, RootEffect> = reducing({
 });
 
 const effector: Effector<RootAction, RootEffect> = effecting(
-  createApiHandler<Paths, RootAction, ApiOperation>(api),
+  createApiEffector<Paths, RootAction, ApiOperation>(api),
   shellEffector,
 );
 ```
@@ -174,7 +174,7 @@ has no transport or Svelte dependencies.
 returns a plain effect object. Its onSuccess receives User and returns a scoped
 action; the reducer then applies it to state. No mapper or HTTP executes while
 the reducer describes the effect. The root declares `ApiOperation = typeof loadUser`
-and includes it in ApiEffect and the single shared createApiHandler.
+and includes it in ApiEffect and the single shared createApiEffector.
 
 The direction is FC → data/api → mapper → domain/entities. Data/API does not
 import feature actions/reducers, and the shared client knows only Paths.

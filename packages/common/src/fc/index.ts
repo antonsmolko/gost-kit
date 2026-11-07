@@ -28,6 +28,6 @@ export type { StoreError } from './types/store-error';
 export type { Tables } from './types/tables';
 export type { Trigger } from './types/trigger';
 export type { Unique } from './types/unique';
-export { createApiHandler } from './lib/create-api-handler';
+export { createApiEffector } from './lib/create-api-effector';
 export type { ApiEffect } from './types/api-effect';
 export { createApiEffect } from './lib/create-api-effect';
