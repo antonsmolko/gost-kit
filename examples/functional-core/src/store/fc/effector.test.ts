@@ -93,10 +93,10 @@ test('success receiver exceptions reject without calling the error receiver', as
         onSuccess: () => {
           throw failure;
         },
-        onError: () => {
+        onError: (errors) => {
           errorCalls += 1;
 
-          return { scope: 'users', type: 'LoadAction' };
+          return { scope: 'users', type: 'ErrorReceiveAction', errors };
         },
       },
       async () => {},
@@ -117,10 +117,10 @@ test('dispatch failures reject without being reclassified as API failures', asyn
     )(
       {
         ...effect,
-        onError: () => {
+        onError: (errors) => {
           errorCalls += 1;
 
-          return { scope: 'users', type: 'LoadAction' };
+          return { scope: 'users', type: 'ErrorReceiveAction', errors };
         },
       },
       async () => {

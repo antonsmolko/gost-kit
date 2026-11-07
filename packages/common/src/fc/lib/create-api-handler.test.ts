@@ -7,9 +7,9 @@ import type { AppError } from '../../app-error';
 import type { TestPaths } from '../../api/types/api-request.test';
 import type { ApiEffect } from '../types/api-effect';
 
-type TestAction =
-  | { type: 'LoadedAction'; name: string }
-  | { type: 'FailedAction'; errors: AppError[] };
+type SuccessAction = { type: 'LoadedAction'; name: string };
+type ErrorAction = { type: 'FailedAction'; errors: AppError[] };
+type TestAction = SuccessAction | ErrorAction;
 
 const fallback: AppError = {
   code: 'LOAD_FAILED',
@@ -21,9 +21,8 @@ const operation = defineApiOperation<TestPaths>()({
   method: 'post',
   url: '/users/{id}',
 });
-const effect: ApiEffect<typeof operation, TestAction> = createApiEffect(
-  operation,
-  {
+const effect: ApiEffect<typeof operation, SuccessAction, ErrorAction> =
+  createApiEffect(operation, {
     params: { path: { id: 1 } },
     body: { name: 'Ada' },
     defaultError: fallback,
@@ -33,8 +32,7 @@ const effect: ApiEffect<typeof operation, TestAction> = createApiEffect(
     onError: (errors) => {
       return { type: 'FailedAction', errors };
     },
-  },
-);
+  });
 const setup = (response: Response, mapErrors?: () => AppError[]) => {
   return createApiHandler<TestPaths, TestAction, typeof operation>(
     createApiClient<TestPaths>({
@@ -51,7 +49,7 @@ test('handler composes with effecting and dispatches the typed success action', 
   const dispatch = vi.fn(async () => {});
   const effector = effecting<
     TestAction,
-    ApiEffect<typeof operation, TestAction>,
+    ApiEffect<typeof operation, SuccessAction, ErrorAction>,
     readonly [ReturnType<typeof setup>]
   >(setup(Response.json({ id: 1, name: 'Ada' })));
 

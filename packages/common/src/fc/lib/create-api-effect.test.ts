@@ -14,9 +14,8 @@ const operation = defineApiOperation<TestPaths>()({
   },
 });
 
-type Action =
-  | { type: 'LoadedAction'; label: string }
-  | { type: 'FailedAction'; errors: AppError[] };
+type SuccessAction = { type: 'LoadedAction'; label: string };
+type ErrorAction = { type: 'FailedAction'; errors: AppError[] };
 
 const checkTypes = () => {
   const effect = createApiEffect(operation, {
@@ -32,7 +31,8 @@ const checkTypes = () => {
       return { type: 'FailedAction', errors };
     },
   });
-  const rootEffect: ApiEffect<typeof operation, Action> = effect;
+  const rootEffect: ApiEffect<typeof operation, SuccessAction, ErrorAction> =
+    effect;
 
   // @ts-expect-error missing required body
   createApiEffect(operation, {
@@ -87,7 +87,8 @@ const checkTypes = () => {
     },
   });
   // @ts-expect-error RootAction validation
-  const invalid: ApiEffect<typeof operation, Action> = wrongAction;
+  const invalid: ApiEffect<typeof operation, SuccessAction, ErrorAction> =
+    wrongAction;
   const other = defineApiOperation<TestPaths>()({
     method: 'post',
     url: '/users/{id}',
@@ -105,9 +106,17 @@ const checkTypes = () => {
       return { type: 'LoadedAction', label: String(id) };
     },
   });
-  const union: ApiEffect<typeof operation | typeof other, Action> = otherEffect;
+  const union: ApiEffect<
+    typeof operation | typeof other,
+    SuccessAction,
+    ErrorAction
+  > = otherEffect;
   // @ts-expect-error callback input must correlate with the selected operation
-  const mixed: ApiEffect<typeof operation | typeof other, Action> = {
+  const mixed: ApiEffect<
+    typeof operation | typeof other,
+    SuccessAction,
+    ErrorAction
+  > = {
     ...otherEffect,
     onSuccess: (_user: { label: string }) => {
       return {

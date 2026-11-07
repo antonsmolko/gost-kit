@@ -20,25 +20,31 @@ const checkEffectTypes = () => {
 
   type Operations = typeof postOperation | typeof emptyOperation;
 
-  const post: ApiEffect<Operations, Action> = createApiEffect(postOperation, {
-    params: { path: { id: 1 } },
-    body: { name: 'Ada' },
-    defaultError: fallback,
-    onSuccess: (data) => {
-      expectTypeOf(data).toEqualTypeOf<TestUser>();
+  const post: ApiEffect<Operations, Action, never> = createApiEffect(
+    postOperation,
+    {
+      params: { path: { id: 1 } },
+      body: { name: 'Ada' },
+      defaultError: fallback,
+      onSuccess: (data) => {
+        expectTypeOf(data).toEqualTypeOf<TestUser>();
 
-      return { type: 'DoneAction' };
+        return { type: 'DoneAction' };
+      },
     },
-  });
-  const empty: ApiEffect<Operations, Action> = createApiEffect(emptyOperation, {
-    defaultError: fallback,
-    onSuccess: (data) => {
-      expectTypeOf(data).toEqualTypeOf<undefined>();
+  );
+  const empty: ApiEffect<Operations, Action, never> = createApiEffect(
+    emptyOperation,
+    {
+      defaultError: fallback,
+      onSuccess: (data) => {
+        expectTypeOf(data).toEqualTypeOf<undefined>();
 
-      return { type: 'DoneAction' };
+        return { type: 'DoneAction' };
+      },
     },
-  });
-  const wrong: ApiEffect<Operations, Action> = {
+  );
+  const wrong: ApiEffect<Operations, Action, never> = {
     ...post,
     // @ts-expect-error response must correspond to the selected operation
     onSuccess: (_data: string) => {
@@ -57,7 +63,7 @@ const checkEffectTypes = () => {
   });
 
   // @ts-expect-error required body must not disappear in effect union
-  const missingBody: ApiEffect<Operations, Action> = {
+  const missingBody: ApiEffect<Operations, Action, never> = {
     type: 'ApiEffect',
     operation: postOperation,
     method: 'post',

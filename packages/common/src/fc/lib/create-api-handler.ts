@@ -43,7 +43,7 @@ export const createApiHandler = <
       effect,
       dispatch,
     }: {
-      effect: ApiEffect<TOperations, TAction>;
+      effect: ApiEffect<TOperations, TAction, TAction>;
       dispatch: Dispatch<TAction>;
     }): Promise<void> => {
       const {

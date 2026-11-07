@@ -286,14 +286,14 @@ const loadUser = defineApiOperation<paths>()({
   },
 });
 
-type Action =
-  | {
-      type: 'UserLoadedAction';
-      user: { id: string; name: string; email: string };
-    }
-  | { type: 'UserLoadFailedAction'; errors: AppError[] };
+type SuccessAction = {
+  type: 'UserLoadedAction';
+  user: { id: string; name: string; email: string };
+};
+type ErrorAction = { type: 'UserLoadFailedAction'; errors: AppError[] };
+type Action = SuccessAction | ErrorAction;
 type Operations = typeof loadUser;
-type Effect = ApiEffect<Operations, Action>;
+type Effect = ApiEffect<Operations, SuccessAction, ErrorAction>;
 
 const effect: Effect = createApiEffect(loadUser, {
   body: { email: 'ada@example.test' },
@@ -335,9 +335,15 @@ defaultError and callbacks. Method/url come from the operation. Reducer tests ca
 check `commit.effects[0].type`, operation identity and request payload.
 
 Declare operations as `typeof loadUser | typeof updateUser` and use that union
-in `ApiEffect<Operations, Action>` and
+in `ApiEffect<Operations, SuccessAction, ErrorAction>` and
 `createApiHandler<paths, Action, Operations>(api)`. Every effect has a required
-operation; omitting mapResponse selects identity mapping. One handler executes
+operation; omitting mapResponse selects identity mapping. SuccessAction and
+ErrorAction are checked separately: onSuccess returns only SuccessAction,
+onError returns only ErrorAction. Each can be a union. Callbacks remain optional;
+use never for a role with no callback. The factory infers each callback result
+independently; annotating the application's effect union enforces their roles.
+The shared handler accepts both results only within its Action union.
+One handler executes
 all API effects. No runtime endpoint registry or per-feature API client is needed,
 and effect metadata is removed before request.
 If an operation is selected at runtime, narrow it to one operation before calling

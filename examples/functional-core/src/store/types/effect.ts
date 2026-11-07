@@ -11,6 +11,10 @@ export type DispatchActionEffect = {
   action: RootAction;
 };
 export type ApiOperations = typeof loadUser;
-export type ApiEffect = CommonApiEffect<ApiOperations, RootAction>;
+export type ApiEffect = CommonApiEffect<
+  ApiOperations,
+  Extract<RootAction, { scope: 'users'; type: 'SuccessReceiveAction' }>,
+  Extract<RootAction, { scope: 'users'; type: 'ErrorReceiveAction' }>
+>;
 export type RootEffect = ApiEffect | DispatchActionEffect;
 export type ApiClient = CommonApiClient<Paths>;

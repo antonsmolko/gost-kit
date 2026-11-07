@@ -17,9 +17,13 @@ const fallback: AppError = {
   path: [],
 };
 
-type Action =
-  | { type: 'LoadedAction'; label: string }
-  | { type: 'FailedAction'; errors: AppError[]; failure: ApiFailure };
+type SuccessAction = { type: 'LoadedAction'; label: string };
+type ErrorAction = {
+  type: 'FailedAction';
+  errors: AppError[];
+  failure: ApiFailure;
+};
+type Action = SuccessAction | ErrorAction;
 
 const request = {
   params: { path: { id: 1 } },
@@ -79,7 +83,7 @@ test('shared effector maps DTO and dispatches a domain action without leaking ef
   });
   const effector = effecting<
     Action,
-    ApiEffect<typeof operation, Action>,
+    ApiEffect<typeof operation, SuccessAction, ErrorAction>,
     readonly [typeof handler]
   >(handler);
 

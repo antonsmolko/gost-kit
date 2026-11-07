@@ -104,11 +104,18 @@ options выводятся из того же upstream FetchOptions для вы�
 
 Единственный формат эффекта содержит обязательную operation. Владелец уточнил,
 что модуль находится в разработке: сохранять прежний формат не требуется.
-Публичный тип связывает операции с actions без отдельного generic Paths:
+Публичный тип связывает операции с отдельными SuccessAction и ErrorAction,
+без отдельного generic Paths. onSuccess возвращает только SuccessAction,
+onError — только ErrorAction; каждый может быть union. Фабрика выводит типы
+callbacks независимо, прикладной ApiEffect закрепляет допустимые роли. Если
+callback отсутствует, можно указать never. Handler проверяет, что оба типа
+результатов входят в RootAction:
 
 ```ts
 type ApiOperations = typeof loadUser;
-type AppApiEffect = ApiEffect<ApiOperations, RootAction>;
+type SuccessAction = Extract<RootAction, { type: 'SuccessReceiveAction' }>;
+type ErrorAction = Extract<RootAction, { type: 'ErrorReceiveAction' }>;
+type AppApiEffect = ApiEffect<ApiOperations, SuccessAction, ErrorAction>;
 
 // Один общеприкладной handler, без runtime реестра endpoint handlers.
 const handlers = createApiHandler<Paths, RootAction, ApiOperations>(api);

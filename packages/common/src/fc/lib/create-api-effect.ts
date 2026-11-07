@@ -10,8 +10,8 @@ import type { SingleApiOperation } from '../../api/types/single-api-operation';
 
 export const createApiEffect = <
   const TOperation extends ApiOperation,
-  const TSuccess extends Trigger = never,
-  const TFailure extends Trigger = never,
+  const TSuccessAction extends Trigger = never,
+  const TErrorAction extends Trigger = never,
 >(
   operation: TOperation,
   options: ApiOperationOptions<NoInfer<TOperation>> & {
@@ -20,8 +20,8 @@ export const createApiEffect = <
     url?: never;
     operation?: never;
     defaultError: AppError;
-    onSuccess?: (data: ApiOperationData<NoInfer<TOperation>>) => TSuccess;
-    onError?: (errors: AppError[], failure: ApiFailure) => TFailure;
+    onSuccess?: (data: ApiOperationData<NoInfer<TOperation>>) => TSuccessAction;
+    onError?: (errors: AppError[], failure: ApiFailure) => TErrorAction;
   },
   // Keep inference on the first argument: an unresolved operation union cannot
   // be paired with request options that satisfy only one possible endpoint.

@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Эффекты — обычные объекты с `type: 'ApiEffect'`; фабрика возвращает один эффект, Commit.effects — массив.
-- Единственный формат — ApiEffect<Operations, Action>; handler требует union операций и проверяет схему клиента. Прямой api.request возвращает DTO.
+- Единственный формат — ApiEffect<Operations, SuccessAction, ErrorAction>; handler требует union операций и проверяет схему клиента. Прямой api.request возвращает DTO.
 - JSON-only, схема определяет DTO/параметры; mapper определяет доменный callback, свободного response generic нет.
 - Common не зависит от Svelte; API не зависит от FC; публичный тип — отдельный файл, тесты рядом, imports без расширений.
 - Никаких запросов/mapper/callbacks при создании операции, эффекта и вызове reducer.
@@ -40,7 +40,7 @@
 
 **Interfaces:**
 - Consumes: ApiResponse/ApiMethod, upstream FetchOptions, Trigger/DispatchAction/AppError.
-- Produces: `defineApiOperation<Paths>()(definition)` с readonly method/url/mapResponse и типовой связью с Paths; `createApiEffect(operation, options)` с inferred independent success/error actions; `ApiEffect<Operations, Action>` описывает только эффекты с operation.
+- Produces: `defineApiOperation<Paths>()(definition)` с readonly method/url/mapResponse и типовой связью с Paths; `createApiEffect(operation, options)` с inferred independent success/error actions; `ApiEffect<Operations, SuccessAction, ErrorAction>` описывает только эффекты с operation.
 
 - [x] Написать runtime tests identity/mapped operation, construction purity и effect.type/operation/payload/callback identity; type tests endpoint DTO, required body/path/query, bad method/route/parseAs, inferred domain/async result, identity/null/HEAD, wrong actions, same-route different mappers.
 - [x] Запустить `npm run check --workspace @gost-kit/common` и `npm test --workspace @gost-kit/common -- --run src/api/lib/define-api-operation.test.ts src/fc/lib/create-api-effect.test.ts`; ожидать ошибки отсутствующего API.
@@ -97,9 +97,19 @@
 
 ### Task 5: Удаление прежнего формата по уточнению владельца
 
-**Interfaces:** `ApiEffect<Operations, Action>`; `createApiHandler<Paths, Action, Operations>(api)`.
+**Interfaces:** `ApiEffect<Operations, SuccessAction, ErrorAction>`; `createApiHandler<Paths, Action, Operations>(api)`.
 
 - [x] Зафиксировать RED type test: handler должен отклонять эффект без operation.
 - [x] Удалить прежний тип/ветку, объединить operation effect в ApiEffect, убрать fallback проверки operation, перевести тесты на фабрику и обновить пример.
 - [x] Обновить документацию и changeset; проверить common/example/full check, собранный tarball и внешний consumer.
 - [x] Провести независимое ревью изменения; исправить подтверждённые находки, commit/push и обновить PR #36.
+
+
+### Task 6: Раздельные типы success/error actions
+
+**Interfaces:** `ApiEffect<Operations, SuccessAction, ErrorAction>`; shared handler проверяет оба callback результата в RootAction.
+
+- [x] Написать RED type tests для отдельных action roles, перепутанных callbacks и inferred factory → declared effect.
+- [x] Разделить типы ApiEffect и сохранить независимый вывод фабрики; обновить внутренний тип handler и эффекты примера.
+- [x] Проверить optional callbacks/never, scoped feature actions, payloads, unions, schema requirements и отрицательные случаи внешнего consumer.
+- [ ] Обновить docs/changeset, выполнить root check и проверить tarball; ревью, commit/push и обновление PR #36.

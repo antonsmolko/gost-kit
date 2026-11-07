@@ -214,10 +214,12 @@ dispatch reports its own failures and resolves, so the parent does not report th
 same failure again. The Svelte adapter includes the callback in
 `createDispatch(config)`.
 
-`ApiEffect<ApiOperations, RootAction>` comes from `@gost-kit/common`. It describes a
+`ApiEffect<ApiOperations, SuccessAction, ErrorAction>` comes from `@gost-kit/common`. It describes a
 lowercase `method`, a schema path in `url`, typed `params`/`body`, `defaultError`
 and optional `onSuccess`/`onError` action factories. This example always supplies
-both callbacks so the feature leaves loading. The handler awaits the returned
+both callbacks so the feature leaves loading. Its effect type selects the
+scoped SuccessReceiveAction and ErrorReceiveAction separately from RootAction,
+so callbacks cannot return each other's action. The handler awaits the returned
 action's dispatch; it never interprets HTTP itself.
 
 `createApiClient<Paths>` uses openapi-fetch with an injected synthetic fetch. It

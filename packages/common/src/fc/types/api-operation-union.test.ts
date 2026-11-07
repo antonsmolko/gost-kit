@@ -57,7 +57,7 @@ const checkUnionTypes = (search: boolean) => {
     // @ts-expect-error narrowed route still requires query
     createApiEffect(operation, { defaultError: fallback });
 
-    const effect: ApiEffect<typeof operation, Action> = createApiEffect(
+    const effect: ApiEffect<typeof operation, Action, never> = createApiEffect(
       operation,
       { params: { query: { term: 'Ada' } }, defaultError: fallback },
     );

@@ -11,7 +11,8 @@ import type { Trigger } from './trigger';
 /** An API effect always references its schema-typed operation. */
 export type ApiEffect<
   TOperation extends ApiOperation,
-  TAction extends Trigger,
+  TSuccessAction extends Trigger,
+  TErrorAction extends Trigger,
 > = TOperation extends ApiOperation
   ? ApiOperationOptions<TOperation> & {
       type: 'ApiEffect';
@@ -21,10 +22,10 @@ export type ApiEffect<
       defaultError: AppError;
       onSuccess?: (
         data: ApiOperationData<TOperation>,
-      ) => DispatchAction<TAction>;
+      ) => DispatchAction<TSuccessAction>;
       onError?: (
         errors: AppError[],
         failure: ApiFailure,
-      ) => DispatchAction<TAction>;
+      ) => DispatchAction<TErrorAction>;
     }
   : never;
