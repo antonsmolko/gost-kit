@@ -25,6 +25,12 @@ HTTP-клиент на каждый endpoint. Mapper принадлежит data
 и `effecting`, который выбирает handler по discriminator. Фабрика не требует
 конструкторов для остальных эффектов и не становится их исполнителем.
 
+Имя `defineApiOperation` оставлено отдельным от `define.state/reducer/effector`
+намеренно: существующий `define` относится к FC, а описание API-операции — к
+слою `api` и используется без actions/reducers. Функция экспортируется из `api`,
+`createApiEffect` — из `fc`; `api` не импортирует FC ради определения операции.
+Добавлять API-специфику в существующий FC namespace для этой задачи не требуется.
+
 ## Предлагаемый публичный API
 
 ```ts
@@ -46,16 +52,18 @@ method/url/mapResponse; оно не захватывает API-клиент.
 // features/user/domain/fc/reducer.ts, LoadAction handler
 return {
   state: { ...state, status: 'loading', errors: [] },
-  effects: createApiEffect(loadUser, {
-    body: { email: state.email },
-    defaultError: loadUserError,
-    onSuccess: (user) => {
-      return { scope: 'users', type: 'SuccessReceiveAction', response: user };
-    },
-    onError: (errors) => {
-      return { scope: 'users', type: 'ErrorReceiveAction', errors };
-    },
-  }),
+  effects: [
+    createApiEffect(loadUser, {
+      body: { email: state.email },
+      defaultError: loadUserError,
+      onSuccess: (user) => {
+        return { scope: 'users', type: 'SuccessReceiveAction', response: user };
+      },
+      onError: (errors) => {
+        return { scope: 'users', type: 'ErrorReceiveAction', errors };
+      },
+    }),
+  ],
 };
 ```
 
@@ -69,13 +77,18 @@ response и без отдельного instance factory на каждый за�
 request options, defaultError и исходные callbacks. Поля открыты для проверки;
 никакой скрытый исполнитель не заменяет onSuccess другим callback.
 Method/url задаёт операция, они не переопределяются options.
+Фабрика возвращает один эффект; `Commit.effects` — массив, поэтому reducer
+возвращает `effects: [createApiEffect(...)]`, а тест проверяет
+`result.effects[0].type`, ссылку operation и параметры этого элемента.
 
 ## Типизация и совместимость — техническое предложение
 
-Публичный `ApiOperation` описывает schema/route/mapper; поле schema служит только
-для вывода типов, без runtime OpenAPI-документа или клиента. Конкретные внутренние
-witness/helpers выбирает реализация. Mapper input всегда выводится из ApiResponse
-выбранного маршрута; свободного generic, подменяющего DTO ответа, не добавляется.
+Публичный `ApiOperation` связывает схему Paths, маршрут и mapResponse на уровне
+типов. Paths передаётся generic-параметром; пользователь не задаёт поле schema,
+а объект не содержит runtime OpenAPI-документа или клиента. Если для вывода типов
+нужен phantom-маркер, он остаётся внутренней деталью типов, без runtime поля.
+Конкретные внутренние witness/helpers выбирает реализация. Mapper input всегда
+выводится из ApiResponse выбранного маршрута; свободного generic, подменяющего DTO ответа, не добавляется.
 
 Definition — discriminated union method/url с contextual DTO mapper. Request
 options выводятся из того же upstream FetchOptions для выбранной операции,
@@ -83,6 +96,12 @@ options выводятся из того же upstream FetchOptions для вы�
 всей тяжёлой ApiRequest union ради одного endpoint избегается: read-only TS 5.9.3
 эксперимент показал union-too-complex у наивного Extract, а endpoint lookup
 проверяет required body/params, mapper input и доменный callback без этой ошибки.
+
+Поддерживается только JSON (`parseAs` отсутствует либо равен `'json'`). Это
+ограничение уже действует и для `ApiClient.request`, и для legacy `ApiEffect`;
+операции не добавляют поддержку blob/text и raw-эффект не является обходом этого
+ограничения. Другие форматы ответа потребуют отдельного изменения API.
+Термин mapper ниже обозначает именно функцию поля `mapResponse`.
 
 Старый `ApiEffect<Paths, Action>` сохраняет DTO-callback и прежние поля. Для
 операционных эффектов предлагается дополнительный необязательный type parameter:
@@ -109,7 +128,13 @@ RootEffect/handler aliases. Это шаг принятия нового API, а 
 
 ## Исполнение и ошибки
 
-1. Handler отделяет operation/callback metadata от native request options.
+1. Обе формы имеют `type: 'ApiEffect'` и попадают в один handler. Внутри него
+   наличие собственного поля `operation` различает операционный эффект и legacy:
+   фабрика всегда добавляет обязательную ссылку operation, legacy-эффекты этого
+   зарезервированного поля не имеют. Method/url для различения не используются,
+   потому что они есть в обеих формах. Ветка legacy сохраняет прежнее исполнение
+   без mapResponse; ветка operation использует её mapResponse. Handler отделяет
+   operation/callback metadata от native request options.
 2. Выполняет один запрос через внедрённый общий ApiClient.
 3. ApiResult error сразу направляется в существующий error path: mapper и
    onSuccess не вызываются; классификация http/network/contract/aborted сохраняется.
@@ -161,7 +186,9 @@ validation library. Mapper не объявляется автоматическ�
   schema-derived mapper input, mapped callback result, optional identity,
   несколько разных action variants, неверные actions в RootEffect и handler.
 - Legacy/direct request type/runtime regression без переписывания потребителей;
-  raw ApiEffect не получает mapper автоматически.
+  raw ApiEffect не получает mapper автоматически. Один handler принимает обе
+  формы с одинаковыми method/url, различает их по operation и не передаёт это
+  поле в API-клиент. Type tests отклоняют не-JSON parseAs в обеих формах.
 - Runtime: mapped success, identity, null/204/HEAD, sync/async mapper failure,
   все transport kinds, optional callbacks, fallback AppErrors, awaited dispatch.
 - Mapper не вызывается для failure; callbacks/dispatch errors не переклассифицируются;
