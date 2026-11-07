@@ -101,5 +101,5 @@
 
 - [x] Зафиксировать RED type test: handler должен отклонять эффект без operation.
 - [x] Удалить прежний тип/ветку, объединить operation effect в ApiEffect, убрать fallback проверки operation, перевести тесты на фабрику и обновить пример.
-- [ ] Обновить документацию и changeset; проверить common/example/full check, собранный tarball и внешний consumer.
-- [ ] Провести независимое ревью изменения; исправить подтверждённые находки, commit/push и обновить PR #36.
+- [x] Обновить документацию и changeset; проверить common/example/full check, собранный tarball и внешний consumer.
+- [x] Провести независимое ревью изменения; исправить подтверждённые находки, commit/push и обновить PR #36.
