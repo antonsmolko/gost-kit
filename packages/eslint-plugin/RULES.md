@@ -3,7 +3,7 @@
 ## gost/require-feature-state-selector
 
 Select an immutable reactive branch before passing it to a computation in
-`$derived` or the synchronous callback of `$derived.by`:
+`$derived`, the synchronous callback of `$derived.by`, or a template `{@const}` initializer:
 
 ```ts
 // Reported; a simple standalone declaration can be fixed with eslint --fix.
@@ -51,6 +51,21 @@ evaluated with the class expression and remain in scope. Helpers, arbitrary retu
 aliased snapshots, dynamic state keys and dependencies hidden across modules
 are not traced. No claim of complete interprocedural analysis or presenter
 purity is made.
+
+Template const computations are also checked in typed components, using the same
+Store/raw provenance. Select a branch first; row values already supplied by each
+need no extra selector:
+
+```svelte
+{@const user = root.state.user}
+{@const view = userPresenter(user)}
+<p>{view.name}</p>
+```
+
+Direct `{@const view = userPresenter(root.state.user)}` reports
+`selectTemplateFeature`. This template context has no autofix; deferred callback
+bodies remain excluded. The extension does not enable checking JavaScript-only
+scripts. Existing derived diagnostics and fixes are unchanged.
 
 ### Autofix
 
@@ -310,3 +325,98 @@ component generics may therefore resolve differently from a particular caller's
 instantiation. This rule checks the parser-provided program, not every generic
 instantiation; use an explicitly boolean view field for that boundary. It cannot
 recover source type distinctions already erased by the parser.
+
+## gost/require-presenter
+
+Opt in for business components; the shared Svelte config registers this rule
+as off. Enable it with a normal rule override and disable it for UI-Kit paths
+where appropriate. Rune modules can be selected with a separate file glob.
+
+```ts
+export default [
+  ...(await createSvelteConfig({ tsconfigRootDir: import.meta.dirname })),
+  {
+    files: ['src/**/*.svelte'],
+    rules: { 'gost/require-presenter': 'error' },
+  },
+  {
+    files: ['src/ui-kit/**/*.svelte'],
+    rules: { 'gost/require-presenter': 'off' },
+  },
+];
+```
+
+Ready values include identifiers, property/index reads, literals and recursively
+ready arrays/objects/spreads. Optional reads, transparent TypeScript wrappers,
+numeric signs on number/bigint literals, and template literals without
+substitutions are allowed. Getters/methods/function definitions, calls, operators
+and calculations nested in containers or computed keys are not ready values.
+
+In intrinsic `$derived`, confirmed presenter calls with ready arguments are also
+allowed. A synchronous `$derived.by` may return such a value directly or use
+const-only local bindings followed by one terminal return. Branches, loops,
+assignments and local function definitions must move out. Module scripts and
+lexically shadowed runes are excluded. Each derived/const root gets one diagnostic.
+
+```svelte
+<script lang="ts">
+  import { userPresenter } from './user.presenter';
+  import { rowPresenter } from './row.presenter';
+
+  const user = $derived(root.state.user);
+  const view = $derived(userPresenter({ user }));
+</script>
+
+<p>{view.name}</p>
+{#each view.rows as row (row.id)}
+  {@const rowView = rowPresenter({ row })}
+  <span>{rowView.label}</span>
+{/each}
+```
+
+Presenter source modules must be named `<name>.presenter.ts`. Their colocated
+tests use `<name>.presenter.test.ts`. Compiled TypeScript packages are recognized
+through `<name>.presenter.d.ts` declarations. A JavaScript import specifier that
+TypeScript resolves to that source/declaration is supported; a plain
+`*.presenter.js` module without TypeScript declarations is not a presenter.
+
+The checker follows actual callable declarations through named/default/namespace
+imports, reexport chains and stable const aliases, including functions annotated
+with shared function types. Renaming an ordinary local function or reexporting
+a helper from a presenter-named barrel does not qualify. Mutable aliases,
+function props, arbitrary factories and dynamic callees are not proven presenters.
+Candidate calls require real TypeScript parser services; missing services produce
+a configuration error. Literal/ready reads and obvious invalid operations do not
+request a program. Resolution is cached per file.
+
+Template display slots allow ready values, without presenter or other calls:
+
+| Slot                                                                               | Policy                                                                                                      |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Text and raw HTML, attributes/props, spreads, class/style directives               | Ready values; nested computations report. Mixed literal text and ready Svelte interpolations are allowed.   |
+| Each source/key, key blocks, special element/component `this`                      | Ready values; filtering, sorting or calculating keys/tag/component inline reports.                          |
+| `{@const}` initializer                                                             | Derived forms, including confirmed presenter calls with ready arguments.                                    |
+| `{@render}`                                                                        | Outer snippet invocation allowed; callee and arguments must be ready, with no presenter calls in arguments. |
+| Snippet bodies/default parameters                                                  | Body checked normally; parameter defaults use derived forms.                                                |
+| Await pending/then/catch, head, special element descendants                        | All nested display slots checked normally.                                                                  |
+| If/else-if condition                                                               | Owned by `ready-boolean-condition`; branch displays still checked.                                          |
+| `on*`/legacy event values, bind/use/transition/animate/attach, await source, debug | Wiring slot excluded; nested display markup remains checked.                                                |
+
+`{@const}` prepares a binding without displaying it, so a row presenter can run
+there; `{rowPresenter(row).label}` is a display calculation and reports.
+The `on*` exclusion is a name heuristic shared with the event policy.
+Unknown future special syntax has no promised new-slot coverage; ordinary
+mustache/attribute descendants still use the normal checks.
+
+`require-feature-state-selector` separately reports direct Store/raw reads in
+computing calls inside derived and typed `{@const}` initializers. It has no
+template autofix. Use a script derived selector or a separate local const
+selector before the presenter call. The combined rules produce only the selector
+diagnostic for an otherwise valid presenter call.
+
+There is no autofix or suggestion: extracting functions changes module and
+reactivity boundaries. This checks visible syntax and declaration provenance,
+not presenter purity, output correctness, hidden helper/store access, or the
+origin of every ready variable. Ordinary script computations outside derived
+are not covered. Each conditions/handlers/local state retain their separate
+policies. Review and presenter tests remain necessary.

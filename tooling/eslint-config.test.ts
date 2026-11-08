@@ -173,3 +173,11 @@ void test('project enables ready boolean template conditions for business compon
 
   assert.deepEqual(config?.rules?.['gost/ready-boolean-condition'], [2]);
 });
+
+void test('project enables presenter computations policy for business components', async () => {
+  const config = await eslint.calculateConfigForFile(
+    join(root, 'src/Business.svelte'),
+  );
+
+  assert.deepEqual(config?.rules?.['gost/require-presenter'], [2]);
+});

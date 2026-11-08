@@ -1,6 +1,6 @@
 # Presenter Computations Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Реализовать opt-in gost/require-presenter и сохранить selector checks в @const (#19).
 
@@ -44,18 +44,18 @@ supplied predicate; `derivedValue(callback, isReady) => boolean` validates inlin
 sync callback, const-only declarations/destructuring and single terminal return.
 Rule exposes messageId `requirePresenter`; no options/fixer.
 
-- [ ] Write compiler-validated fixtures: ready values/containers/optional/dynamic
+- [x] Write compiler-validated fixtures: ready values/containers/optional/dynamic
   reads, present calls/import aliases/default/namespace/barrels/declaration API,
   immutable vs reassigned aliases, no name-based exceptions, Fn annotation.
-- [ ] Add invalid arithmetic/logical/call/new/await/functions, nested calculations,
+- [x] Add invalid arithmetic/logical/call/new/await/functions, nested calculations,
   wrapper/argument cases, derived.by branching/mutation, shadowed intrinsic cases.
   Configuration error is tested separately from ordinary rule diagnostics.
-- [ ] Run plugin test for require-presenter. Expected RED: rule absent.
-- [ ] Implement resolver with per-file symbol cache/cycle guard, structural ready
+- [x] Run plugin test for require-presenter. Expected RED: rule absent.
+- [x] Implement resolver with per-file symbol cache/cycle guard, structural ready
   values and derived callbacks; register rule export. Resolve actual bindings,
   not function type signatures that lose source under Fn annotations.
-- [ ] Run plugin tests + typecheck; format/lint touched code. Expected GREEN.
-- [ ] Commit `[gost-kit-19] Require presenter computations in derived bindings`.
+- [x] Run plugin tests + typecheck; format/lint touched code. Expected GREEN.
+- [x] Commit `[gost-kit-19] Require presenter computations in derived bindings`.
 
 ### Task 2: Template contexts and const selectors
 
@@ -69,21 +69,21 @@ with presenter predicate checks @const/default bindings. reactiveContext returns
 discriminated `kind: 'derived' | 'templateConst'`; only derived branch has
 `derived` for selectorFix. Template branch produces diagnostic only.
 
-- [ ] Write RED fixtures for every design table row: text/raw/props/style/class/
+- [x] Write RED fixtures for every design table row: text/raw/props/style/class/
   spread, each source/key, key block, @const row presenter, render callee/args,
   snippet body/defaults, pending/then/catch, head/this/descendants. Pin exclusions
   for event/bind/actions/transitions/attachments/await source/if conditions.
-- [ ] Write combined #6+#19 tests: direct root/raw call in @const reports selector,
+- [x] Write combined #6+#19 tests: direct root/raw call in @const reports selector,
   separate local selector/row inputs valid, multi-scope call reports correctly,
   deferred functions exempt; #6 works without #19. Existing derived fixes unchanged.
-- [ ] Run these tests before implementation. Expected RED: missing listeners/selector.
-- [ ] Implement slot listeners with recursive normal traversal and no parent-block
+- [x] Run these tests before implementation. Expected RED: missing listeners/selector.
+- [x] Implement slot listeners with recursive normal traversal and no parent-block
   exclusions. Skip nested duplicate derived roots, event attrs; @render checks
   only outer call callee and ready arguments. Validate snippet/default patterns.
-- [ ] Extend #6 script filter/reactive context and diagnostic message for @const;
+- [x] Extend #6 script filter/reactive context and diagnostic message for @const;
   no template autofix, retain previous TS scope and Store/raw checks.
-- [ ] Run complete plugin tests/check/lint. Expected GREEN including old fixes.
-- [ ] Commit `[gost-kit-19] Check template computations and const state selectors`.
+- [x] Run complete plugin tests/check/lint. Expected GREEN including old fixes.
+- [x] Commit `[gost-kit-19] Check template computations and const state selectors`.
 
 ### Task 3: Consumer configuration, documentation and delivery
 
@@ -95,16 +95,16 @@ design/plan completion notes.
 **Interfaces:** Public config registers gost/require-presenter off; project adapter
 enables for src/**/*.svelte. UI-Kit late override off stays possible.
 
-- [ ] Add RED config tests: off/on/UI-Kit off, existing policies unchanged,
+- [x] Add RED config tests: off/on/UI-Kit off, existing policies unchanged,
   actual diagnostics for calculations and no errors for example-ready bindings.
-- [ ] Wire config + documentation: exact slots, module naming/declarations,
+- [x] Wire config + documentation: exact slots, module naming/declarations,
   #6 @const coverage/TS boundary, parser requirement and limitations, no autofix.
-- [ ] Add changeset plugin minor + config-svelte patch.
-- [ ] Run full root check, example build and 2 browser scenarios. Expected GREEN.
+- [x] Add changeset plugin minor + config-svelte patch.
+- [x] Run full root check, example build and 2 browser scenarios. Expected GREEN.
   Svelte autofixer only if components/rune modules changed.
-- [ ] Build/pack plugin/config; real external consumer with TS program/barrels
+- [x] Build/pack plugin/config; real external consumer with TS program/barrels
   validates published API boundary, source declarations, rule diagnostics and
   unchanged dependency/artifact boundaries. Expected GREEN.
-- [ ] Commit `[gost-kit-19] Configure and document presenter enforcement`.
+- [x] Commit `[gost-kit-19] Configure and document presenter enforcement`.
 - [ ] One fresh whole-branch review; important findings one RED→GREEN fix pass.
   Prepare draft PR with evidence; do not merge/publish without owner instruction.

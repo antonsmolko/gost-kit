@@ -94,7 +94,7 @@ business components to require ready boolean if/else-if conditions; strictNullCh
 and typed parser services are required for reads. Boolean literals are allowed;
 comparisons, calls, nullable truthiness and dynamic keys are reported. UI-Kit
 paths can override it off. The check does not prove presenter provenance and
-has no autofix. Presentation computations outside conditions remain #19. Existing `$state.raw`
+has no autofix. Presentation computations outside conditions use the opt-in presenter rule. Existing `$state.raw`
 shell bindings and feature selectors remain valid; the Svelte compiler/type
 checker still verifies compilation/accessibility.
 
@@ -124,3 +124,14 @@ in both inherited common policies and the Svelte inventory, run type/component
 checks and tests, and review any output diff. Configuration releases remain
 independent of runtime package versions. Tests and helper fixtures are excluded
 from package artifacts; Svelte is a peer, not an automatically selected UI framework.
+
+The bundled `gost/require-presenter` rule is off by default. Enable it for business
+components with `rules: { 'gost/require-presenter': 'error' }` and use late UI-Kit
+overrides where needed. Calculations in derived and template display slots move
+to `*.presenter.ts` functions; public barrels and emitted `*.presenter.d.ts`
+declarations are supported. Presenter calls prepare derived or template const
+bindings; markup reads ready values. Candidate calls require typed parser services.
+The selector rule also checks direct Store/raw arguments in typed template const
+computations, with diagnostics only. Neither the presenter rule nor template
+selector checks invent functions or change markup with an autofix. The private
+project adapter enables presenter checks for `src/**/*.svelte`.

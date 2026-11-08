@@ -50,6 +50,7 @@ export const createSvelteConfig = async ({
       plugins: { gost: plugin },
       rules: {
         'gost/require-feature-state-selector': 'error',
+        'gost/require-presenter': 'off',
         'gost/ready-boolean-condition': 'off',
       },
     },
