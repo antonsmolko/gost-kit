@@ -422,5 +422,5 @@ are not covered. Each conditions/handlers/local state retain their separate
 policies. Review and presenter tests remain necessary.
 
 Known boundaries: selector diagnostics do not cover presenter inputs in snippet,
-each or await pattern defaults; select Store/raw scopes beforehand. Nested derived
-expressions can produce diagnostics for both the outer and inner derived calls.
+each or await pattern defaults; select Store/raw scopes beforehand. A reported derived root suppresses duplicate diagnostics for its nested derived
+calls; independent derived bindings are still checked separately.

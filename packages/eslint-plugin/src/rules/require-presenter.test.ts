@@ -4,6 +4,7 @@ import {
   type ValidTestCase,
   type InvalidTestCase,
 } from '@typescript-eslint/rule-tester';
+import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 import { plugin } from '../index';
 import { ESLint } from 'eslint';
 import * as svelte from 'svelte-eslint-parser';
@@ -129,6 +130,36 @@ const invalid: InvalidTestCase<'requirePresenter', []>[] = expressions.map(
     errors: [{ messageId: 'requirePresenter' as const }],
   });
 });
+[
+  'const ready = $derived.by(() => { const name = $derived(user.name.trim()); return name; });',
+  'const ready = $derived.by(() => { const name = $derived.by(() => user.name.trim()); return name; });',
+].forEach((script) => {
+  invalid.push({
+    ...component(input + script),
+    errors: [
+      {
+        messageId: 'requirePresenter',
+        type: AST_NODE_TYPES.CallExpression,
+        column:
+          '<script lang="ts">'.length +
+          input.length +
+          'const ready = '.length +
+          1,
+      },
+    ],
+  });
+});
+invalid.push({
+  ...component(
+    input +
+      'const first = $derived(user.name.trim()); const second = $derived(user.name.trim());',
+  ),
+  errors: [
+    { messageId: 'requirePresenter' },
+    { messageId: 'requirePresenter' },
+  ],
+});
+
 new RuleTester({
   languageOptions: {
     parser: svelte,

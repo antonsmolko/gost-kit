@@ -255,10 +255,11 @@ Changeset: eslint-plugin minor, eslint-config-svelte patch. Common/Svelte runtim
 
 Дизайн и план утверждены владельцем. Реализация завершена: правило, template
 контексты, расширение selector checks, конфигурация и документация. Полный check
-проходит (820 тестов), пример собирается, 2 браузерных сценария и внешний
+проходит (823 теста), пример собирается, 2 браузерных сценария и внешний
 tarball consumer с public barrel/declaration imports проходят. Независимое финальное ревью завершено: пропуск destructuring bindings each/await
-исправлен через compiler-valid regressions RED→GREEN. Небольшое замечание о двух
-диагностиках для вложенного derived отложено и указано в RULES/PR.
+исправлен через compiler-valid regressions RED→GREEN. Дублирование
+диагностик вложенного derived также исправлено по указанию владельца: один report
+на внешний нарушенный root, независимые bindings проверяются отдельно.
 
 ## Исправления ревью дизайна
 

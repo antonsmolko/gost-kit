@@ -65,6 +65,8 @@ export const requirePresenter = ESLintUtils.RuleCreator.withoutDocs({
       }
     };
 
+    const reportedDerived = new WeakSet<TSESTree.Node>();
+
     return {
       SvelteMustacheTag(raw: TSESTree.Node) {
         const node = raw as unknown as AST.SvelteMustacheTag;
@@ -171,6 +173,14 @@ export const requirePresenter = ESLintUtils.RuleCreator.withoutDocs({
           return;
         }
 
+        if (
+          context.sourceCode.getAncestors(node).some((ancestor) => {
+            return reportedDerived.has(ancestor);
+          })
+        ) {
+          return;
+        }
+
         const argument = node.arguments[0];
         const by =
           node.callee.type === AST_NODE_TYPES.MemberExpression &&
@@ -181,6 +191,7 @@ export const requirePresenter = ESLintUtils.RuleCreator.withoutDocs({
           !argument ||
           !(by ? derivedValue(argument, isReady) : isReady(argument))
         ) {
+          reportedDerived.add(node);
           context.report({ node, messageId: 'requirePresenter' });
         }
       },
