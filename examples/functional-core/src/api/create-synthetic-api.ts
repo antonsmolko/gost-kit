@@ -1,10 +1,10 @@
 import { createApiClient, guard, type AsyncFn } from '@gost-kit/common';
-import type { User } from '../features/user/domain/entities/user';
+import type { UserDto } from '../features/user/data/dto/user-dto';
 import type { ApiClient } from '../store/types/effect';
 import type { Paths } from './paths';
 
 export const createSyntheticApi = (
-  operation: AsyncFn<[Pick<User, 'email'>], User>,
+  operation: AsyncFn<[Pick<UserDto, 'email'>], UserDto>,
 ): ApiClient => {
   return createApiClient<Paths>({
     baseUrl: 'https://synthetic.invalid',

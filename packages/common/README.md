@@ -211,26 +211,14 @@ storage or application schema is imported. The upstream API and serialization
 baseline is documented at https://openapi-ts.dev/openapi-fetch/api.
 
 ```ts
-import {
-  createApiClient,
-  createApiHandler,
-  effecting,
-  type ApiEffect,
-} from '@gost-kit/common';
+import { createApiClient } from '@gost-kit/common';
 import type { paths } from './schema';
 
-type Action = { type: 'LoadedAction'; name: string } | { type: 'FailedAction' };
 const api = createApiClient<paths>({ baseUrl: 'https://api.example.test' });
-// The path/method/options and result below depend on your actual schema.
+// The path/method/options and result depend on your actual schema.
 const result = await api.request('get', '/users/{id}', {
   params: { path: { id: 1 } },
 });
-
-type Effect = ApiEffect<paths, Action>;
-const handlers = createApiHandler<paths, Action>(api);
-const effector = effecting<Action, Effect, readonly [typeof handlers]>(
-  handlers,
-);
 ```
 
 Methods are lowercase (`get`, `post`, `put`, `patch`, `delete`, `head`, `options`,
@@ -266,40 +254,116 @@ Set `mapErrors(body, response)` once when creating the client to convert your
 backend's HTTP errors into `AppError[]`. The default is an empty array because
 no backend error envelope is assumed. Its input is the already parsed error
 payload (possibly text or undefined); validate external data before using it.
-Mapper exceptions propagate, rather than becoming network failures. Existing
+`mapErrors` exceptions propagate, rather than becoming network failures. Existing
 `Result<T>` and `AppError` contracts are unchanged.
 
-The pure `ApiEffect<paths, Action>` remains an object: it contains `method`, `url`
-and request options, plus `type: 'ApiEffect'`, required `defaultError` and optional
-action factories. The handler adapts that description to the client call:
+Use the operation/effect API below to connect requests to FC actions. The client
+handles HTTP once; the operation handles domain mapping; the handler dispatches
+callback-generated actions. Authentication, retries, state management and runtime
+response validation remain application concerns or separate extensions.
+
+## API operations and mapped effects
+
+Define a reusable operation in `data/api`, then bind its result to actions in
+the reducer. For a schema whose POST `/user` returns
+`{ user_id: number; full_name: string; email: string }`:
 
 ```ts
-const effect: Effect = {
-  type: 'ApiEffect',
-  method: 'get',
-  url: '/users/{id}',
-  params: { path: { id: 1 } },
+import {
+  createApiEffect,
+  createApiEffector,
+  defineApiOperation,
+  type ApiEffect,
+  type AppError,
+} from '@gost-kit/common';
+import type { paths } from './schema';
+
+const loadUser = defineApiOperation<paths>()({
+  method: 'post',
+  url: '/user',
+  mapResponse: (dto) => {
+    return { id: String(dto.user_id), name: dto.full_name, email: dto.email };
+  },
+});
+
+type SuccessAction = {
+  type: 'UserLoadedAction';
+  user: { id: string; name: string; email: string };
+};
+type ErrorAction = { type: 'UserLoadFailedAction'; errors: AppError[] };
+type Action = SuccessAction | ErrorAction;
+type Operation = typeof loadUser;
+type Effect = ApiEffect<Operation, SuccessAction, ErrorAction>;
+
+const effect: Effect = createApiEffect(loadUser, {
+  body: { email: 'ada@example.test' },
   defaultError: {
     code: 'LOAD_FAILED',
     message: 'Could not load user',
     path: [],
   },
-  onSuccess: (data) => ({ type: 'LoadedAction', name: data.name }),
-  onError: () => ({ type: 'FailedAction' }),
-};
+  onSuccess: (user) => {
+    return { type: 'UserLoadedAction', user };
+  },
+  onError: (errors) => {
+    return { type: 'UserLoadFailedAction', errors };
+  },
+});
+
+// In a reducer: return { state: loadingState, effects: [effect] }.
+// Supply the same shared schema-typed api used by the rest of the application.
+const handlers = createApiEffector<paths, Action, Operation>(api);
 ```
 
-`onSuccess` receives the endpoint's schema-derived data. `onError` receives
-`(errors, failure)`, using the client's nonempty errors or `[defaultError]`.
-Both return an action, and the handler awaits dispatch of that action. A missing
-onSuccess skips dispatch; a missing onError rejects the failure to the existing
-store error reporter. Callback and dispatch exceptions propagate without being
-converted to request failures. Effect metadata/callbacks never reach the client.
+`api` is your configured
+`createApiClient<paths>` instance. Keep a named mapper in `data/mappers` when
+reused or tested separately. Data/API modules need no feature actions or reducers.
+`defineApiOperation` lives in the API layer; `createApiEffect` lives in FC.
 
-Request execution, response interpretation and error normalization live in
-separate internal helpers; endpoints and the effect handler do not duplicate
-HTTP handling. API-client rejections represent unexpected implementation or
-mapper errors; expected transport failures use `ApiResult`. Auth/refresh,
-automatic retries, CSRF/Origin policy, state management and runtime response
-validation are separate application concerns or future extensions.
-See the [synthetic example](../../examples/functional-core/README.md).
+`mapResponse` receives the selected endpoint's schema-derived DTO. Its return
+value determines `onSuccess`'s argument, including `Awaited` for async mappers.
+Omitting `mapResponse` uses identity. JSON null is preserved; 204 and HEAD pass
+undefined to the mapper. A mapper is application code, not automatic OpenAPI
+runtime validation. Direct `api.request` keeps returning DTOs without mapping.
+The client and API effects support JSON only;
+`parseAs: 'text'`, blob and other formats require a separate API extension.
+
+Construction is pure: no client, mapper, callback or dispatch runs until the
+shared handler executes the effect. The result is one ordinary object containing
+`type: 'ApiEffect'`, the original `operation`, its method/url, request options,
+defaultError and callbacks. Method/url come from the operation. Reducer tests can
+check `commit.effects[0].type`, operation identity and request payload.
+
+Declare operations as `typeof loadUser | typeof updateUser` and use that union
+in `ApiEffect<Operation, SuccessAction, ErrorAction>` and
+`createApiEffector<paths, Action, Operation>(api)`. Every effect has a required
+operation; omitting mapResponse selects identity mapping. SuccessAction and
+ErrorAction are checked separately: onSuccess returns only SuccessAction,
+onError returns only ErrorAction. Each can be a union. Callbacks remain optional;
+use never for a role with no callback. The factory infers each callback result
+independently; annotating the application's effect union enforces their roles.
+The shared handler accepts both results only within its Action union.
+The factory defines its table through define.effector, just like application
+effectors. effecting composes those definitions into the executable Effector.
+One handler executes all API effects. No runtime endpoint registry or per-feature API client is needed,
+and effect metadata is removed before request.
+If an operation is selected at runtime, narrow it to one operation before calling
+createApiEffect (for example, branch on operation.url). Alternatively, construct
+the effect in each selection branch. An unresolved union could otherwise pair
+one route with another route's options. The handler and RootEffect accept the
+union of the resulting correctly constructed effects.
+`SingleApiOperation<Operation>` is exported for typed wrappers: it preserves a
+single operation type and resolves an unresolved union to never. It performs
+no runtime narrowing; select the concrete branch before constructing an effect.
+
+HTTP/network/aborted/contract failures skip the mapper and use the existing
+onError path. A mapper throw or rejection becomes `{ kind: 'contract', errors: [] }`:
+onError receives `[defaultError]` and can return an action that exits loading
+and shows a notification. No status is invented, and client mapErrors is not
+called again. Mapper runs even without onSuccess; if it succeeds, dispatch is
+skipped. Without onError, a failure rejects to the store reporter. Callback and
+dispatch exceptions propagate unchanged. Cancellation during mapping introduces
+no extra cancellation protocol; mapper exceptions are contract failures.
+
+See the [working DTO-to-domain example](../../examples/functional-core/src/features/user/data/api/load-user.ts)
+and its [mapper](../../examples/functional-core/src/features/user/data/mappers/map-user.ts).

@@ -7,6 +7,7 @@ import {
   type Reducer,
 } from '@gost-kit/common';
 import { userReducer } from './reducer';
+import { loadUser } from '../../data/api/load-user';
 import { initialState } from '../../../../store/fc/state';
 import type { RootState } from '../../../../store/types/state';
 import type { RootEffect } from '../../../../store/types/effect';
@@ -69,9 +70,10 @@ test('loading only describes a request and its success/error receivers', () => {
 
   expect(effect.type).toBe('ApiEffect');
 
-  if (effect.type !== 'ApiEffect') {
+  if (effect.type !== 'ApiEffect' || !effect.operation) {
     throw new Error('Expected API description');
   }
+  expect(effect.operation).toBe(loadUser);
   expect(effect.method).toBe('post');
   expect(effect.body).toEqual({ email: '' });
 

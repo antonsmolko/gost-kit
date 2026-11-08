@@ -1,6 +1,6 @@
 import { expect, test, vi } from 'vitest';
 import { createApiClient } from './create-api-client';
-import type { TestPaths } from '../types/api-request.test';
+import type { TestPaths } from '../types/api-client.test';
 
 const user = { id: 1, name: 'Ada' };
 const get = [

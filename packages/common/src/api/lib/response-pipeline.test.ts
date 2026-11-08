@@ -1,7 +1,7 @@
 import { expect, expectTypeOf, test } from 'vitest';
 import { executeRequest } from './execute-request';
 import { readResult } from './read-result';
-import type { TestUser } from '../types/api-request.test';
+import type { TestUser } from '../types/api-client.test';
 
 const checkPipelineTypes = async () => {
   const data: TestUser = { id: 1, name: 'Ada' };

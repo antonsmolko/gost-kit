@@ -51,7 +51,8 @@ component: dispatch({ scope: 'users', type: 'SetEmailAction', email })
 component: await dispatch({ scope: 'users', type: 'LoadAction' })
 → reducer returns loading state + ApiEffect
 → shell commits state and starts the effect
-→ shared API client executes the injected synthetic fetch and normalizes the result
+→ shared API client executes the injected synthetic fetch and normalizes the DTO result
+→ operation.mapResponse converts DTO to the domain User
 → onSuccess/onError creates SuccessReceiveAction / ErrorReceiveAction with scope: 'users'
 → await dispatch(callback action)
 → on failure: DispatchActionEffect sends global ShowAlertAction
@@ -59,6 +60,7 @@ component: await dispatch({ scope: 'users', type: 'LoadAction' })
 ```
 
 - `src/store/types/`: root action/effect unions, state/store types, global actions, API contracts and effect payloads.
+- `src/features/user/data/`: schema-derived DTO alias, pure mapper and reusable API operation.
 - `src/features/user/domain/entities/`: user entity.
 - `src/features/user/domain/fc/`: user actions, reducer handlers, state type and initializer.
   All actions/effects are objects.
@@ -98,7 +100,7 @@ provides the entire current root state, including other features, auth and globa
 configuration when present. Both state inputs are deeply readonly at compile time.
 The handler returns complete `UserState`, not `RootState`. Its inferred result is
 checked for extra state keys without a return annotation.
-`createApiHandler<Paths, RootAction>(api)` supplies the common API effect table.
+`createApiEffector<Paths, RootAction, ApiOperation>(api)` supplies the common API effect table.
 `define.effector<RootAction, DispatchActionEffect>` defines the remaining table;
 handlers receive `{ effect, dispatch }`. Each table covers its declared effect union.
 
@@ -111,7 +113,7 @@ const reducer: Reducer<RootState, RootAction, RootEffect> = reducing({
 });
 
 const effector: Effector<RootAction, RootEffect> = effecting(
-  createApiHandler<Paths, RootAction>(api),
+  createApiEffector<Paths, RootAction, ApiOperation>(api),
   shellEffector,
 );
 ```
@@ -142,56 +144,42 @@ These APIs expect trusted typed application objects; they do not validate extern
 
 ## Applying functional core in a feature
 
-Use `fc` as the short directory name for functional core. For example:
+The runnable feature separates DTOs, API operations and domain state:
 
 ```text
 features/user/
-  app/
-    dto/
-      user.dto.ts
-      user.response.ts
-      user.request.ts
-    mappers/
-      mapUserDtoToState.ts
-      mapUserStateToRequest.ts
+  data/
+    dto/user-dto.ts
+    mappers/map-user.ts
+    mappers/map-user.test.ts
+    api/load-user.ts
   domain/
-    entities/
-      user.ts
-  fc/
-    action.ts
-    reducer.ts
-    reducer.test.ts
-    state.ts
+    entities/user.ts
+    fc/action.ts
+    fc/reducer.ts
+    fc/reducer.test.ts
+    fc/state.ts
+  ui/
+    user.presenter.ts
+    user.presenter.test.ts
 ```
 
-- `app/dto/user.dto.ts` describes the user data transferred by the API.
-  `user.response.ts` describes the response envelope, if the endpoint has one;
-  `user.request.ts` describes the POST request body.
-- `domain/entities/user.ts` defines the business `User` type without API or Svelte
-  dependencies. DTO types and business entities do not have to share a shape.
-- `mapUserDtoToState` converts API DTO data into the data used by feature state.
-  The reducer decides how to apply that data and update loading/error status.
-  `mapUserStateToRequest` converts feature state into the request body; it does
-  not send a request. Neither mapper performs I/O or mutates its input.
-- These API boundary mappers are placed in `app/mappers` rather than
-  `domain/mappers`: they connect API-specific DTOs with the feature's state,
-  keeping business entities independent of the transport format.
-- `fc/action.ts` defines the feature action union. `fc/state.ts` defines feature
-  state and its initializer. `fc/reducer.ts` implements pure transitions returning
-  `{ state, effects }`; `fc/reducer.test.ts` verifies the transitions and absence
-  of mutations without a network or Svelte component.
+`data/dto/user-dto.ts` derives its type from synthetic Paths using ApiResponse;
+it does not duplicate the schema. The API returns user_id/full_name/email.
+`mapUser` converts it to the domain User with id/name/email. The domain entity
+has no transport or Svelte dependencies.
 
-This is the application structure for a feature, not a required directory tree
-for every project. Create request/envelope types only when the API needs them.
+`data/api/load-user.ts` defines method/url/mapResponse with
+`defineApiOperation<Paths>()`. In the reducer, `createApiEffect(loadUser, options)`
+returns a plain effect object. Its onSuccess receives User and returns a scoped
+action; the reducer then applies it to state. No mapper or HTTP executes while
+the reducer describes the effect. The root declares `ApiOperation = typeof loadUser`
+and includes it in ApiEffect and the single shared createApiEffector.
+
+The direction is FC → data/api → mapper → domain/entities. Data/API does not
+import feature actions/reducers, and the shared client knows only Paths.
 A root store composes feature state/actions/reducers with application-level
-state/actions, including global notifications. Features may emit an effect
-containing an action handled by another feature or the application level.
-
-The runnable example separates root composition in `src/store/` from user
-logic in `src/features/user/domain/`. The injected fake API already returns
-trusted `User` data. It therefore has no
-DTO mappers or real HTTP layer. The tree above explains how to apply the same
-flow when an actual API boundary is introduced.
+state/actions, including global notifications.
 
 ## Execution rules
 
@@ -226,10 +214,12 @@ dispatch reports its own failures and resolves, so the parent does not report th
 same failure again. The Svelte adapter includes the callback in
 `createDispatch(config)`.
 
-`ApiEffect<Paths, RootAction>` comes from `@gost-kit/common`. It describes a
+`ApiEffect<ApiOperation, SuccessAction, ErrorAction>` comes from `@gost-kit/common`. It describes a
 lowercase `method`, a schema path in `url`, typed `params`/`body`, `defaultError`
 and optional `onSuccess`/`onError` action factories. This example always supplies
-both callbacks so the feature leaves loading. The handler awaits the returned
+both callbacks so the feature leaves loading. Its effect type selects the
+scoped SuccessReceiveAction and ErrorReceiveAction separately from RootAction,
+so callbacks cannot return each other's action. The handler awaits the returned
 action's dispatch; it never interprets HTTP itself.
 
 `createApiClient<Paths>` uses openapi-fetch with an injected synthetic fetch. It
@@ -241,7 +231,9 @@ errors to the effect's `onError`, or `[defaultError]` when none are available.
 exceptions are not retained in failures or displayed to the user.
 
 Missing success callbacks skip dispatch. Missing error callbacks reject the
-failure to store-level reporting. Client/mapper/callback/dispatch exceptions
+failure to store-level reporting. A mapResponse exception becomes a contract
+failure and reaches onError with the fallback, so this example exits loading
+and shows an alert. Unexpected client errors and callback/dispatch exceptions
 propagate without being reclassified as request errors or retried. Reducer
 failures in callback-generated actions are reported by their own dispatch.
 Distinguish the effect's domain `onError` from the store's execution-error callback.
