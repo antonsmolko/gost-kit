@@ -1,5 +1,16 @@
 # @gost-kit/eslint-config-svelte
 
+## 0.2.1
+
+### Patch Changes
+
+- 9f59da3: Add the opt-in ready-boolean-condition rule for Svelte if/else-if conditions.
+  Accept ready boolean reads and literals, report computations/truthiness, and
+  require typed parser services with strictNullChecks for reads. The Svelte config
+  registers the rule off; projects select business/UI-Kit scopes explicitly.
+- Updated dependencies [9f59da3]
+  - @gost-kit/eslint-plugin@0.2.0
+
 ## 0.2.0
 
 ### Minor Changes
