@@ -36,7 +36,8 @@ modify `packages/common/src/fc/index.ts`.
 
 **Interfaces:** Produces `createReset<TState>(config: ResetConfig<TState>): Reset<TState>`;
 ResetConfig содержит initState: AnyFn<[], TState>, readState: AnyFn<[], TState>,
-writeState: AnyFn<[state: TState], void>. Reset = (options?: ResetOptions<TState>) => void.
+writeState: AnyFn<[state: TState], void>, onError?: AnyFn<[failure: ResetError], void>. Reset = (options?: ResetOptions<TState>) => void.
+ResetError = { kind: 'reset'; error: unknown }, включён в StoreError.
 ResetOptions содержит excluded?: readonly keys[], union/primitive/array/function
 дают never keys. IsUnion приватный; проверка true extends IsUnion<TState>.
 
@@ -100,3 +101,6 @@ contract and changeset common minor + Svelte minor (breaking 0.x API).
 - [x] Commit `[gost-kit-32] Document reset contract and prepare package changes`.
 - [x] Один независимый whole-branch review; доказанные важные findings исправить
   RED→GREEN. Подготовить draft PR с доказательствами, merge/publish не выполнять.
+
+Уточнение после ревью: ошибки reset передаются в общий onError через report.
+ResetError — отдельный публичный тип без action; reset не бросает наружу.

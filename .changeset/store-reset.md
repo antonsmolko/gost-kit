@@ -12,3 +12,8 @@ common's framework-independent createReset. Replace initState: initialState()
 with initState: initialState.
 Excluded root scopes retain current references; all other scopes use fresh defaults
 in a single state update. Reset does not cancel running effects or suppress late responses.
+
+Reset failures are reported through the store's onError as ResetError with
+kind: 'reset' and no action. StoreError now includes this variant; handlers
+reading action/effect must first narrow kind. Without a handler, report uses the
+existing console fallback. Errors during reset no longer propagate to its caller.

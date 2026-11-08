@@ -100,8 +100,10 @@ Store не проверяет глубину, не клонирует резул
   текущий state также не мутируется.
 - Только после успешного вычисления всего результата выполняется один writeState.
   Нет промежуточных публикаций по scopes. Каждый reset вызывает factory заново.
-- Если factory бросает исключение, reset синхронно бросает его, текущее состояние
-  не меняется. Существующий action-bound StoreError не получает фиктивный action.
+- Ошибки внутри reset передаются в общий onError как ResetError с kind: 'reset'
+  и error: unknown, без action. Reset прекращается без throw наружу. Ошибка
+  factory/readState не приводит к записи. Существующий report предоставляет
+  console fallback, включая сбой самого обработчика.
 - Если все scopes исключены, их ссылки сохраняются; root factory всё равно
   вызывается. Не обещаем уведомление Svelte-потребителей при равных результатах:
   одна запись состояния не означает обязательный rerun каждого derived.
@@ -149,7 +151,7 @@ JavaScript не содержит исходного типа. Поддержив
 
 Для JavaScript/обхода типов неизвестные excluded keys пропускаются. Проверка в filter
 допускает только собственные поля current и initial; унаследованные поля не считаются scopes.
-Непустой excluded для не-record root по-прежнему отклоняется TypeError. Object
+Непустой excluded для не-record root даёт TypeError через onError. Object
 root — обычная запись данных; экземпляры классов/getters/property descriptors
 не добавляются к текущему контракту store.
 
@@ -169,10 +171,11 @@ root — обычная запись данных; экземпляры клас
 
 В common/fc добавляется framework-independent `createReset` по аналогии с
 `createDispatch`: конфигурация `initState`, `readState`, `writeState`; результат —
-типизированный reset method. Он отвечает за factory, исключения и одну запись.
+типизированный reset method. Он отвечает за factory, исключения, report ошибок
+и одну запись; ResetConfig принимает необязательный onError для ResetError.
 Тесты чистого выполнения располагаются рядом с реализацией.
 
-Публичные `Reset<TState>`, `ResetOptions<TState>` и конфигурация createReset
+Публичные `Reset<TState>`, `ResetOptions<TState>`, `ResetError` и конфигурация createReset
 экспортируются из common, каждый публичный тип — в собственном файле.
 `Store<TState, TAction>` получает `reset: Reset<TState>`, `StoreConfig.initState`
 становится фабрикой. `createDispatch` не получает зависимости от reset/factory;
@@ -270,3 +273,18 @@ state callbacks. Семь regression cases (null, строки, объекты, 
 наличие собственных ключей; TypeScript по-прежнему проверяет допустимые имена.
 
 После уточнения контракта полный root check прошёл: 663 теста.
+
+## Общий канал ошибок reset
+
+По подтверждённому уточнению владельца StoreError расширен ResetError без action.
+Svelte и common test-store передают один и тот же onError в dispatch и reset.
+Вся операция reset, включая чтение options, выполняется внутри try/catch;
+ошибки передаются в report({ kind: 'reset', error }, onError). При ошибке reset
+прекращается без throw наружу. Начальная инициализация createStore остаётся прямым
+вызовом factory и может завершиться исключением до создания store. Произвольные
+побочные эффекты writeState не откатываются. Сбой callback обрабатывает report.
+Добавлены проверки ошибок записи, malformed options, default reporter и fallback;
+типовые проверки подтверждают narrowing StoreError и отсутствие action у reset.
+
+После подключения общего onError полный root check прошёл: 668 тестов. Внешний
+consumer проверил ResetError exports, narrowing и common/Svelte runtime reporting.

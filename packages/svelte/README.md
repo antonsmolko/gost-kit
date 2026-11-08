@@ -65,8 +65,11 @@ type widening or assertions can erase that information. Runtime checks do not
 detect unions. An excluded key is preserved only if it is an own property of both
 the current and initial roots. Missing or inherited keys are skipped, including
 optional scopes deleted or added by reducers. Such scopes take their presence
-and value from the initial root. Factory errors propagate synchronously without
-changing state.
+and value from the initial root. Errors during reset go to the store's `onError`
+as `{ kind: 'reset', error }`; reset stops without throwing outward. Factory or
+validation failures leave state unchanged. Without `onError`, the shared reporter
+logs the failure to console. Initial creation still calls the factory directly:
+if that fails, creation throws and no store is returned.
 
 Reset does not cancel pending effects or ignore late responses. A later dispatch
 reads the current state after reset and may populate it again. Routing and request

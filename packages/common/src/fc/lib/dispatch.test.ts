@@ -38,7 +38,7 @@ const createTestStore = <
       return state;
     },
     dispatch,
-    reset: createReset({ initState, readState, writeState }),
+    reset: createReset({ initState, readState, writeState, onError }),
   };
 };
 
@@ -312,10 +312,13 @@ test('scoped reducer and effect failures retain the original action and effect c
     { kind: 'reducer', action: users, error: reducerFailure },
     { kind: 'effect', action: roles, effect, error: effectFailure },
   ]);
-  expect(reported[0].action).toBe(users);
-  expect(reported[1].action).toBe(roles);
+
+  if (reported[0].kind === 'reducer') {
+    expect(reported[0].action).toBe(users);
+  }
 
   if (reported[1].kind === 'effect') {
+    expect(reported[1].action).toBe(roles);
     expect(reported[1].effect).toBe(effect);
   }
 });

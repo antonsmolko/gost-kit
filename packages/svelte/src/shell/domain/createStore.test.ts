@@ -318,6 +318,7 @@ test('publishes a complete reset once and preserves excluded scope presentation'
 test('does not change state or notify consumers if a reset factory fails', () => {
   const failure = new Error('reset factory failed');
   let fail = false;
+  const onError = vi.fn();
   const store = createStore<CounterState, CounterAction, never>({
     initState: () => {
       if (fail) {
@@ -330,6 +331,7 @@ test('does not change state or notify consumers if a reset factory fails', () =>
       return { state, effects: [] };
     },
     effector: async () => {},
+    onError,
   });
   const previous = store.state;
   const observed = observe(
@@ -345,7 +347,11 @@ test('does not change state or notify consumers if a reset factory fails', () =>
     fail = true;
     expect(() => {
       return store.reset();
-    }).toThrow(failure);
+    }).not.toThrow();
+    expect(onError).toHaveBeenCalledExactlyOnceWith({
+      kind: 'reset',
+      error: failure,
+    });
     flushSync();
     expect(store.state).toBe(previous);
     expect(observed.values).toEqual([0]);

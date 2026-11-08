@@ -2,6 +2,7 @@ import { expect, expectTypeOf, test, vi } from 'vitest';
 import { createReset } from './create-reset';
 import { define } from './define';
 import type { Reset } from '../types/reset';
+import type { ResetError } from '../types/reset-error';
 
 const usersState = define.state<{ errors: string[] }>((options = {}) => {
   return { errors: [], ...options };
@@ -105,11 +106,14 @@ test.each([null, 'auth', '', {}, { length: 0 }, 7, false])(
     const initState = vi.fn(rootState);
     const readState = vi.fn(rootState);
     const writeState = vi.fn();
-    const reset = createReset({ initState, readState, writeState });
+    const onError = vi.fn();
+    const reset = createReset({ initState, readState, writeState, onError });
 
-    expect(() => {
-      return Reflect.apply(reset, undefined, [{ excluded }]);
-    }).toThrow(new TypeError('Reset excluded must be an array of root keys'));
+    Reflect.apply(reset, undefined, [{ excluded }]);
+    expect(onError).toHaveBeenCalledExactlyOnceWith({
+      kind: 'reset',
+      error: new TypeError('Reset excluded must be an array of root keys'),
+    });
     expect(initState).not.toHaveBeenCalled();
     expect(readState).not.toHaveBeenCalled();
     expect(writeState).not.toHaveBeenCalled();
@@ -135,9 +139,10 @@ test('calls the factory without overrides even when all scopes are excluded', ()
   expect(writeState.mock.calls[0][0]).not.toBe(current);
 });
 
-test('leaves state untouched when the factory throws', () => {
+test('reports a factory failure without publishing or throwing', () => {
   const failure = new Error('factory failed');
   const writeState = vi.fn();
+  const onError = vi.fn();
   const reset = createReset({
     initState: () => {
       throw failure;
@@ -146,28 +151,39 @@ test('leaves state untouched when the factory throws', () => {
       return {};
     },
     writeState,
+    onError,
   });
 
   expect(() => {
     return reset();
-  }).toThrow(failure);
+  }).not.toThrow();
+  expect(onError).toHaveBeenCalledExactlyOnceWith({
+    kind: 'reset',
+    error: failure,
+  });
   expect(writeState).not.toHaveBeenCalled();
 });
 
-test('does not publish if reading current state fails', () => {
+test('reports a read failure without publishing or throwing', () => {
   const failure = new Error('read failed');
   const writeState = vi.fn();
+  const onError = vi.fn();
   const reset = createReset({
     initState: rootState,
     readState: () => {
       throw failure;
     },
     writeState,
+    onError,
   });
 
   expect(() => {
     return reset({ excluded: ['auth'] });
-  }).toThrow(failure);
+  }).not.toThrow();
+  expect(onError).toHaveBeenCalledExactlyOnceWith({
+    kind: 'reset',
+    error: failure,
+  });
   expect(writeState).not.toHaveBeenCalled();
 });
 
@@ -319,6 +335,7 @@ test.each([
   'supports full reset but rejects excluded keys for non-record %j',
   (initial) => {
     const writeState = vi.fn();
+    const onError = vi.fn();
     const reset = createReset({
       initState: () => {
         return initial;
@@ -327,6 +344,7 @@ test.each([
         return initial;
       },
       writeState,
+      onError,
     });
 
     reset();
@@ -334,7 +352,11 @@ test.each([
     expect(writeState).toHaveBeenCalledTimes(2);
     expect(() => {
       return Reflect.apply(reset, undefined, [{ excluded: ['length'] }]);
-    }).toThrow(TypeError);
+    }).not.toThrow();
+    expect(onError).toHaveBeenCalledExactlyOnceWith({
+      kind: 'reset',
+      error: expect.any(TypeError),
+    });
     expect(writeState).toHaveBeenCalledTimes(2);
   },
 );
@@ -370,4 +392,98 @@ const checkResetTypes = (
 
 test('checks reset contracts at compile time', () => {
   expectTypeOf(checkResetTypes).toBeFunction();
+});
+
+test('reports write failures through the reset error channel', () => {
+  const failure = new Error('write failed');
+  const failures: ResetError[] = [];
+  const reset = createReset({
+    initState: rootState,
+    readState: rootState,
+    writeState: () => {
+      throw failure;
+    },
+    onError: (error) => {
+      failures.push(error);
+    },
+  });
+
+  expect(() => {
+    return reset();
+  }).not.toThrow();
+  expect(failures).toEqual([{ kind: 'reset', error: failure }]);
+});
+
+test('reports malformed reset options instead of throwing during destructuring', () => {
+  const initState = vi.fn(rootState);
+  const writeState = vi.fn();
+  const onError = vi.fn();
+  const reset = createReset({
+    initState,
+    readState: rootState,
+    writeState,
+    onError,
+  });
+
+  expect(() => {
+    return Reflect.apply(reset, undefined, [null]);
+  }).not.toThrow();
+  expect(onError).toHaveBeenCalledExactlyOnceWith({
+    kind: 'reset',
+    error: expect.any(TypeError),
+  });
+  expect(initState).not.toHaveBeenCalled();
+  expect(writeState).not.toHaveBeenCalled();
+});
+
+test('uses the default reporter when no reset error handler is supplied', () => {
+  const failure = new Error('factory failed');
+  const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const reset = createReset({
+    initState: () => {
+      throw failure;
+    },
+    readState: rootState,
+    writeState: () => {},
+  });
+
+  try {
+    expect(() => {
+      return reset();
+    }).not.toThrow();
+    expect(logged).toHaveBeenCalledExactlyOnceWith({
+      kind: 'reset',
+      error: failure,
+    });
+  } finally {
+    logged.mockRestore();
+  }
+});
+
+test('uses the reporter fallback when a reset error handler itself throws', () => {
+  const failure = new Error('factory failed');
+  const handlerFailure = new Error('handler failed');
+  const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const reset = createReset({
+    initState: () => {
+      throw failure;
+    },
+    readState: rootState,
+    writeState: () => {},
+    onError: () => {
+      throw handlerFailure;
+    },
+  });
+
+  try {
+    expect(() => {
+      return reset();
+    }).not.toThrow();
+    expect(logged).toHaveBeenCalledExactlyOnceWith('Error handler failed', {
+      failure: { kind: 'reset', error: failure },
+      error: handlerFailure,
+    });
+  } finally {
+    logged.mockRestore();
+  }
 });

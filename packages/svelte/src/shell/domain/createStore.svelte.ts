@@ -33,7 +33,7 @@ export const createStore = <
     effector,
     onError,
   });
-  const reset = createReset({ initState, readState, writeState });
+  const reset = createReset({ initState, readState, writeState, onError });
 
   return {
     get state() {

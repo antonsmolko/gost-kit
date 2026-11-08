@@ -73,7 +73,7 @@ rootState({ users: usersState({ errors: [apiError()] }) }). Это shallow overr
 и не гарантирует их свежести; библиотека не выполняет deep clone.
 
 Значение excluded, не являющееся массивом (в том числе null/строка/array-like
-объект), отклоняется TypeError до вызова factory/readState/writeState.
+объект), даёт TypeError через onError до вызова factory/readState/writeState.
 Отсутствующий excluded и undefined по-прежнему означают полный сброс.
 
 Непустой excluded разрешён для record root фиксированной структуры с
@@ -86,8 +86,13 @@ optional/временных scopes наличие и значение опред
 filter/reduce не мутирует результат factory или current; один writeState публикует
 полный результат. Поддерживаются numeric/symbol keys.
 
-Ошибка factory или подготовки результата выходит из reset синхронно; состояние
-остаётся прежним. Reset не создаёт action, не запускает effects, не меняет
+Ошибки валидации/factory/readState/подготовки/writeState передаются в общий
+store onError как ResetError = { kind: 'reset'; error: unknown }, без action.
+Reset прекращается и не бросает ошибку наружу. До writeState состояние остаётся
+прежним; произвольный writeState с собственными side effects не откатывается.
+Без onError report выводит ошибку в console; сбой самого callback обрабатывается
+существующим console fallback. Начальный вызов factory при создании store
+выполняется напрямую: ошибка создания по-прежнему выходит наружу. Reset не создаёт action, не запускает effects, не меняет
 store/dispatch identity. Уже выполняющиеся effects не отменяются; их поздний
 dispatch читает состояние после сброса и может снова заполнить scopes.
 
@@ -95,7 +100,7 @@ dispatch читает состояние после сброса и может �
 | ----- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | SB-06 | Создать store; заменить config.initState; выполнить повторный reset и dispatch.       | Исходная фабрика вызывается без аргументов при создании и каждом reset; store/dispatch/reset сохраняют identity, dispatch работает после сброса. |
 | SB-07 | Сбросить несколько изменённых scopes, исключив user; наблюдать root и user presenter. | Один согласованный root snapshot; user reference и presenter result сохраняются; полный reset затем обновляет user.                              |
-| SB-08 | Factory бросает при reset; flushSync реактивного потребителя.                         | Синхронная ошибка, прежний state reference и отсутствие нового значения у потребителя.                                                           |
+| SB-08 | Factory бросает при reset; flushSync реактивного потребителя.                         | ResetError в store onError, без throw; прежний state reference и отсутствие нового значения у потребителя.                                       |
 | SB-09 | Начать effect, выполнить reset, затем завершить effect вложенным dispatch.            | Первый dispatch остаётся pending до завершения; поздний action читает post-reset state.                                                          |
 
 Чистая композиция, ключи, отсутствие мутаций, ошибки и типы excluded покрыты
