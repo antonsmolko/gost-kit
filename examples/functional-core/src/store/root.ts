@@ -11,7 +11,7 @@ const loggedReducer = logReducer(reducer, { isEnabled: true });
 
 export const createRootStore = (api: ApiClient) => {
   return createStore({
-    initState: initialState(),
+    initState: initialState,
     reducer: loggedReducer,
     effector: logEffector(createEffector(api), { isEnabled: true }),
     onError: (failure) => {

@@ -59,7 +59,7 @@ writeFileSync(
 
 const filename = join(root, 'Nested.svelte.ts');
 const code = `import { createStore } from '@gost-kit/svelte';
-const app = createStore({ initState: { user: { name: 'Ada' } }, reducer: (state) => ({ state, effects: [] }), effector: async () => {} });
+const app = createStore({ initState: () => ({ user: { name: 'Ada' } }), reducer: (state) => ({ state, effects: [] }), effector: async () => {} });
 const present = (user: { name: string }) => user.name;
 const view = $derived.by(() => present(app.state.user));`;
 

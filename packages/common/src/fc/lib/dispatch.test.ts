@@ -1,5 +1,6 @@
 import { expect, test, vi } from 'vitest';
 import { createDispatch } from './dispatch';
+import { createReset } from './create-reset';
 import { reducing } from './reducing';
 import type { StoreConfig } from '../types/store-config';
 import type { Store } from '../types/store';
@@ -17,7 +18,7 @@ const createTestStore = <
   config: StoreConfig<TState, TAction, TEffect>,
 ): Store<TState, TAction> => {
   const { initState, onError, ...handlers } = config;
-  let state = initState;
+  let state = initState();
   const dispatch = createDispatch({
     ...handlers,
     readState: () => {
@@ -34,6 +35,13 @@ const createTestStore = <
       return state;
     },
     dispatch,
+    reset: createReset({
+      initState,
+      readState: () => {return state},
+      writeState: (next) => {
+        state = next;
+      },
+    }),
   };
 };
 
@@ -170,7 +178,7 @@ test('accepts a synchronous onError in dispatch config', async () => {
 test('dispatch accepts explicit root scope without requiring it in the source action type', async () => {
   const received: Action[] = [];
   const root = createTestStore<number, Action, never>({
-    initState: 0,
+    initState: () => {return 0},
     reducer: (state, action) => {
       received.push(action);
 
@@ -204,7 +212,7 @@ test('dispatch commits before effects and awaits nested actions across namespace
   const lastRequest = Promise.withResolvers<void>();
   const rootEffectStarted = Promise.withResolvers<void>();
   const root = createTestStore<State, Action, Effect>({
-    initState: { users: 0, roles: '', message: '' },
+    initState: () => {return { users: 0, roles: '', message: '' }},
     reducer: reducing({
       users: {
         LoadAction: ({ state, action }) => {
@@ -270,7 +278,7 @@ test('scoped reducer and effect failures retain the original action and effect c
   const effect: Effect = { type: 'WorkEffect', id: 7 };
   const reported: StoreError<Action, Effect>[] = [];
   const root = createTestStore<number, Action, Effect>({
-    initState: 0,
+    initState: () => {return 0},
     reducer: reducing({
       users: {
         LoadAction: () => {
@@ -386,7 +394,7 @@ test('effects start in parallel after state commit and dispatch waits for all', 
   ];
   const started: number[] = [];
   const root = createTestStore<{ count: number }, Action, Effect>({
-    initState: { count: 0 },
+    initState: () => {return { count: 0 }},
     reducer: () => {
       return {
         state: { count: 1 },
@@ -453,7 +461,7 @@ test('a reducer exception is reported with the action and dispatch resolves', as
   const reported: StoreError<Action, Effect>[] = [];
   const failure = new Error('Broken reducer');
   const root = createTestStore<null, Action, Effect>({
-    initState: null,
+    initState: () => {return null},
     reducer: () => {
       throw failure;
     },
@@ -480,7 +488,7 @@ test('dispatch waits for another effect and its nested state update after a reje
   const firstError = new Error('First effect failed');
   const reported: StoreError<BatchAction, Effect>[] = [];
   const root = createTestStore<{ count: number }, BatchAction, Effect>({
-    initState: { count: 0 },
+    initState: () => {return { count: 0 }},
     reducer: (_state, action) => {
       return action.type === 'DoneAction'
         ? { state: { count: 2 }, effects: [] }
@@ -542,7 +550,7 @@ test('synchronous effect throws do not skip siblings and all failures are collec
   const started: number[] = [];
   const reported: StoreError<Action, Effect>[] = [];
   const root = createTestStore<null, Action, Effect>({
-    initState: null,
+    initState: () => {return null},
     reducer: () => {
       return {
         state: null,
@@ -591,7 +599,7 @@ test('a nested reducer failure is reported once by the nested dispatch', async (
   const failure = new Error('Nested reducer failed');
   const reported: StoreError<NestedAction, Effect>[] = [];
   const root = createTestStore<{ count: number }, NestedAction, Effect>({
-    initState: { count: 0 },
+    initState: () => {return { count: 0 }},
     reducer: (_state, action) => {
       if (action.type === 'NestedAction') {
         throw failure;
@@ -620,7 +628,7 @@ test('the default error handler logs context without rejecting dispatch', async 
 
   try {
     const root = createTestStore<null, Action, Effect>({
-      initState: null,
+      initState: () => {return null},
       reducer: () => {
         return { state: null, effects: [{ type: 'WorkEffect', id: 0 }] };
       },
@@ -653,7 +661,7 @@ test('a throwing error handler is logged by the fallback without rejecting dispa
 
   try {
     const root = createTestStore<null, Action, Effect>({
-      initState: null,
+      initState: () => {return null},
       reducer: () => {
         throw failure;
       },
@@ -676,7 +684,7 @@ test('a throwing error handler is logged by the fallback without rejecting dispa
 test('invalid reducer output is caught inside dispatch as a reducer failure', async () => {
   const reported: StoreError<Action, Effect>[] = [];
   const root = createTestStore<null, Action, Effect>({
-    initState: null,
+    initState: () => {return null},
     reducer: () => {
       return { state: null, effects: undefined } as unknown as Commit<
         null,

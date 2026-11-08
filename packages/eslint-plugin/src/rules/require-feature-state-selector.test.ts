@@ -282,7 +282,7 @@ const noFixCases = [
   ],
   [
     'inferred createStore',
-    "import { createStore } from '@gost-kit/svelte'; const app = createStore({initState: {user: {name: 'Ada'}}, reducer: (state) => ({state, effects: []}), effector: async () => {}}); const view = $derived.by(() => userPresenter(app.state.user));",
+    "import { createStore } from '@gost-kit/svelte'; const app = createStore({initState: () => ({user: {name: 'Ada'}}), reducer: (state) => ({state, effects: []}), effector: async () => {}}); const view = $derived.by(() => userPresenter(app.state.user));",
     1,
   ],
   ['whole snapshot', 'const view = $derived(consume(root.state));', 1],

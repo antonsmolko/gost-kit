@@ -1,5 +1,6 @@
 import {
   createDispatch,
+  createReset,
   type Store,
   type StoreConfig,
   type Trigger,
@@ -16,24 +17,29 @@ export const createStore = <
   onError,
 }: StoreConfig<TState, TAction, TEffect>): Store<TState, TAction> => {
   // Reducers replace complete immutable state; deep proxies are unnecessary.
-  let state = $state.raw(initState);
+  let state = $state.raw(initState());
+
+  const readState = () => {
+    return state;
+  };
+  const writeState = (next: TState) => {
+    state = next;
+  };
 
   const dispatch = createDispatch<TState, TAction, TEffect>({
-    readState: () => {
-      return state;
-    },
-    writeState: (next) => {
-      state = next;
-    },
+    readState,
+    writeState,
     reducer,
     effector,
     onError,
   });
+  const reset = createReset({ initState, readState, writeState });
 
   return {
     get state() {
       return state;
     },
     dispatch,
+    reset,
   };
 };

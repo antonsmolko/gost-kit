@@ -9,7 +9,7 @@ export type StoreConfig<
   TAction extends Trigger,
   TEffect extends Trigger,
 > = {
-  initState: TState;
+  initState: AnyFn<[], TState>;
   reducer: Reducer<TState, TAction, TEffect>;
   effector: Effector<TAction, TEffect>;
   onError?: AnyFn<[failure: StoreError<TAction, TEffect>], void>;
