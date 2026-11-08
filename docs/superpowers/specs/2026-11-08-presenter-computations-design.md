@@ -26,7 +26,7 @@ Git source; выбор файла — конвенция gost-kit, а не ун�
    symbol resolution. Выбрано владельцем; учитывает reexports/import aliases.
    Это проверка принятого размещения, не доказательство purity.
 
-Одно opt-in правило `gost/prefer-presenter` в существующем eslint-plugin.
+Одно opt-in правило `gost/require-presenter` в существующем eslint-plugin.
 Один контракт: разрешённые read/binding forms и видимые calculations в заданных
 контекстах. Не вводим presenter runtime, новый пакет или architecture mode.
 Если реализация потребует отдельного самостоятельного механизма за пределами
@@ -104,6 +104,10 @@ default initializers проверяются как fallback decisions и не д
 chains разрешаются к верхнеуровневой функции или function-valued declaration в
 `*.presenter.ts`. Для опубликованных TypeScript-модулей принимается также
 `*.presenter.d.ts`; классификация по declaration source, не по type name.
+JS-only presenter `*.presenter.js` без подходящей `.presenter.d.ts` не распознаётся
+первой версией. Импорт из `.presenter.js`, разрешённый TypeScript к исходному
+`.presenter.ts` или декларации `.presenter.d.ts`, поддерживается по найденному
+symbol source. Само расширение import specifier не является критерием.
 
 Поддерживаются named/default imports, import rename, `export { ... }`, `export *`
 и статические обращения к namespace import. Простые неизменяемые `const` aliases
@@ -124,19 +128,31 @@ JS-script компонентов может пользоваться typed Svelt
 
 ### Шаблон
 
-| Контекст                                                | Проверка                                                                                                                                                                    |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `{value}` и `{@html value}`                             | Ready forms; произвольные/presenter calls при отображении запрещены. HTML sanitization остаётся отдельной обязанностью.                                                     |
-| HTML attributes и component props                       | Проверяются expression parts; shorthand готового имени допустим. Svelte literal text + ready interpolation остаётся обычной привязкой.                                      |
-| Spread props                                            | Ready object либо упаковка готовых значений; вызов/оператор в operand запрещён.                                                                                             |
-| `class:active`, `style:width`                           | Готовое значение; inline вычисления переносятся.                                                                                                                            |
-| `{#each rows as row (row.id)}`                          | Список и key — ready forms; iterate/read row fields разрешено, map/filter/sort/calculate key — report.                                                                      |
-| `{#key value}`                                          | Готовое значение identity, без расчёта при render. Не проверяем стабильность самого значения.                                                                               |
-| `{@const value = ...}`                                  | Локальная реактивная привязка: те же формы, что derived, включая подтверждённый presenter. Это позволяет готовить row view внутри each без обязательного нового компонента. |
-| `{@render children(value)}`                             | Внешний snippet call — синтаксис Svelte, разрешён. Callee — готовое чтение; аргументы — ready forms, без форматирования или presenter call при render.                      |
-| `{#if}` / `{:else if}`                                  | Условия не проверяются этим правилом: ответственность #18. Содержимое branches проверяется.                                                                                 |
-| `on*` attributes и legacy `on:`                         | Не проверяются: event wiring/handlers — #17. Наличие callback не разрешает вычисления в обычном display prop.                                                               |
-| bind/use/transition/animate/attach, await source, debug | Не проверяются первой версией: browser/lifecycle/resource wiring. Display expressions в дочерней разметке по-прежнему проверяются.                                          |
+Общее правило обхода: интерполяции и display attributes/props проверяются на
+любой глубине template независимо от вида родителя. Snippet/await/special element
+не создают исключения для своей дочерней разметки. Исключение из таблицы относится
+только к конкретному expression slot (например await source или event value),
+а не ко всему enclosing block/element. Для будущего неизвестного специального
+узла не заявляем покрытие его новых slots: обычные mustache/attribute descendants
+остаются под общей проверкой.
+
+| Контекст                                                | Проверка                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{value}` и `{@html value}`                             | Ready forms; произвольные/presenter calls при отображении запрещены. HTML sanitization остаётся отдельной обязанностью.                                                                                                                                                                                     |
+| HTML attributes и component props                       | Проверяются expression parts; shorthand готового имени допустим. Svelte literal text + ready interpolation остаётся обычной привязкой.                                                                                                                                                                      |
+| Spread props                                            | Ready object либо упаковка готовых значений; вызов/оператор в operand запрещён.                                                                                                                                                                                                                             |
+| `class:active`, `style:width`                           | Готовое значение; inline вычисления переносятся.                                                                                                                                                                                                                                                            |
+| `{#each rows as row (row.id)}`                          | Список и key — ready forms; iterate/read row fields разрешено, map/filter/sort/calculate key — report.                                                                                                                                                                                                      |
+| `{#key value}`                                          | Готовое значение identity, без расчёта при render. Не проверяем стабильность самого значения.                                                                                                                                                                                                               |
+| `{@const value = ...}`                                  | Локальная реактивная привязка: те же формы, что derived, включая подтверждённый presenter. Это позволяет готовить row view внутри each без обязательного нового компонента.                                                                                                                                 |
+| `{@render children(value)}`                             | Внешний snippet call — синтаксис Svelte, разрешён. Callee — готовое чтение; аргументы — ready forms, без форматирования или presenter call при render.                                                                                                                                                      |
+| `{#snippet name(...)}`                                  | Display body проверяется по общим правилам, включая вложенные const/render/blocks. Параметры snippet — bindings, не вычисления; defaults проверяются как derived initializers; literal/read/presenter binding допустимы, inline calculations нет. `{#snippet price(v)}{v * 100}{/snippet}` получает report. |
+| `{#await source}` и pending/then/catch                  | Source — исключение для resource wiring. Вся разметка pending, then и catch проверяется, включая текст/props, row/branch-local bindings и вложенные snippets.                                                                                                                                               |
+| `<svelte:head>`                                         | Дочерняя разметка, title/meta и их display expressions проверяются по обычным правилам.                                                                                                                                                                                                                     |
+| `<svelte:element>`, `<svelte:component>`                | Display body и attributes/props проверяются. Special directive `this={...}` принимает ready form; вычисление выбора tag/component должно быть подготовлено заранее. Browser/event slots сохраняют только собственные исключения.                                                                            |
+| `{#if}` / `{:else if}`                                  | Условия не проверяются этим правилом: ответственность #18. Содержимое branches проверяется.                                                                                                                                                                                                                 |
+| `on*` attributes и legacy `on:`                         | Не проверяются: event wiring/handlers — #17. Наличие callback не разрешает вычисления в обычном display prop.                                                                                                                                                                                               |
+| bind/use/transition/animate/attach, await source, debug | Не проверяются первой версией: browser/lifecycle/resource wiring. Display expressions в дочерней разметке по-прежнему проверяются.                                                                                                                                                                          |
 
 Решение автора дизайна: разрешить `{@const rowView = rowPresenter({ row })}` как
 binding, но не `{rowPresenter({ row }).title}` как display expression. Это
@@ -153,12 +169,33 @@ Ready container не является разрешением писать алг
 
 ## Соседние правила и ограничения
 
-`gost/require-feature-state-selector` (#6) сохраняет проверку прямого Store/raw
-state в call внутри derived; здесь не дублируется анализ Store provenance.
-Вызов presenter допустим по #19, но может нарушать #6 из-за несделанного selector.
-Для @const этот существующий анализ не расширяется неявно; гарантии #6 на новый
-контекст не заявляются. `ready-boolean-condition` и `single-intent-dispatch`
-сохраняют собственные контексты и сообщения.
+`gost/require-feature-state-selector` (#6) явно расширяется на синхронные
+вычисляющие вызовы в initializer `{@const}`. Store provenance и `$state.raw`
+распознаются существующими checks; #19 не дублирует их. Проверяются те же call,
+new и tagged-template контексты, что и в derived, а не только вызовы функций
+из presenter-файлов. Вложенные отложенные function bodies не становятся
+синхронным вызовом и сохраняют существующую границу #6.
+
+Следствие: `{@const v = userPresenter({ state: root.state.user })}` допустим
+по форме #19, но получает report #6. Для root scope используется отдельный
+script selector `$derived(root.state.user)`; внутри template можно сначала
+выбрать branch самостоятельным `{@const user = root.state.user}`, а затем
+передать `user` в presenter. Для row, уже полученной от each, дополнительный
+selector не требуется. Само чтение без вычисляющего вызова не запрещается.
+
+Технические границы расширения #6: фильтр inScript допускает initializer const
+только в этом новом контексте; reactive-context различает derived и template
+const. Existing selectorFix применяется исключительно к derived; для @const
+только диагностика с примером подходящей локальной привязки, без вставки runes
+в HTML и без переноса row bindings в script. Исходную TS-применимость #6 не
+расширяем на JS-only components этой задачей; ограничение описывается в RULES.
+Гарантии не распространяются на скрытый store access через arbitrary helpers.
+
+Новый контекст #6 и его отсутствие autofix явно документируются рядом с #19
+в RULES/README и changeset. Существующие derived diagnostics/fixes сохраняются.
+Совместный тест проверяет, что подтверждённый presenter с прямым Store/raw-state
+read в @const даёт selector report и не получает дублирующий report #19.
+`ready-boolean-condition` и `single-intent-dispatch` сохраняют свои контексты.
 
 Не доказываем purity тела presenter, отсутствие скрытого store access, корректность
 его выходного типа, alias provenance всех ready variables или отсутствия расчёта
@@ -191,10 +228,19 @@ Changeset: eslint-plugin minor, eslint-config-svelte patch. Common/Svelte runtim
   readonly aliases, mutable aliases, unresolved/ordinary calls и отсутствие
   services. Отдельно declaration-only .presenter.d.ts consumer и Fn annotations.
 - Template fixtures для каждого контекста таблицы: text/raw/attribute/style/class,
-  spread, each/key, @const row presenter и @render outer-call exception. Events,
-  lifecycle directives и if conditions не получают дублирующей диагностики.
-- Существующее #6 вместе с новым правилом: imported presenter поддерживается,
-  root.state внутри аргумента остаётся диагностикой selector, без повтора #19.
+  spread, each/key, @const row presenter и @render outer-call exception. Для
+  snippet body, каждой ветви await, head и dynamic element/component обязательны
+  отдельные valid/invalid fixtures; глубоко вложенный display slot не пропускается.
+  Для special this и compiler-valid snippet defaults проверяются свои slots.
+  Events, lifecycle directives и if conditions не получают дублирующей диагностики.
+- Расширенное #6 вместе с новым правилом: derived и @const с прямым Store/raw
+  read внутри вызова дают selector diagnostic, без повтора #19 на допустимый
+  presenter call. Отдельный @const selector и row input валидны. Проверяются
+  mixed contexts, namespace/import aliases, несколько scopes, deferred callbacks,
+  обычные object reads и отсутствие autofix в template; старые derived fixes
+  и их idempotence остаются зелёными. Новая проверка #6 работает и без #19.
+- Происхождение presenter: JS-only .presenter.js без деклараций получает report;
+  .presenter.d.ts и импорты .js с TS substitution распознаются корректно.
 - Config tests: default off, explicit on, UI-Kit off при сохранении остальных
   checks. Документация RULES/README с точным syntactic scope и примерами обходов.
 - Полный root check, пример build/2 browser scenarios; Svelte autofixer при
@@ -207,3 +253,16 @@ Changeset: eslint-plugin minor, eslint-config-svelte patch. Common/Svelte runtim
 Способ распознавания по модулю подтверждён владельцем. Остальные границы —
 предложение автора для согласования. Независимый builder check завершён:
 важных неразрешённых вопросов для планирования нет. Реализация не начата.
+
+## Исправления ревью дизайна
+
+Уточнён общий recursive scope шаблона и явно добавлены snippet bodies, все ветви
+await, head и dynamic elements/components со своими fixtures. Read-only AST probe
+на установленных Svelte 5.57.2 / svelte-eslint-parser 1.10.1 подтвердил nodes и
+корректную компиляцию примеров; this представлен отдельным SvelteSpecialDirective.
+
+Для @const выбран вариант явного расширения #6 вместо принятия известного
+пропуска: добавлены границы синхронного вызова, TS scope, diagnostic-only для
+нового контекста и совместные проверки. JS-only presenter boundary названа явно;
+новое имя правила — gost/require-presenter. Синтаксис snippet defaults и двух последовательных @const bindings отдельно
+проверен compiler/parser. Уточнённый дизайн ожидает утверждения владельца.
