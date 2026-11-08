@@ -38,7 +38,7 @@ and `**/*.svelte.js` where the upstream rule supports the corresponding syntax.
 
 Not enabled: AS04 DOM/listener restrictions, AS05 SSR browser-global restrictions,
 AS06 prefer-svelte-reactivity, legacy recommended/experimental rules and SvelteKit
-routing rules. Prettier owns HTML/CSS formatting. Architecture checks #18–#19 remain separate outcomes.
+routing rules. Prettier owns HTML/CSS formatting. Presentation computations outside conditions remain a separate outcome (#19).
 
 The bundled GOST plugin additionally enables `gost/require-feature-state-selector`
 at error for TypeScript component scripts and `.svelte.ts`. It checks public
@@ -59,3 +59,10 @@ exception and no autofix. See the plugin inventory for exact boundaries.
 GOST Dispatch calls and conditional intent selection in typed instance `on*`
 callbacks. Business/UI-Kit scopes use explicit consumer overrides. It requires
 type services and has no autofix; see the plugin inventory for limits.
+
+`gost/ready-boolean-condition` is registered explicitly off. Opt in for business
+components; boolean literals and ready boolean identifier/static member reads
+are allowed. Computations, nonboolean/nullable/any/unknown/never conditions are
+reported. Reads require type services and strictNullChecks; missing configuration
+fails explicitly. JS/stateless template reads are checked when typed services are
+available. There is no autofix or proof of presenter origin; see plugin inventory.

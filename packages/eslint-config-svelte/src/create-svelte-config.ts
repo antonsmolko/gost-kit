@@ -48,7 +48,10 @@ export const createSvelteConfig = async ({
       name: 'gost-svelte/architecture',
       files: ['**/*.svelte', '**/*.svelte.ts'],
       plugins: { gost: plugin },
-      rules: { 'gost/require-feature-state-selector': 'error' },
+      rules: {
+        'gost/require-feature-state-selector': 'error',
+        'gost/ready-boolean-condition': 'off',
+      },
     },
     {
       name: 'gost-svelte/selected-rules',

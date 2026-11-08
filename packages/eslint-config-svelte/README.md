@@ -89,8 +89,12 @@ owns browser-event adaptation and may opt out through file overrides. This is
 not a blanket browser API detector, and there is no autofix. Consult the plugin
 inventory for supported aliases and scope limits.
 
-Boolean conditions (#18) and presentation computations in derived/template
-expressions (#19) remain separate work. Existing `$state.raw`
+The bundled `gost/ready-boolean-condition` rule is off by default. Enable it for
+business components to require ready boolean if/else-if conditions; strictNullChecks
+and typed parser services are required for reads. Boolean literals are allowed;
+comparisons, calls, nullable truthiness and dynamic keys are reported. UI-Kit
+paths can override it off. The check does not prove presenter provenance and
+has no autofix. Presentation computations outside conditions remain #19. Existing `$state.raw`
 shell bindings and feature selectors remain valid; the Svelte compiler/type
 checker still verifies compilation/accessibility.
 

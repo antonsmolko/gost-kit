@@ -1,13 +1,15 @@
 <script lang="ts">
   import { rootStore } from './store/root';
+  import { globalAlertPresenter } from './global-alert.presenter';
 
   const root = rootStore();
   const alert = $derived(root.state.alert);
+  const view = $derived(globalAlertPresenter({ alert }));
 </script>
 
-{#if alert}
+{#if view.isVisible}
   <aside role="alert">
-    <p>{alert.message}</p>
+    <p>{view.message}</p>
   </aside>
 {/if}
 
