@@ -104,10 +104,12 @@ default initializers проверяются как fallback decisions и не д
 chains разрешаются к верхнеуровневой функции или function-valued declaration в
 `*.presenter.ts`. Для опубликованных TypeScript-модулей принимается также
 `*.presenter.d.ts`; классификация по declaration source, не по type name.
-JS-only presenter `*.presenter.js` без подходящей `.presenter.d.ts` не распознаётся
-первой версией. Импорт из `.presenter.js`, разрешённый TypeScript к исходному
-`.presenter.ts` или декларации `.presenter.d.ts`, поддерживается по найденному
-symbol source. Само расширение import specifier не является критерием.
+Исходный presenter должен быть TypeScript-модулем `*.presenter.ts`.
+JavaScript-файл `*.presenter.js` не считается исходным presenter по этому
+контракту. `.presenter.d.ts` — допустимое представление TypeScript API в
+скомпилированном пакете. Import specifier `.js`, который TypeScript разрешает
+к `.presenter.ts` или `.presenter.d.ts`, не меняет происхождение функции:
+проверяется найденная декларация, а не строка импорта.
 
 Поддерживаются named/default imports, import rename, `export { ... }`, `export *`
 и статические обращения к namespace import. Простые неизменяемые `const` aliases
@@ -239,8 +241,9 @@ Changeset: eslint-plugin minor, eslint-config-svelte patch. Common/Svelte runtim
   mixed contexts, namespace/import aliases, несколько scopes, deferred callbacks,
   обычные object reads и отсутствие autofix в template; старые derived fixes
   и их idempotence остаются зелёными. Новая проверка #6 работает и без #19.
-- Происхождение presenter: JS-only .presenter.js без деклараций получает report;
-  .presenter.d.ts и импорты .js с TS substitution распознаются корректно.
+- Происхождение presenter: исходный .presenter.ts распознаётся, обычный
+  .presenter.js не принимается; .presenter.d.ts опубликованного TypeScript API
+  и импорты .js с TS substitution распознаются корректно.
 - Config tests: default off, explicit on, UI-Kit off при сохранении остальных
   checks. Документация RULES/README с точным syntactic scope и примерами обходов.
 - Полный root check, пример build/2 browser scenarios; Svelte autofixer при
@@ -263,6 +266,6 @@ await, head и dynamic elements/components со своими fixtures. Read-only
 
 Для @const выбран вариант явного расширения #6 вместо принятия известного
 пропуска: добавлены границы синхронного вызова, TS scope, diagnostic-only для
-нового контекста и совместные проверки. JS-only presenter boundary названа явно;
+нового контекста и совместные проверки. Требование TypeScript-исходника presenter названо явно;
 новое имя правила — gost/require-presenter. Синтаксис snippet defaults и двух последовательных @const bindings отдельно
 проверен compiler/parser. Уточнённый дизайн ожидает утверждения владельца.
