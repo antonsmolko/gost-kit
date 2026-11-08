@@ -1,4 +1,5 @@
 import type { ESLint } from 'eslint';
+import { requirePresenter } from './rules/require-presenter';
 import { readyBooleanCondition } from './rules/ready-boolean-condition';
 import { singleIntentDispatch } from './rules/single-intent-dispatch';
 import { noComponentState } from './rules/no-component-state';
@@ -9,6 +10,9 @@ export const plugin: ESLint.Plugin = {
   // typescript-eslint still types the legacy context members removed in ESLint 10.
   // At this public boundary the implementation uses only the current APIs.
   rules: {
+    'require-presenter': requirePresenter as unknown as NonNullable<
+      ESLint.Plugin['rules']
+    >[string],
     'ready-boolean-condition': readyBooleanCondition as unknown as NonNullable<
       ESLint.Plugin['rules']
     >[string],
