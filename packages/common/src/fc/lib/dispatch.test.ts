@@ -19,14 +19,17 @@ const createTestStore = <
 ): Store<TState, TAction> => {
   const { initState, onError, ...handlers } = config;
   let state = initState();
+
+  const readState = () => {
+    return state;
+  };
+  const writeState = (next: TState) => {
+    state = next;
+  };
   const dispatch = createDispatch({
     ...handlers,
-    readState: () => {
-      return state;
-    },
-    writeState: (next: TState) => {
-      state = next;
-    },
+    readState,
+    writeState,
     onError,
   });
 
@@ -35,15 +38,7 @@ const createTestStore = <
       return state;
     },
     dispatch,
-    reset: createReset({
-      initState,
-      readState: () => {
-        return state;
-      },
-      writeState: (next) => {
-        state = next;
-      },
-    }),
+    reset: createReset({ initState, readState, writeState }),
   };
 };
 

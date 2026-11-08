@@ -8,6 +8,10 @@ export const createReset = <TState>({
   writeState,
 }: ResetConfig<TState>): Reset<TState> => {
   return ({ excluded = [] } = {}) => {
+    if (!guard.array(excluded)) {
+      throw new TypeError('Reset excluded must be an array of root keys');
+    }
+
     const fresh = initState();
 
     if (excluded.length === 0) {

@@ -99,6 +99,23 @@ test.each([undefined, {}, { excluded: undefined }, { excluded: [] }])(
   },
 );
 
+test.each([null, 'auth', '', {}, { length: 0 }, 7, false])(
+  'rejects non-array excluded %j before executing state callbacks',
+  (excluded) => {
+    const initState = vi.fn(rootState);
+    const readState = vi.fn(rootState);
+    const writeState = vi.fn();
+    const reset = createReset({ initState, readState, writeState });
+
+    expect(() => {
+      return Reflect.apply(reset, undefined, [{ excluded }]);
+    }).toThrow(new TypeError('Reset excluded must be an array of root keys'));
+    expect(initState).not.toHaveBeenCalled();
+    expect(readState).not.toHaveBeenCalled();
+    expect(writeState).not.toHaveBeenCalled();
+  },
+);
+
 test('calls the factory without overrides even when all scopes are excluded', () => {
   const current = rootState({ alerts: ['keep'] });
   const initState = vi.fn(rootState);

@@ -252,3 +252,15 @@ exports, reactive reset и отсутствие tests/src в артефакта�
 не обнаружил issues/suggestions в изменённом rune module.
 
 Независимое whole-branch review завершено: Critical/Important/Minor — нет.
+
+## Исправления опубликованного ревью #39
+
+В common test-store dispatch и reset используют общие readState/writeState,
+как в Svelte adapter. Миграционная заметка явно требует добавить обязательный
+reset внешним реализациям Store, включая test doubles и wrappers.
+
+Немассивный excluded отклоняется описательным TypeError до вызова factory и
+state callbacks. Семь regression cases (null, строки, объекты, number, boolean)
+прошли RED→GREEN; пустая строка и объект с length: 0 больше не запускают полный
+сброс. Полный root check после исправлений — 660 тестов, lint/format/types/build
+и проверка примера прошли.

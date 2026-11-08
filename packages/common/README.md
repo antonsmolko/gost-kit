@@ -167,7 +167,8 @@ once. `reset({ excluded: ['auth'] })` composes fresh defaults with current value
 of the excluded own root keys, preserving their references. The factory runs for
 the entire root, including excluded scopes. Neither root is mutated.
 
-Excluded keys must exist in both current and fresh roots; missing/optional absent
+Non-array `excluded` values throw TypeError before executing the factory or state
+callbacks. Excluded keys must exist in both current and fresh roots; missing/optional absent
 keys throw TypeError before writing. An empty list is a full reset. Partial reset
 supports independent scopes of a fixed record; primitive/array/function/union
 roots only support full reset in the types. A union inside a scope is allowed.
@@ -176,7 +177,8 @@ record roots and own keys, not TypeScript unions. A factory/read error propagate
 without a write. Reset does not cancel effects or protect against late responses.
 
 `Reset`, `ResetOptions` and `ResetConfig` are public types. `Store` now includes
-`reset`, and `StoreConfig.initState` requires a zero-argument factory. Construct
+the required `reset` member: custom Store implementations, test doubles and
+wrappers must add it. `StoreConfig.initState` requires a zero-argument factory. Construct
 fresh nested defaults through scope factories and compose them in a root factory;
 use `define.state(factory)` for optional shallow overrides in tests. Move existing
 `initState: initialState()` call sites to `initState: initialState`.

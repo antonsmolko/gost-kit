@@ -72,6 +72,10 @@ rootState({ users: usersState({ errors: [apiError()] }) }). Это shallow overr
 не глубокое слияние. Object-вариант define.state разделяет вложенные значения
 и не гарантирует их свежести; библиотека не выполняет deep clone.
 
+Значение excluded, не являющееся массивом (в том числе null/строка/array-like
+объект), отклоняется TypeError до вызова factory/readState/writeState.
+Отсутствующий excluded и undefined по-прежнему означают полный сброс.
+
 Непустой excluded разрешён для record root фиксированной структуры с
 независимыми scopes. Типы отклоняют primitive/array/function/представленный union
 root, но разрешают union внутри scope. Type widening/assertions могут стереть
