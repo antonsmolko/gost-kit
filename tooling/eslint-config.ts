@@ -12,6 +12,7 @@ export const createProjectConfig = async (
       rules: {
         'gost/no-component-state': 'error',
         'gost/single-intent-dispatch': 'error',
+        'gost/require-presenter': 'error',
         'gost/ready-boolean-condition': 'error',
       },
     },

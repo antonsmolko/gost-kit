@@ -5,6 +5,7 @@ import {
 } from '@typescript-eslint/utils';
 import { runeCallee } from './rune-callee';
 import { memberKey } from './member-key';
+import type { AST } from 'svelte-eslint-parser';
 
 export const isDerived = (
   node: TSESTree.CallExpression,
@@ -26,10 +27,18 @@ export const reactiveContext = (
 
   while (current.parent) {
     const parent = current.parent;
+    // Only svelte-eslint-parser introduces this extended parent node.
+    const template = parent as unknown as AST.SvelteConstTag;
+
+    if (template.type === 'SvelteConstTag') {
+      return call ? { kind: 'templateConst' as const, call } : undefined;
+    }
 
     if (parent.type === AST_NODE_TYPES.CallExpression) {
       if (isDerived(parent, source)) {
-        return call ? { derived: parent, call } : undefined;
+        return call
+          ? { kind: 'derived' as const, derived: parent, call }
+          : undefined;
       }
     }
 
@@ -68,7 +77,9 @@ export const reactiveContext = (
         !parent.generator &&
         isDerived(owner, source)
       ) {
-        return call ? { derived: owner, call } : undefined;
+        return call
+          ? { kind: 'derived' as const, derived: owner, call }
+          : undefined;
       }
 
       return undefined;

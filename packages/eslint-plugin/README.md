@@ -9,7 +9,7 @@ ESLint ^10.14.0 and TypeScript ^5.9.3.
 `@gost-kit/eslint-config-svelte` installs and enables the plugin for typed Svelte
 components and `.svelte.ts` modules. The selector rule is enabled by default;
 `gost/no-component-state`, `gost/single-intent-dispatch` and
-`gost/ready-boolean-condition` require explicit
+`gost/ready-boolean-condition` and `gost/require-presenter` require explicit
 consumer overrides for business component paths. UI-Kit paths can opt out.
 No separate plugin registration is needed.
 Other consumers may register the named public export in their flat config:
@@ -51,3 +51,12 @@ ready boolean identifier/static field reads. Computations and truthiness are
 reported; typed reads require strictNullChecks and parser services. JS/stateless
 reads are checked too when services are available. No autofix or presenter
 provenance guarantee is provided. See the inventory for opt-in boundaries.
+
+`require-presenter` moves visible calculations from derived bindings and template
+display slots to functions declared in `*.presenter.ts` modules. Named/default
+imports and public barrel exports are supported; compiled TypeScript packages use
+`*.presenter.d.ts` declarations. Ready reads and containers remain valid.
+Presenter calls belong in derived or template const bindings, with ready values
+used for display. Typed parser services are required to resolve candidate calls.
+The selector rule also checks typed template const computations, without template
+autofix. See the inventory for exact contexts and known analysis boundaries.

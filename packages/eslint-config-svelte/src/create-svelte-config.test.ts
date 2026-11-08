@@ -697,3 +697,88 @@ test('UI-Kit may disable condition policy while keeping Svelte checks', async ()
     expect.objectContaining({ ruleId: 'svelte/button-has-type', severity: 2 }),
   );
 });
+
+test('presenter rule is registered and default off', async () => {
+  const config = await eslint.calculateConfigForFile(
+    join(root, 'PresenterDefault.svelte'),
+  );
+
+  expect(config?.rules?.['gost/require-presenter']).toEqual([0]);
+});
+
+test('presenter opt-in checks derived and template calculations without autofix', async () => {
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      ...(await createSvelteConfig({ tsconfigRootDir: root })),
+      { files: ['**/*.svelte'], rules: { 'gost/require-presenter': 'error' } },
+    ],
+  });
+  const result = await lint(
+    '<script lang="ts">const value = 2; const doubled = $derived(value * 2);</script><p>{doubled + 1}</p>',
+    'PresenterOn.svelte',
+    instance,
+  );
+  const messages = result.messages.filter((message) => {
+    return message.ruleId === 'gost/require-presenter';
+  });
+
+  expect(messages).toHaveLength(2);
+  expect(
+    messages.every((message) => {
+      return message.severity === 2 && !message.fix && !message.suggestions;
+    }),
+  ).toBe(true);
+
+  await writeFile(
+    join(root, 'name.presenter.ts'),
+    'export const namePresenter = (name: string) => { return name.toUpperCase(); };',
+  );
+  await writeFile(
+    join(root, 'presenters.ts'),
+    "export { namePresenter } from './name.presenter';",
+  );
+
+  const valid = await lint(
+    '<script lang="ts">import { namePresenter } from "./presenters"; const name = "Ada"; const view = $derived(namePresenter(name));</script><p>{view}</p>',
+    'PresenterReady.svelte',
+    instance,
+  );
+
+  expect(valid.messages).toEqual([]);
+});
+
+test('UI-Kit may disable presenter policy while keeping Svelte checks', async () => {
+  await mkdir(join(root, 'src/ui-kit'), { recursive: true });
+
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      ...(await createSvelteConfig({ tsconfigRootDir: root })),
+      {
+        files: ['src/**/*.svelte'],
+        rules: { 'gost/require-presenter': 'error' },
+      },
+      {
+        files: ['src/ui-kit/**/*.svelte'],
+        rules: { 'gost/require-presenter': 'off' },
+      },
+    ],
+  });
+  const result = await lint(
+    '<script lang="ts">const value = 2;</script><button>{value + 1}</button>',
+    'src/ui-kit/Presenter.svelte',
+    instance,
+  );
+
+  expect(
+    result.messages.some((message) => {
+      return message.ruleId === 'gost/require-presenter';
+    }),
+  ).toBe(false);
+  expect(result.messages).toContainEqual(
+    expect.objectContaining({ ruleId: 'svelte/button-has-type', severity: 2 }),
+  );
+});
