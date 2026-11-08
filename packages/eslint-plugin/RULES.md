@@ -247,3 +247,62 @@ a dispatch diagnostic, although it violates the business-component boundary.
 Event adaptation belongs in UI-Kit. Effects outside discovered UI callbacks may
 perform several dispatches. Presentation computations (including templates) are
 #19, boolean template conditions #18, and testable local UI-state #27.
+
+## gost/ready-boolean-condition
+
+Opt in for business `.svelte` files. `{#if}` and `{:else if}` read a ready
+boolean; ordinary else and conditional rendering remain available.
+
+```svelte
+{#if view.isLoaded}
+  <p>{view.name}</p>
+{:else if isFailed}
+  <p>Failed</p>
+{/if}
+```
+
+Allowed: boolean literals true/false, identifiers, static field chains,
+quoted keys and numeric literal indexes whose final type is definitely boolean.
+Optional chains are accepted only when the complete expression excludes
+undefined/null. Boolean aliases, boolean-only unions and proven boolean generic
+constraints are accepted. TypeScript flow narrowing applies at the expression.
+
+Reported with `readyBoolean`: comparisons, logical operations, negation, calls,
+ternaries, dynamic keys, assertions/non-null assertions/satisfies wrappers,
+object/string/number truthiness, nullable booleans and any/unknown/never. Move
+the calculation to a pure presenter and read its named boolean result. There
+is no autofix or suggestion that invents a presenter/field name.
+
+Identifier/member reads require actual parser type services and strictNullChecks,
+either directly or via strict. Explicit strictNullChecks: false overrides strict.
+Missing services/null checking is a configuration error, not a successful check.
+Literal booleans and invalid syntax do not need services; components without
+conditions do not request them. Type services also cover JS-script and stateless
+components when the configured parser supplies a program. Inferred any in JS
+props is rejected just like TypeScript any. Script if statements, ordinary TS and
+rune modules are outside the rule.
+
+This checks shape and type, not provenance/purity. A local boolean or boolean
+getter is not proof of a presenter. Rule #19 addresses presentation calculations
+outside template conditions. Static indexed reads follow consumer TypeScript
+options; enable noUncheckedIndexedAccess to expose possible missing entries.
+The rule does not validate runtime input that the declared types conceal.
+
+`createSvelteConfig` registers it explicitly off. Enable with a later override:
+
+```ts
+{
+  files: ['src/**/*.svelte'],
+  rules: { 'gost/ready-boolean-condition': 'error' },
+}
+```
+
+Independent UI-Kit components may use a later matching off override while
+retaining the other TypeScript/Svelte checks.
+
+The current svelte-eslint-parser 1.10.1 models component generics as aliases to
+their constraints (unknown when unconstrained). Conditional types over those
+component generics may therefore resolve differently from a particular caller's
+instantiation. This rule checks the parser-provided program, not every generic
+instantiation; use an explicitly boolean view field for that boundary. It cannot
+recover source type distinctions already erased by the parser.

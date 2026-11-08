@@ -136,3 +136,22 @@ suggestions, создающих presenter/имя поля либо меняющ�
 Ветка обновлена поверх main после слияния #36 (3a39e51).
 
 Независимый builder-check: важных неразрешённых вопросов для плана нет.
+
+## Источники реализации
+
+Presenter guidance: FRONTEND-ARCH-002, revision f0a936c36458225dd58a896e7f5f6257dcf99821,
+proposed/Pending; Requirement, Applicability и Verification сверены с pinned source.
+Реализация не принимает стандарт нормативно. Named-parameter/explicit-result
+convention взят из gost-view-presenter recipe; существующий private userPresenter
+переведён с positional state на `{ state }` вместе с его callers/tests.
+
+## Ограничение parser type model
+
+В svelte-eslint-parser 1.10.1 component generics преобразуются в aliases их
+constraints (unknown для unconstrained T; lib/context/script-let.js:209).
+Conditional type над таким T может разрешиться в boolean в synthetic program,
+хотя одна из исходных ветвей была any/object. Правило проверяет предоставленный
+program и не доказывает контракт для всех generic instantiations. Это не
+устраняется проверкой TypeFlags без построения альтернативной системы типов;
+для такой границы передают явно boolean view field. Ограничение передаётся
+независимому reviewer и отражено в публичном inventory.

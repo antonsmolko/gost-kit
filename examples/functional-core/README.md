@@ -35,7 +35,7 @@ one for presentation:
 
 ```ts
 const user = $derived(root.state.user);
-const viewState = $derived(userPresenter(user));
+const viewState = $derived(userPresenter({ state: user }));
 ```
 
 An unrelated root update rechecks the user reference but does not call the
@@ -284,7 +284,7 @@ changes. `check` includes lint/format checks, type checking and tests; the root
 The project consumes the Svelte ESLint configuration and the shared Prettier
 configuration; the Prettier Svelte plugin is connected locally. The repository's [adapter](../../tooling/eslint-config.ts) adds project globals
 and explicitly enables `gost/no-component-state` and
-`gost/single-intent-dispatch` for `src/**/*.svelte`;
+`gost/single-intent-dispatch` and `gost/ready-boolean-condition` for `src/**/*.svelte`;
 `bind:this` refs remain permitted while logical state lives in root/features;
 the published Svelte config owns component parsing and shared policies. Dependencies/config
 exports must be prepared in the repository first; the example is not a standalone
@@ -307,3 +307,10 @@ in application business features, library components own browser events and
 expose semantic callbacks/ready values. The intent rule catches direct dispatch
 cascades/branches; it does not prove the absence of every browser API. A UI-Kit
 component extraction and local-state design are separate work (#27).
+
+The boolean condition policy is enabled for this example. userPresenter returns
+hasLoadedUser plus loadedUserName/loadedUserEmail; globalAlertPresenter returns
+isVisible/message. Components keep separate state selectors and reactive presenter
+calls. Conditions read those boolean fields instead of nullable object truthiness.
+Loaded data stays visible during loading/error, and both presenters have ordinary
+function tests with deterministic outputs and preserved inputs.

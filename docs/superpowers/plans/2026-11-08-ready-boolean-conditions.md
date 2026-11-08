@@ -33,11 +33,11 @@
 
 **Interfaces:** Export `readyBooleanCondition` RuleModule with no options, messageId `readyBoolean`; exported plugin rule `ready-boolean-condition`.
 
-- [ ] Написать compiler-validated fixtures и RuleTester tests: literal/identifier/member/alias/static keys/nullable optional chains, mixed types, TS generics, script-if exclusions, one diagnostic per invalid condition.
-- [ ] Запустить `npm test --workspace @gost-kit/eslint-plugin -- --run src/rules/ready-boolean-condition.test.ts`. Expected: FAIL, rule missing.
-- [ ] Реализовать whitelist выражений и lazy parser services. Boolean predicate использует checker constraints, unions и TypeFlags, не type-name strings. Для strictNullChecks использовать resolved compiler option с учётом strict override.
-- [ ] Добавить configuration-error tests для reads без services/strict null; JS/stateless/context mapping cases. Запустить rule tests и plugin tsc. Expected: PASS, все negative fixtures дают rule diagnostic, а не compiler error.
-- [ ] Проверить plugin lint/format, commit `[gost-kit-18] feat: require ready boolean template conditions`.
+- [x] Написать compiler-validated fixtures и RuleTester tests: literal/identifier/member/alias/static keys/nullable optional chains, mixed types, TS generics, script-if exclusions, one diagnostic per invalid condition.
+- [x] Запустить `npm test --workspace @gost-kit/eslint-plugin -- --run src/rules/ready-boolean-condition.test.ts`. Expected: FAIL, rule missing.
+- [x] Реализовать whitelist выражений и lazy parser services. Boolean predicate использует checker constraints, unions и TypeFlags, не type-name strings. Для strictNullChecks использовать resolved compiler option с учётом strict override.
+- [x] Добавить configuration-error tests для reads без services/strict null; JS/stateless/context mapping cases. Запустить rule tests и plugin tsc. Expected: PASS, все negative fixtures дают rule diagnostic, а не compiler error.
+- [x] Проверить plugin lint/format, commit `[gost-kit-18] feat: require ready boolean template conditions`.
 
 ### Task 2: Presenters and opt-in config
 
@@ -45,11 +45,11 @@
 
 **Interfaces:** Rule registered by plugin; `userPresenter({ state })` preserves existing data/reference, adds hasLoadedUser/loadedUserName/loadedUserEmail. `globalAlertPresenter({ alert })` returns isVisible/message. Public config off, private project on.
 
-- [ ] Сначала добавить presenter output tests для empty/all statuses/retained data/frozen inputs; ожидаемые literal views. Запустить example tests. Expected: FAIL, новых полей/helper нет.
-- [ ] Реализовать presenters с named inputs и explicit view types; подключить через $derived с отдельным state selector. Template conditions читают готовые flags.
-- [ ] Написать config tests default-off/explicit-on/UI-Kit override с сохранением остальных правил и rune/script exclusions; добавить project rule-ID case. Запустить соответствующие tests до config edits: Expected FAIL.
-- [ ] Зарегистрировать default-off policy и project-on, обновить components. Запустить plugin/config/tooling и example checks. Expected PASS.
-- [ ] Svelte autofixer для обоих компонентов, production build/browser; commit `[gost-kit-18] feat: opt in to boolean conditions in Svelte example`.
+- [x] Сначала добавить presenter output tests для empty/all statuses/retained data/frozen inputs; ожидаемые literal views. Запустить example tests. Expected: FAIL, новых полей/helper нет.
+- [x] Реализовать presenters с named inputs и explicit view types; подключить через $derived с отдельным state selector. Template conditions читают готовые flags.
+- [x] Написать config tests default-off/explicit-on/UI-Kit override с сохранением остальных правил и rune/script exclusions; добавить project rule-ID case. Запустить соответствующие tests до config edits: Expected FAIL.
+- [x] Зарегистрировать default-off policy и project-on, обновить components. Запустить plugin/config/tooling и example checks. Expected PASS.
+- [x] Svelte autofixer для обоих компонентов, production build/browser; commit `[gost-kit-18] feat: opt in to boolean conditions in Svelte example`.
 
 ### Task 3: Distribution and final review
 
