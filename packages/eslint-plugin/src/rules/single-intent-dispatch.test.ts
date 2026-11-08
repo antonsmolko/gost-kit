@@ -334,7 +334,7 @@ const invalid = [
   ],
   [
     'inferred Store',
-    "import { createStore } from '@gost-kit/svelte'; const app = createStore({ initState: {value:0}, reducer: (state, _action: Action) => ({ state, effects: [] }), effector: async () => {} }); const handle = () => { void app.dispatch({type:'OneAction'}); void app.dispatch({type:'TwoAction'}); };",
+    "import { createStore } from '@gost-kit/svelte'; const app = createStore({ initState: () => ({value:0}), reducer: (state, _action: Action) => ({ state, effects: [] }), effector: async () => {} }); const handle = () => { void app.dispatch({type:'OneAction'}); void app.dispatch({type:'TwoAction'}); };",
     'multipleDispatch',
   ],
 ] as const;

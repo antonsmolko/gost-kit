@@ -1,4 +1,9 @@
 export { createDispatch } from './lib/dispatch';
+export { createReset } from './lib/create-reset';
+export type { Reset } from './types/reset';
+export type { ResetOptions } from './types/reset-options';
+export type { ResetConfig } from './types/reset-config';
+export type { ResetError } from './types/reset-error';
 export { define } from './lib/define';
 export { effecting } from './lib/effecting';
 export { reducing } from './lib/reducing';

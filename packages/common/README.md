@@ -160,9 +160,40 @@ independent. A function input is treated as a state factory. Reducer definitions
 default to `never` effects when no effect type is supplied; effectful reducers
 must declare their effect union.
 
+`createReset({ initState, readState, writeState })` returns a synchronous reset
+method for framework adapters. It does not initialize state when constructed.
+Each `reset()` calls `initState()` without arguments and writes the fresh state
+once. `reset({ excluded: ['auth'] })` composes fresh defaults with current values
+of the excluded own root keys, preserving their references. The factory runs for
+the entire root, including excluded scopes. Neither root is mutated.
+
+Non-array `excluded` values report a TypeError through `onError` before executing
+the factory or state callbacks. Only excluded keys that are own properties of both current and initial
+roots are preserved; missing or inherited keys are skipped. An optional scope
+absent from either root is skipped too: initial defaults determine its presence
+and value after reset. An empty list is a full reset. Partial reset
+supports independent scopes of a fixed record; primitive/array/function/union
+roots only support full reset in the types. A union inside a scope is allowed.
+Union checking is static and cannot recover erased types; runtime validates
+record roots and own keys, not TypeScript unions. Reset errors (validation,
+factory, read, composition or write) go to `onError` as `{ kind: 'reset', error }`,
+without an action. The method stops without throwing outward; factory/read errors
+occur before writing. Without a handler, the existing `report` logs to console;
+if the handler throws, `report` uses its console fallback. Reset does not cancel
+effects or protect against late responses.
+
+`Reset`, `ResetOptions`, `ResetConfig` and `ResetError` are public types. `Store` now includes
+the required `reset` member: custom Store implementations, test doubles and
+wrappers must add it. `StoreConfig.initState` requires a zero-argument factory. Construct
+fresh nested defaults through scope factories and compose them in a root factory;
+use `define.state(factory)` for optional shallow overrides in tests. Move existing
+`initState: initialState()` call sites to `initState: initialState`.
+
 `createDispatch(config)` receives `reducer`, `effector`, `readState`, `writeState`
 and optional `onError` in the same config. The error callback is synchronous,
 with contract `(failure: StoreError<TAction, TEffect>) => void`.
+`StoreError` includes `ResetError` for a shared store handler. Narrow by `kind`
+before reading `action` or `effect`; reset failures have neither field.
 It is called without awaiting a result; the default logs to `console.error`.
 A synchronous handler failure uses the existing console fallback.
 
