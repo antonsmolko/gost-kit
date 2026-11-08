@@ -25,6 +25,8 @@ export const readyBooleanCondition = ESLintUtils.RuleCreator.withoutDocs({
       return {};
     }
 
+    let checkType: ((node: TSESTree.Expression) => boolean) | undefined;
+
     return {
       SvelteIfBlock(node: { expression: TSESTree.Expression }) {
         const expression = node.expression;
@@ -42,21 +44,24 @@ export const readyBooleanCondition = ESLintUtils.RuleCreator.withoutDocs({
           return;
         }
 
-        const services = ESLintUtils.getParserServices(context);
-        const options = services.program.getCompilerOptions();
+        if (!checkType) {
+          const services = ESLintUtils.getParserServices(context);
+          const options = services.program.getCompilerOptions();
 
-        if (!(options.strictNullChecks ?? options.strict ?? false)) {
-          throw new Error(
-            'gost/ready-boolean-condition requires strictNullChecks (or strict) for typed conditions.',
-          );
+          if (!(options.strictNullChecks ?? options.strict ?? false)) {
+            throw new Error(
+              'gost/ready-boolean-condition requires strictNullChecks (or strict) for typed conditions.',
+            );
+          }
+
+          const checker = services.program.getTypeChecker();
+
+          checkType = (condition) => {
+            return booleanType(checker, services.getTypeAtLocation(condition));
+          };
         }
 
-        if (
-          !booleanType(
-            services.program.getTypeChecker(),
-            services.getTypeAtLocation(expression),
-          )
-        ) {
+        if (!checkType(expression)) {
           context.report({ node: expression, messageId: 'readyBoolean' });
         }
       },
