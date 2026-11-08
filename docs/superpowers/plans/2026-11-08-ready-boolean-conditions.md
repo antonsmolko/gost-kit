@@ -57,8 +57,8 @@
 
 **Interfaces:** Built public plugin/config, unchanged application state/runtime contracts.
 
-- [ ] Документировать правила формы/типа, strictNullChecks/config error, no-provenance guarantee, opt-in/UI-Kit overrides, no autofix.
-- [ ] `npm run check`, example build and `test:e2e`: Expected PASS.
-- [ ] `npm pack` plugin/config и установить tarballs во внешний consumer с реальными type services; valid boolean проходит, nullable/computed диагностируются правильным ruleId, default-off и UI-Kit override сохраняются; JS/stateless и TS declarations проверить. Artifacts исключают src/tests, tooling не добавляет @gost-kit/common runtime dependency.
-- [ ] Один независимый whole-branch review; существенные находки исправить RED→GREEN и повторить нужные checks.
-- [ ] Commit/push, draft PR closes #18. Не мержить и не публиковать.
+- [x] Документировать правила формы/типа, strictNullChecks/config error, no-provenance guarantee, opt-in/UI-Kit overrides, no autofix.
+- [x] `npm run check`, example build and `test:e2e`: Expected PASS.
+- [x] `npm pack` plugin/config и установить tarballs во внешний consumer с реальными type services; valid boolean проходит, nullable/computed диагностируются правильным ruleId, default-off и UI-Kit override сохраняются; JS/stateless и TS declarations проверить. Artifacts исключают src/tests, tooling не добавляет @gost-kit/common runtime dependency.
+- [x] Один независимый whole-branch review; существенные находки исправить RED→GREEN и повторить нужные checks.
+- [x] Commit/push, draft PR closes #18. Не мержить и не публиковать.

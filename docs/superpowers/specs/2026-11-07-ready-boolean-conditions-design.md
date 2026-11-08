@@ -155,3 +155,12 @@ program и не доказывает контракт для всех generic in
 устраняется проверкой TypeFlags без построения альтернативной системы типов;
 для такой границы передают явно boolean view field. Ограничение передаётся
 независимому reviewer и отражено в публичном inventory.
+
+## Результат
+
+Правило реализовано; 56 compiler-validated rule cases, полный root check —
+610 тестов; build и 2 browser scenarios прошли. Проверены настоящие tarballs
+во внешнем consumer, declarations и отсутствие GOST runtime dependency/src/tests.
+Независимое whole-branch review: Critical/Important/Minor — нет; дополнительно
+проверены 14 type/parser probes и оба компонента Svelte autofixer.
+Ограничение generic parser model признано допустимым при явной документации.
