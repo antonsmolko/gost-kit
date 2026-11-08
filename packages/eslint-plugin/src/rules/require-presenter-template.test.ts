@@ -25,6 +25,12 @@ const transition = (node: Element, params?: unknown) => ({});
 const attachment = (node: Element) => {};
 `;
 const valid = [
+  '{#each view.rows as {name = "Unknown"} (name)}<p>{name}</p>{/each}',
+  '{#each view.rows as {[view.title]: name} (name)}<p>{name}</p>{/each}',
+  '{#each view.rows as {name = personPresenter({state:user}).label} (name)}<p>{name}</p>{/each}',
+  '{#await view.promise then {label = view.title}}<p>{label}</p>{/await}',
+  '{#await view.promise}<p>Loading</p>{:then {label = "Unknown"}}<p>{label}</p>{:catch {message = "Failed"}}<p>{message}</p>{/await}',
+  '{#await view.promise catch {message = "Failed"}}<p>{message}</p>{/await}',
   '<p>{view.title}</p>',
   '<p>{view?.title}</p>',
   '<p>{view.rows[count].name}</p>',
@@ -61,6 +67,14 @@ const valid = [
   return component(script, markup);
 });
 const invalid = [
+  '{#each view.rows as {name = user.name.trim()} (name)}<p>{name}</p>{/each}',
+  '{#each view.rows as {[user.name.trim()]: name} (name)}<p>{name}</p>{/each}',
+  '{#await view.promise then {label = user.name.trim()}}<p>{label}</p>{/await}',
+  '{#await view.promise then {[user.name.trim()]: label}}<p>{label}</p>{/await}',
+  '{#await view.promise}<p>Loading</p>{:then {label = user.name.trim()}}<p>{label}</p>{/await}',
+  '{#await view.promise catch {message = user.name.trim()}}<p>{message}</p>{/await}',
+  '{#await view.promise}<p>Loading</p>{:catch {[user.name.trim()]: message}}<p>{message}</p>{/await}',
+  '{#each view.rows as {details: [name = user.name.trim()]} (name)}<p>{name}</p>{/each}',
   '<p>{user.name.trim()}</p>',
   '<p>{personPresenter({ state: user }).label}</p>',
   '<p>{count * 100}</p>',

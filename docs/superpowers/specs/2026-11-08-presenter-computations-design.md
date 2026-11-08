@@ -255,9 +255,10 @@ Changeset: eslint-plugin minor, eslint-config-svelte patch. Common/Svelte runtim
 
 Дизайн и план утверждены владельцем. Реализация завершена: правило, template
 контексты, расширение selector checks, конфигурация и документация. Полный check
-проходит (806 тестов), пример собирается, 2 браузерных сценария и внешний
-tarball consumer с public barrel/declaration imports проходят. Финальное ревью
-ветки выполняется перед draft PR.
+проходит (820 тестов), пример собирается, 2 браузерных сценария и внешний
+tarball consumer с public barrel/declaration imports проходят. Независимое финальное ревью завершено: пропуск destructuring bindings each/await
+исправлен через compiler-valid regressions RED→GREEN. Небольшое замечание о двух
+диагностиках для вложенного derived отложено и указано в RULES/PR.
 
 ## Исправления ревью дизайна
 
@@ -271,3 +272,13 @@ await, head и dynamic elements/components со своими fixtures. Read-only
 нового контекста и совместные проверки. Требование TypeScript-исходника presenter названо явно;
 новое имя правила — gost/require-presenter. Синтаксис snippet defaults и двух последовательных @const bindings отдельно
 проверен compiler/parser. Уточнённый дизайн утверждён владельцем.
+
+## Уточнение после финального ревью
+
+Each context и then/catch bindings проверяются тем же рекурсивным binding
+классификатором, что snippet parameters: defaults принимают ready/confirmed
+presenter forms, computed keys — ready reads. Восемь compiler-valid invalid
+fixtures воспроизвели пропуск до исправления; добавлены шесть valid counterparts.
+Selector extension по-прежнему ограничен @const: pattern defaults не получают
+его гарантий, что явно указано в RULES. Вычисления вне видимых проверяемых slots,
+purity presenter и wiring exceptions остаются ранее принятыми границами.

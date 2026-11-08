@@ -59,6 +59,12 @@ export const requirePresenter = ESLintUtils.RuleCreator.withoutDocs({
       }
     };
 
+    const binding = (node: TSESTree.Node) => {
+      if (!readyPattern(node, isReady)) {
+        context.report({ node, messageId: 'requirePresenter' });
+      }
+    };
+
     return {
       SvelteMustacheTag(raw: TSESTree.Node) {
         const node = raw as unknown as AST.SvelteMustacheTag;
@@ -96,6 +102,24 @@ export const requirePresenter = ESLintUtils.RuleCreator.withoutDocs({
 
         if (node.key) {
           display(node.key as TSESTree.Node);
+        }
+
+        if (node.context) {
+          binding(node.context as TSESTree.Node);
+        }
+      },
+      SvelteAwaitThenBlock(raw: TSESTree.Node) {
+        const node = raw as unknown as AST.SvelteAwaitThenBlock;
+
+        if (node.value) {
+          binding(node.value as TSESTree.Node);
+        }
+      },
+      SvelteAwaitCatchBlock(raw: TSESTree.Node) {
+        const node = raw as unknown as AST.SvelteAwaitCatchBlock;
+
+        if (node.error) {
+          binding(node.error as TSESTree.Node);
         }
       },
       SvelteKeyBlock(raw: TSESTree.Node) {
@@ -139,12 +163,7 @@ export const requirePresenter = ESLintUtils.RuleCreator.withoutDocs({
         const node = raw as unknown as AST.SvelteSnippetBlock;
 
         node.params.forEach((param) => {
-          if (!readyPattern(param as TSESTree.Node, isReady)) {
-            context.report({
-              node: param as TSESTree.Node,
-              messageId: 'requirePresenter',
-            });
-          }
+          binding(param as TSESTree.Node);
         });
       },
       CallExpression(node) {

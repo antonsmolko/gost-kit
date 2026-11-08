@@ -391,16 +391,16 @@ request a program. Resolution is cached per file.
 
 Template display slots allow ready values, without presenter or other calls:
 
-| Slot                                                                               | Policy                                                                                                      |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Text and raw HTML, attributes/props, spreads, class/style directives               | Ready values; nested computations report. Mixed literal text and ready Svelte interpolations are allowed.   |
-| Each source/key, key blocks, special element/component `this`                      | Ready values; filtering, sorting or calculating keys/tag/component inline reports.                          |
-| `{@const}` initializer                                                             | Derived forms, including confirmed presenter calls with ready arguments.                                    |
-| `{@render}`                                                                        | Outer snippet invocation allowed; callee and arguments must be ready, with no presenter calls in arguments. |
-| Snippet bodies/default parameters                                                  | Body checked normally; parameter defaults use derived forms.                                                |
-| Await pending/then/catch, head, special element descendants                        | All nested display slots checked normally.                                                                  |
-| If/else-if condition                                                               | Owned by `ready-boolean-condition`; branch displays still checked.                                          |
-| `on*`/legacy event values, bind/use/transition/animate/attach, await source, debug | Wiring slot excluded; nested display markup remains checked.                                                |
+| Slot                                                                               | Policy                                                                                                                                |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Text and raw HTML, attributes/props, spreads, class/style directives               | Ready values; nested computations report. Mixed literal text and ready Svelte interpolations are allowed.                             |
+| Each source/key, key blocks, special element/component `this`                      | Ready values; filtering, sorting or calculating keys/tag/component inline reports.                                                    |
+| `{@const}` initializer                                                             | Derived forms, including confirmed presenter calls with ready arguments.                                                              |
+| `{@render}`                                                                        | Outer snippet invocation allowed; callee and arguments must be ready, with no presenter calls in arguments.                           |
+| Each/await destructuring and snippet default parameters                            | Bindings are checked recursively: defaults use derived forms; computed keys must be ready reads. Snippet bodies are checked normally. |
+| Await pending/then/catch, head, special element descendants                        | All nested display slots checked normally.                                                                                            |
+| If/else-if condition                                                               | Owned by `ready-boolean-condition`; branch displays still checked.                                                                    |
+| `on*`/legacy event values, bind/use/transition/animate/attach, await source, debug | Wiring slot excluded; nested display markup remains checked.                                                                          |
 
 `{@const}` prepares a binding without displaying it, so a row presenter can run
 there; `{rowPresenter(row).label}` is a display calculation and reports.
@@ -420,3 +420,7 @@ not presenter purity, output correctness, hidden helper/store access, or the
 origin of every ready variable. Ordinary script computations outside derived
 are not covered. Each conditions/handlers/local state retain their separate
 policies. Review and presenter tests remain necessary.
+
+Known boundaries: selector diagnostics do not cover presenter inputs in snippet,
+each or await pattern defaults; select Store/raw scopes beforehand. Nested derived
+expressions can produce diagnostics for both the outer and inner derived calls.

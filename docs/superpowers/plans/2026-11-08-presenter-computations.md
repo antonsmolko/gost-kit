@@ -106,5 +106,5 @@ enables for src/**/*.svelte. UI-Kit late override off stays possible.
   validates published API boundary, source declarations, rule diagnostics and
   unchanged dependency/artifact boundaries. Expected GREEN.
 - [x] Commit `[gost-kit-19] Configure and document presenter enforcement`.
-- [ ] One fresh whole-branch review; important findings one RED→GREEN fix pass.
+- [x] One fresh whole-branch review; important findings one RED→GREEN fix pass.
   Prepare draft PR with evidence; do not merge/publish without owner instruction.
