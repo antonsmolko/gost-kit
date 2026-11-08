@@ -345,9 +345,7 @@ test('does not change state or notify consumers if a reset factory fails', () =>
 
   try {
     fail = true;
-    expect(() => {
-      return store.reset();
-    }).not.toThrow();
+    store.reset();
     expect(onError).toHaveBeenCalledExactlyOnceWith({
       kind: 'reset',
       error: failure,

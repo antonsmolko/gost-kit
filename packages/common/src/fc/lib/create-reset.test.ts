@@ -154,9 +154,7 @@ test('reports a factory failure without publishing or throwing', () => {
     onError,
   });
 
-  expect(() => {
-    return reset();
-  }).not.toThrow();
+  reset();
   expect(onError).toHaveBeenCalledExactlyOnceWith({
     kind: 'reset',
     error: failure,
@@ -177,9 +175,7 @@ test('reports a read failure without publishing or throwing', () => {
     onError,
   });
 
-  expect(() => {
-    return reset({ excluded: ['auth'] });
-  }).not.toThrow();
+  reset({ excluded: ['auth'] });
   expect(onError).toHaveBeenCalledExactlyOnceWith({
     kind: 'reset',
     error: failure,
@@ -350,9 +346,7 @@ test.each([
     reset();
     reset({ excluded: [] });
     expect(writeState).toHaveBeenCalledTimes(2);
-    expect(() => {
-      return Reflect.apply(reset, undefined, [{ excluded: ['length'] }]);
-    }).not.toThrow();
+    Reflect.apply(reset, undefined, [{ excluded: ['length'] }]);
     expect(onError).toHaveBeenCalledExactlyOnceWith({
       kind: 'reset',
       error: expect.any(TypeError),
@@ -408,9 +402,7 @@ test('reports write failures through the reset error channel', () => {
     },
   });
 
-  expect(() => {
-    return reset();
-  }).not.toThrow();
+  reset();
   expect(failures).toEqual([{ kind: 'reset', error: failure }]);
 });
 
@@ -425,9 +417,7 @@ test('reports malformed reset options instead of throwing during destructuring',
     onError,
   });
 
-  expect(() => {
-    return Reflect.apply(reset, undefined, [null]);
-  }).not.toThrow();
+  Reflect.apply(reset, undefined, [null]);
   expect(onError).toHaveBeenCalledExactlyOnceWith({
     kind: 'reset',
     error: expect.any(TypeError),
@@ -448,9 +438,7 @@ test('uses the default reporter when no reset error handler is supplied', () => 
   });
 
   try {
-    expect(() => {
-      return reset();
-    }).not.toThrow();
+    reset();
     expect(logged).toHaveBeenCalledExactlyOnceWith({
       kind: 'reset',
       error: failure,
@@ -476,9 +464,7 @@ test('uses the reporter fallback when a reset error handler itself throws', () =
   });
 
   try {
-    expect(() => {
-      return reset();
-    }).not.toThrow();
+    reset();
     expect(logged).toHaveBeenCalledExactlyOnceWith('Error handler failed', {
       failure: { kind: 'reset', error: failure },
       error: handlerFailure,
