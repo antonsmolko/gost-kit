@@ -14,13 +14,7 @@ export const readyBooleanExpression = (node: TSESTree.Expression): boolean => {
     return false;
   }
 
-  const staticKey =
-    memberKey(node) !== undefined ||
-    (node.computed &&
-      node.property.type === AST_NODE_TYPES.Literal &&
-      // AST numeric literals include values such as 1e999; a finite-number
-      // runtime guard would change this syntax classification.
-      typeof node.property.value === 'number');
+  const staticKey = memberKey(node, { numeric: true }) !== undefined;
 
   return (
     staticKey &&

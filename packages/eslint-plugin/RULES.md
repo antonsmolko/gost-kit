@@ -261,8 +261,12 @@ boolean; ordinary else and conditional rendering remain available.
 {/if}
 ```
 
-Allowed: boolean literals true/false, identifiers, static field chains,
-quoted keys and numeric literal indexes whose final type is definitely boolean.
+Allowed: boolean literals true/false, identifiers and static field chains rooted
+at an identifier (for example view.ready), including quoted keys and number-valued
+AST literal indexes such as flags[0] or flags[0x10]. The final type must be
+definitely boolean. this.isReady is outside the supported root form. Signed keys
+such as flags[-1] are unary expressions, and bigint keys such as flags[10n] are
+not number-valued literals; both are outside this first-version syntax boundary.
 Optional chains are accepted only when the complete expression excludes
 undefined/null. Boolean aliases, boolean-only unions and proven boolean generic
 constraints are accepted. TypeScript flow narrowing applies at the expression.

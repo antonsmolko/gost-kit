@@ -58,6 +58,9 @@ const component = (declaration: string, condition: string) => {
 };
 const valid = [
   fixture(
+    '<script lang="ts">let { a, view }: { a: boolean; view: { ready: boolean } } = $props();</script>{#if a}<p>A</p>{:else if view.ready}<p>B</p>{/if}',
+  ),
+  fixture(
     '<script lang="ts" generics="T">type Ready<T> = T extends string ? true : false; let { ready }: { ready: Ready<T> } = $props();</script>{#if ready}<p>Ready</p>{/if}',
   ),
   fixture('{#if true}<p>A</p>{:else if false}<p>B</p>{:else}<p>C</p>{/if}'),
@@ -102,6 +105,12 @@ if (!narrowed) {
 }
 
 const invalid = [
+  fixture(
+    '<script lang="ts">let { a, view }: { a: boolean; view: { ready: boolean | null } } = $props();</script>{#if a}<p>A</p>{:else if view.ready}<p>B</p>{/if}',
+  ),
+  component('const flags: boolean[] = [true];', 'flags[-1]'),
+  component('const flags: boolean[] = [true];', 'flags[10n]'),
+  component('', 'this.isReady'),
   ...[
     'null',
     'undefined',

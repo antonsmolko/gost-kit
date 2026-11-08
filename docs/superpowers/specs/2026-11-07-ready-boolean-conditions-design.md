@@ -43,7 +43,9 @@ project adapter включает его для `src/**/*.svelte`. Для UI-Kit 
   each/await/snippet contexts. Обычный `else` не содержит условия и не меняется.
 - Разрешены boolean literals, Identifier и цепочка доступа к полю от Identifier.
   Static bracket keys (`view['isReady']`) и numeric literal index (`flags[0]`)
-  разрешены как чтение, если итоговый тип boolean.
+  разрешены как чтение, если итоговый тип boolean. Числовой ключ означает
+  number-valued AST Literal: `flags[-1]` — unary expression, `flags[10n]` — bigint;
+  обе формы исключены. Корень `this` также не входит в Identifier chains.
 - Динамический ключ (`view[key]`, `flags[index]`) не допускается первой версией:
   это выбор значения в условии; presenter выдаёт именованный boolean. Вызов в
   receiver/key (`present().ready`, `view[getKey()]`) также вычисление.
@@ -158,9 +160,18 @@ program и не доказывает контракт для всех generic in
 
 ## Результат
 
-Правило реализовано; 56 compiler-validated rule cases, полный root check —
-610 тестов; build и 2 browser scenarios прошли. Проверены настоящие tarballs
+Правило реализовано; 61 compiler-validated rule cases, полный root check —
+627 тестов; build и 2 browser scenarios прошли. Проверены настоящие tarballs
 во внешнем consumer, declarations и отсутствие GOST runtime dependency/src/tests.
 Независимое whole-branch review: Critical/Important/Minor — нет; дополнительно
 проверены 14 type/parser probes и оба компонента Svelte autofixer.
 Ограничение generic parser model признано допустимым при явной документации.
+
+## Исправления опубликованного ревью #38
+
+Добавлены typed valid/nullable else-if cases и явные отрицательные границы this,
+negative unary index и bigint. Классификация статических числовых ключей перенесена
+в memberKey с opt-in numeric: true; остальные четыре callers сохраняют прежний
+names-only режим. Type services/checker/strictNullChecks кэшируются лениво на файл.
+Прямые memberKey tests проверяют оба режима (12 cases), общий root check — 627.
+Во внешнем packed consumer typed else-if повторно проверен для boolean/nullable.
