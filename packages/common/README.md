@@ -160,6 +160,27 @@ independent. A function input is treated as a state factory. Reducer definitions
 default to `never` effects when no effect type is supplied; effectful reducers
 must declare their effect union.
 
+`createReset({ initState, readState, writeState })` returns a synchronous reset
+method for framework adapters. It does not initialize state when constructed.
+Each `reset()` calls `initState()` without arguments and writes the fresh state
+once. `reset({ excluded: ['auth'] })` composes fresh defaults with current values
+of the excluded own root keys, preserving their references. The factory runs for
+the entire root, including excluded scopes. Neither root is mutated.
+
+Excluded keys must exist in both current and fresh roots; missing/optional absent
+keys throw TypeError before writing. An empty list is a full reset. Partial reset
+supports independent scopes of a fixed record; primitive/array/function/union
+roots only support full reset in the types. A union inside a scope is allowed.
+Union checking is static and cannot recover erased types; runtime validates
+record roots and own keys, not TypeScript unions. A factory/read error propagates
+without a write. Reset does not cancel effects or protect against late responses.
+
+`Reset`, `ResetOptions` and `ResetConfig` are public types. `Store` now includes
+`reset`, and `StoreConfig.initState` requires a zero-argument factory. Construct
+fresh nested defaults through scope factories and compose them in a root factory;
+use `define.state(factory)` for optional shallow overrides in tests. Move existing
+`initState: initialState()` call sites to `initState: initialState`.
+
 `createDispatch(config)` receives `reducer`, `effector`, `readState`, `writeState`
 and optional `onError` in the same config. The error callback is synchronous,
 with contract `(failure: StoreError<TAction, TEffect>) => void`.

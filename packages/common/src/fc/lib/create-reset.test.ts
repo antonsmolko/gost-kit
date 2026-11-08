@@ -21,7 +21,9 @@ test('creates fresh nested defaults on every reset without mutating prior state'
   const writes: (typeof state)[] = [];
   const reset = createReset({
     initState,
-    readState: () => {return state},
+    readState: () => {
+      return state;
+    },
     writeState: (next) => {
       writes.push(next);
       state = next;
@@ -53,8 +55,12 @@ test('preserves multiple excluded references and publishes only the composed roo
   let state = previous;
   const writes: (typeof state)[] = [];
   const reset = createReset({
-    initState: () => {return fresh},
-    readState: () => {return state},
+    initState: () => {
+      return fresh;
+    },
+    readState: () => {
+      return state;
+    },
     writeState: (next) => {
       writes.push(next);
       state = next;
@@ -78,9 +84,17 @@ test.each([undefined, {}, { excluded: undefined }, { excluded: [] }])(
   (options) => {
     const fresh = rootState();
     const writeState = vi.fn();
-    const readState = vi.fn(() => {return rootState()});
+    const readState = vi.fn(() => {
+      return rootState();
+    });
 
-    createReset({ initState: () => {return fresh}, readState, writeState })(options);
+    createReset({
+      initState: () => {
+        return fresh;
+      },
+      readState,
+      writeState,
+    })(options);
     expect(writeState).toHaveBeenCalledExactlyOnceWith(fresh);
   },
 );
@@ -90,7 +104,13 @@ test('calls the factory without overrides even when all scopes are excluded', ()
   const initState = vi.fn(rootState);
   const writeState = vi.fn();
 
-  createReset({ initState, readState: () => {return current}, writeState })({
+  createReset({
+    initState,
+    readState: () => {
+      return current;
+    },
+    writeState,
+  })({
     excluded: ['users', 'auth', 'alerts'],
   });
   expect(initState.mock.calls).toEqual([[]]);
@@ -105,11 +125,15 @@ test('leaves state untouched when the factory throws', () => {
     initState: () => {
       throw failure;
     },
-    readState: () => {return {}},
+    readState: () => {
+      return {};
+    },
     writeState,
   });
 
-  expect(() => {return reset()}).toThrow(failure);
+  expect(() => {
+    return reset();
+  }).toThrow(failure);
   expect(writeState).not.toHaveBeenCalled();
 });
 
@@ -124,7 +148,9 @@ test('does not publish if reading current state fails', () => {
     writeState,
   });
 
-  expect(() => {return reset({ excluded: ['auth'] })}).toThrow(failure);
+  expect(() => {
+    return reset({ excluded: ['auth'] });
+  }).toThrow(failure);
   expect(writeState).not.toHaveBeenCalled();
 });
 
@@ -138,14 +164,18 @@ test.each([
   ({ current, fresh, key }) => {
     const writeState = vi.fn();
     const reset = createReset({
-      initState: () => {return fresh},
-      readState: () => {return current},
+      initState: () => {
+        return fresh;
+      },
+      readState: () => {
+        return current;
+      },
       writeState,
     });
 
-    expect(() =>
-      {return Reflect.apply(reset, undefined, [{ excluded: [key] }])},
-    ).toThrow(TypeError);
+    expect(() => {
+      return Reflect.apply(reset, undefined, [{ excluded: [key] }]);
+    }).toThrow(TypeError);
     expect(writeState).not.toHaveBeenCalled();
   },
 );
@@ -154,8 +184,12 @@ test('resets reshaped roots while preserving only valid scopes', () => {
   const old = { users: ['Ada'], debug: true };
   const writeState = vi.fn();
   const reset = createReset({
-    initState: () => {return { users: [] as string[], auth: '' }},
-    readState: () => {return old},
+    initState: () => {
+      return { users: [] as string[], auth: '' };
+    },
+    readState: () => {
+      return old;
+    },
     writeState,
   });
 
@@ -181,9 +215,15 @@ test('preserves own numeric, symbol and __proto__ keys without changing the prot
   };
   const writeState = vi.fn();
 
-  createReset({ initState: () => {return fresh}, readState: () => {return current}, writeState })(
-    { excluded: [7, symbol, '__proto__'] },
-  );
+  createReset({
+    initState: () => {
+      return fresh;
+    },
+    readState: () => {
+      return current;
+    },
+    writeState,
+  })({ excluded: [7, symbol, '__proto__'] });
 
   const result = writeState.mock.calls[0][0];
 
@@ -194,22 +234,33 @@ test('preserves own numeric, symbol and __proto__ keys without changing the prot
   expect(result.resettable).toBe(0);
 });
 
-test.each([0, null, [1], () => {return 1}])(
+test.each([
+  0,
+  null,
+  [1],
+  () => {
+    return 1;
+  },
+])(
   'supports full reset but rejects excluded keys for non-record %j',
   (fresh) => {
     const writeState = vi.fn();
     const reset = createReset({
-      initState: () => {return fresh},
-      readState: () => {return fresh},
+      initState: () => {
+        return fresh;
+      },
+      readState: () => {
+        return fresh;
+      },
       writeState,
     });
 
     reset();
     reset({ excluded: [] });
     expect(writeState).toHaveBeenCalledTimes(2);
-    expect(() =>
-      {return Reflect.apply(reset, undefined, [{ excluded: ['length'] }])},
-    ).toThrow(TypeError);
+    expect(() => {
+      return Reflect.apply(reset, undefined, [{ excluded: ['length'] }]);
+    }).toThrow(TypeError);
     expect(writeState).toHaveBeenCalledTimes(2);
   },
 );
