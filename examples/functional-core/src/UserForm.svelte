@@ -4,7 +4,7 @@
 
   const root = rootStore();
   const user = $derived(root.state.user);
-  const viewState = $derived(userPresenter(user));
+  const viewState = $derived(userPresenter({ state: user }));
 
   const handleInput = (email: string) => {
     void root.dispatch({ scope: 'users', type: 'SetEmailAction', email });
@@ -35,10 +35,10 @@
 
 <p>Email in state: {viewState.email}</p>
 <p role="status">Status: {viewState.status}</p>
-{#if viewState.loadedUser}
+{#if viewState.hasLoadedUser}
   <section aria-label="Loaded user">
-    <h2>{viewState.loadedUser.name}</h2>
-    <p>Loaded email: {viewState.loadedUser.email}</p>
+    <h2>{viewState.loadedUserName}</h2>
+    <p>Loaded email: {viewState.loadedUserEmail}</p>
   </section>
 {/if}
 

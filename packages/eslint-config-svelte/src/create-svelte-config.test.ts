@@ -600,3 +600,100 @@ test('component intent override does not constrain a shell effector module', asy
 
   expect(result.messages).toEqual([]);
 });
+
+test('boolean condition policy is registered and explicitly default off', async () => {
+  const config = await eslint.calculateConfigForFile(
+    join(root, 'DefaultBoolean.svelte'),
+  );
+
+  expect(config?.rules?.['gost/ready-boolean-condition']).toEqual([0]);
+
+  const result = await lint(
+    '<script lang="ts">let { value }: { value: object | null } = $props();</script>{#if value}<p>Ready</p>{/if}',
+    'DefaultBoolean.svelte',
+  );
+
+  expect(
+    result.messages.some((message) => {
+      return message.ruleId === 'gost/ready-boolean-condition';
+    }),
+  ).toBe(false);
+});
+
+test('boolean policy opt-in checks types and reports computations without autofix', async () => {
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      ...(await createSvelteConfig({ tsconfigRootDir: root })),
+      {
+        files: ['**/*.svelte'],
+        rules: { 'gost/ready-boolean-condition': 'error' },
+      },
+    ],
+  });
+  const source =
+    '<script lang="ts">let { view }: { view: { ready: boolean | undefined } } = $props();</script>{#if view.ready}<p>A</p>{:else if !view.ready}<p>B</p>{/if}';
+  const result = await lint(source, 'TypedBoolean.svelte', instance);
+  const messages = result.messages.filter((message) => {
+    return message.ruleId === 'gost/ready-boolean-condition';
+  });
+
+  expect(messages).toHaveLength(2);
+  expect(
+    messages.every((message) => {
+      return (
+        message.messageId === 'readyBoolean' &&
+        message.severity === 2 &&
+        !message.fix &&
+        !message.suggestions
+      );
+    }),
+  ).toBe(true);
+
+  const valid = await lint(
+    '<script lang="ts">let { ready }: { ready: boolean } = $props();</script>{#if ready}<p>Ready</p>{/if}',
+    'ValidBoolean.svelte',
+    instance,
+  );
+
+  expect(
+    valid.messages.filter((message) => {
+      return message.ruleId === 'gost/ready-boolean-condition';
+    }),
+  ).toEqual([]);
+});
+
+test('UI-Kit may disable condition policy while keeping Svelte checks', async () => {
+  await mkdir(join(root, 'src/ui-kit'), { recursive: true });
+
+  const instance = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      ...(await createSvelteConfig({ tsconfigRootDir: root })),
+      {
+        files: ['src/**/*.svelte'],
+        rules: { 'gost/ready-boolean-condition': 'error' },
+      },
+      {
+        files: ['src/ui-kit/**/*.svelte'],
+        rules: { 'gost/ready-boolean-condition': 'off' },
+      },
+    ],
+  });
+  const result = await lint(
+    '<script lang="ts">let { value }: { value: object | null } = $props();</script>{#if value}<button>Ready</button>{/if}',
+    'src/ui-kit/Boolean.svelte',
+    instance,
+  );
+
+  expect(
+    result.messages.some((message) => {
+      return message.ruleId === 'gost/ready-boolean-condition';
+    }),
+  ).toBe(false);
+  expect(result.messages).toContainEqual(
+    expect.objectContaining({ ruleId: 'svelte/button-has-type', severity: 2 }),
+  );
+});

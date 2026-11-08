@@ -165,3 +165,11 @@ void test('project explicitly enables single intent policy for business componen
 
   assert.deepEqual(config?.rules?.['gost/single-intent-dispatch'], [2]);
 });
+
+void test('project enables ready boolean template conditions for business components', async () => {
+  const config = await eslint.calculateConfigForFile(
+    join(root, 'src/Business.svelte'),
+  );
+
+  assert.deepEqual(config?.rules?.['gost/ready-boolean-condition'], [2]);
+});
