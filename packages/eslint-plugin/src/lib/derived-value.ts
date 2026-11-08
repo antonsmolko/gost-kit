@@ -6,10 +6,27 @@ export const derivedValue = (
   isReady: (value: TSESTree.Node) => boolean,
 ): boolean => {
   if (
+    node.type === AST_NODE_TYPES.TSAsExpression ||
+    node.type === AST_NODE_TYPES.TSTypeAssertion ||
+    node.type === AST_NODE_TYPES.TSNonNullExpression ||
+    node.type === AST_NODE_TYPES.TSSatisfiesExpression
+  ) {
+    return derivedValue(node.expression, isReady);
+  }
+
+  if (
     (node.type !== AST_NODE_TYPES.ArrowFunctionExpression &&
       node.type !== AST_NODE_TYPES.FunctionExpression) ||
     node.async ||
     node.generator
+  ) {
+    return false;
+  }
+
+  if (
+    !node.params.every((param) => {
+      return readyPattern(param, isReady);
+    })
   ) {
     return false;
   }

@@ -45,6 +45,9 @@ const valid: ValidTestCase<[]>[] = [
   `${imported} const ready = $derived.by(() => personPresenter({ state: user }));`,
   `${imported} const ready = $derived.by(function () { const selected = user; const { name } = selected; return personPresenter({ state: { name } }); });`,
   'const ready = $derived.by(() => { const { name } = user; return name; });',
+  'const ready = $derived.by((() => user.name) satisfies () => string);',
+  'const ready = $derived.by((value = "constant") => value);',
+
   `${imported} const ready = $derived({ first: personPresenter({ state: user }), second: personPresenter({ state: user }) });`,
 ].map((script) => {
   return component(input + script);
@@ -117,6 +120,8 @@ const invalid: InvalidTestCase<'requirePresenter', []>[] = expressions.map(
   'const ready = $derived.by(() => { let name = user.name; return name; });',
   'const ready = $derived.by(() => { const { name = "Unknown" } = user; return name; });',
   'const ready = $derived.by(() => { view.index++; return user; });',
+  'const ready = $derived.by((value = user.name.trim()) => value);',
+
   'const ready = $derived.by(() => { const calculate = () => user.name; return calculate(); });',
 ].forEach((script) => {
   invalid.push({

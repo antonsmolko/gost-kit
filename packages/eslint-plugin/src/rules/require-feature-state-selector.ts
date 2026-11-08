@@ -17,6 +17,8 @@ export const requireFeatureStateSelector = ESLintUtils.RuleCreator.withoutDocs({
     schema: [],
     fixable: 'code',
     messages: {
+      selectTemplateFeature:
+        'Select the feature before computing its presentation in the template: {@const user = store.state.user} then {@const view = presenter(user)}; a script $derived selector is also allowed.',
       selectFeature:
         'Select the feature with a separate $derived before computing its presentation: const user = $derived(store.state.user); const view = $derived(presenter(user)); This skips downstream updates when the feature reference is unchanged.',
     },
@@ -37,19 +39,20 @@ export const requireFeatureStateSelector = ESLintUtils.RuleCreator.withoutDocs({
 
     return {
       MemberExpression(node) {
-        if (typedScripts && !inScript(node, typedScripts)) {
+        const reactive = reactiveContext(node, context.sourceCode);
+
+        if (
+          !reactive ||
+          (typedScripts &&
+            !inScript(node, typedScripts) &&
+            reactive.kind !== 'templateConst')
+        ) {
           return;
         }
 
         const storeState = memberKey(node) === 'state' && isStore(node.object);
 
         if (!storeState && !isRawState(node.object)) {
-          return;
-        }
-
-        const reactive = reactiveContext(node, context.sourceCode);
-
-        if (!reactive) {
           return;
         }
 
@@ -63,8 +66,12 @@ export const requireFeatureStateSelector = ESLintUtils.RuleCreator.withoutDocs({
 
         context.report({
           node: location,
-          messageId: 'selectFeature',
+          messageId:
+            reactive.kind === 'templateConst'
+              ? 'selectTemplateFeature'
+              : 'selectFeature',
           fix:
+            reactive.kind === 'derived' &&
             reactive.call.type === AST_NODE_TYPES.CallExpression
               ? selectorFix(
                   storeState ? node : node.object,

@@ -60,7 +60,10 @@ export const readyValue = (
   }
 };
 
-export const readyPattern = (node: TSESTree.Node): boolean => {
+export const readyPattern = (
+  node: TSESTree.Node,
+  isDefaultValue?: (value: TSESTree.Node) => boolean,
+): boolean => {
   // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check -- Syntax allowlist: every other AST kind is intentionally rejected.
   switch (node.type) {
     case AST_NODE_TYPES.Identifier:
@@ -68,16 +71,22 @@ export const readyPattern = (node: TSESTree.Node): boolean => {
     case AST_NODE_TYPES.ObjectPattern:
       return node.properties.every((property) => {
         return property.type === AST_NODE_TYPES.RestElement
-          ? readyPattern(property.argument)
+          ? readyPattern(property.argument, isDefaultValue)
           : (!property.computed || readyValue(property.key)) &&
-              readyPattern(property.value);
+              readyPattern(property.value, isDefaultValue);
       });
     case AST_NODE_TYPES.ArrayPattern:
       return node.elements.every((element) => {
-        return !element || readyPattern(element);
+        return !element || readyPattern(element, isDefaultValue);
       });
     case AST_NODE_TYPES.RestElement:
-      return readyPattern(node.argument);
+      return readyPattern(node.argument, isDefaultValue);
+    case AST_NODE_TYPES.AssignmentPattern:
+      return (
+        !!isDefaultValue &&
+        readyPattern(node.left, isDefaultValue) &&
+        isDefaultValue(node.right)
+      );
     default:
       return false;
   }
