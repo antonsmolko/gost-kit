@@ -79,11 +79,12 @@ rootState({ users: usersState({ errors: [apiError()] }) }). Это shallow overr
 Непустой excluded разрешён для record root фиксированной структуры с
 независимыми scopes. Типы отклоняют primitive/array/function/представленный union
 root, но разрешают union внутри scope. Type widening/assertions могут стереть
-сведения об union; runtime его не обнаруживает. Ключи excluded должны быть
-собственными полями и current, и fresh, иначе TypeError до публикации. Это
-осознанное ограничение optional/временных scopes: reducer может поменять набор
-ключей, но исключить отсутствующий с одной стороны scope нельзя. Полный сброс
-продолжает восстанавливать root из factory. Поддерживаются numeric/symbol keys.
+сведения об union; runtime его не обнаруживает. Проверка прямо в filter
+сопоставляет собственные поля current и initial. Недоступные с одной
+из сторон ключи и унаследованные поля пропускаются; reset продолжается. Для таких
+optional/временных scopes наличие и значение определяет initial. Сборка через
+filter/reduce не мутирует результат factory или current; один writeState публикует
+полный результат. Поддерживаются numeric/symbol keys.
 
 Ошибка factory или подготовки результата выходит из reset синхронно; состояние
 остаётся прежним. Reset не создаёт action, не запускает effects, не меняет

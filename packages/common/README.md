@@ -168,8 +168,10 @@ of the excluded own root keys, preserving their references. The factory runs for
 the entire root, including excluded scopes. Neither root is mutated.
 
 Non-array `excluded` values throw TypeError before executing the factory or state
-callbacks. Excluded keys must exist in both current and fresh roots; missing/optional absent
-keys throw TypeError before writing. An empty list is a full reset. Partial reset
+callbacks. Only excluded keys that are own properties of both current and initial
+roots are preserved; missing or inherited keys are skipped. An optional scope
+absent from either root is skipped too: initial defaults determine its presence
+and value after reset. An empty list is a full reset. Partial reset
 supports independent scopes of a fixed record; primitive/array/function/union
 roots only support full reset in the types. A union inside a scope is allowed.
 Union checking is static and cannot recover erased types; runtime validates

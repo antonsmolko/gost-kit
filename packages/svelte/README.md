@@ -62,10 +62,11 @@ Partial reset supports fixed object roots with independent scopes. Primitive,
 array, function and union roots permit full reset only at the type level; a union
 inside a scope is fine. Union detection uses the represented TypeScript type;
 type widening or assertions can erase that information. Runtime checks do not
-detect unions. Each excluded key must be an own property of both the current and
-fresh root, or reset throws TypeError without publishing. This also applies to
-optional scopes deleted or added by reducers. A full reset still restores the
-factory state. Factory errors propagate synchronously without changing state.
+detect unions. An excluded key is preserved only if it is an own property of both
+the current and initial roots. Missing or inherited keys are skipped, including
+optional scopes deleted or added by reducers. Such scopes take their presence
+and value from the initial root. Factory errors propagate synchronously without
+changing state.
 
 Reset does not cancel pending effects or ignore late responses. A later dispatch
 reads the current state after reset and may populate it again. Routing and request

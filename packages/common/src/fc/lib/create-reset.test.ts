@@ -14,7 +14,7 @@ const rootState = define.state<{
   return { users: usersState(), auth: { token: '' }, alerts: [], ...options };
 });
 
-test('creates fresh nested defaults on every reset without mutating prior state', () => {
+test('creates initial nested defaults on every reset without mutating prior state', () => {
   const previous = rootState({ users: usersState({ errors: ['failed'] }) });
   let state = previous;
   const initState = vi.fn(rootState);
@@ -51,12 +51,12 @@ test('creates fresh nested defaults on every reset without mutating prior state'
 
 test('preserves multiple excluded references and publishes only the composed root', () => {
   const previous = rootState({ auth: { token: 'session' }, alerts: ['saved'] });
-  const fresh = Object.freeze(rootState());
+  const initial = Object.freeze(rootState());
   let state = previous;
   const writes: (typeof state)[] = [];
   const reset = createReset({
     initState: () => {
-      return fresh;
+      return initial;
     },
     readState: () => {
       return state;
@@ -74,15 +74,15 @@ test('preserves multiple excluded references and publishes only the composed roo
   ]);
   expect(state.auth).toBe(previous.auth);
   expect(state.alerts).toBe(previous.alerts);
-  expect(state.users).toBe(fresh.users);
-  expect(state).not.toBe(fresh);
-  expect(fresh.auth.token).toBe('');
+  expect(state.users).toBe(initial.users);
+  expect(state).not.toBe(initial);
+  expect(initial.auth.token).toBe('');
 });
 
 test.each([undefined, {}, { excluded: undefined }, { excluded: [] }])(
   'treats %j as a full reset',
   (options) => {
-    const fresh = rootState();
+    const initial = rootState();
     const writeState = vi.fn();
     const readState = vi.fn(() => {
       return rootState();
@@ -90,12 +90,12 @@ test.each([undefined, {}, { excluded: undefined }, { excluded: [] }])(
 
     createReset({
       initState: () => {
-        return fresh;
+        return initial;
       },
       readState,
       writeState,
     })(options);
-    expect(writeState).toHaveBeenCalledExactlyOnceWith(fresh);
+    expect(writeState).toHaveBeenCalledExactlyOnceWith(initial);
   },
 );
 
@@ -172,17 +172,17 @@ test('does not publish if reading current state fails', () => {
 });
 
 test.each([
-  { current: { users: [] }, fresh: {}, key: 'users' },
-  { current: {}, fresh: { users: [] }, key: 'users' },
-  { current: {}, fresh: {}, key: 'unknown' },
-  { current: {}, fresh: {}, key: 'toString' },
+  { current: { users: [] }, initial: {}, key: 'users' },
+  { current: {}, initial: { users: [] }, key: 'users' },
+  { current: {}, initial: {}, key: 'unknown' },
+  { current: {}, initial: {}, key: 'toString' },
 ])(
-  'rejects excluded keys absent from either root: %j',
-  ({ current, fresh, key }) => {
+  'skips excluded keys absent from either root: %j',
+  ({ current, initial, key }) => {
     const writeState = vi.fn();
     const reset = createReset({
       initState: () => {
-        return fresh;
+        return initial;
       },
       readState: () => {
         return current;
@@ -190,10 +190,67 @@ test.each([
       writeState,
     });
 
-    expect(() => {
-      return Reflect.apply(reset, undefined, [{ excluded: [key] }]);
-    }).toThrow(TypeError);
-    expect(writeState).not.toHaveBeenCalled();
+    Reflect.apply(reset, undefined, [{ excluded: [key] }]);
+
+    expect(writeState).toHaveBeenCalledExactlyOnceWith(initial);
+  },
+);
+
+test('preserves available scopes while skipping missing and inherited keys', () => {
+  const current = rootState({ auth: { token: 'session' }, alerts: ['old'] });
+  const initial = Object.freeze(rootState());
+  const writeState = vi.fn();
+  const reset = createReset({
+    initState: () => {
+      return initial;
+    },
+    readState: () => {
+      return current;
+    },
+    writeState,
+  });
+
+  Reflect.apply(reset, undefined, [
+    { excluded: ['missing', 'auth', 'toString'] },
+  ]);
+
+  expect(writeState).toHaveBeenCalledExactlyOnceWith({
+    users: { errors: [] },
+    auth: { token: 'session' },
+    alerts: [],
+  });
+  expect(writeState.mock.calls[0][0].auth).toBe(current.auth);
+  expect(initial.auth.token).toBe('');
+  expect(current.alerts).toEqual(['old']);
+});
+
+test.each([true, false])(
+  'skips an optional scope absent from one root (current has scope: %j)',
+  (hasCurrentScope) => {
+    type State = { auth: string; debug?: boolean };
+
+    const current: State = hasCurrentScope
+      ? { auth: 'session', debug: true }
+      : { auth: 'session' };
+    const initial: State = hasCurrentScope
+      ? { auth: '' }
+      : { auth: '', debug: false };
+    const writeState = vi.fn();
+    const reset = createReset({
+      initState: () => {
+        return initial;
+      },
+      readState: () => {
+        return current;
+      },
+      writeState,
+    });
+
+    reset({ excluded: ['debug', 'auth'] });
+
+    expect(writeState).toHaveBeenCalledExactlyOnceWith(
+      hasCurrentScope ? { auth: 'session' } : { auth: 'session', debug: false },
+    );
   },
 );
 
@@ -224,7 +281,7 @@ test('preserves own numeric, symbol and __proto__ keys without changing the prot
     ['__proto__']: { preserved: true },
     resettable: 8,
   };
-  const fresh = {
+  const initial = {
     7: [] as string[],
     [symbol]: { value: 0 },
     ['__proto__']: { preserved: false },
@@ -234,7 +291,7 @@ test('preserves own numeric, symbol and __proto__ keys without changing the prot
 
   createReset({
     initState: () => {
-      return fresh;
+      return initial;
     },
     readState: () => {
       return current;
@@ -260,14 +317,14 @@ test.each([
   },
 ])(
   'supports full reset but rejects excluded keys for non-record %j',
-  (fresh) => {
+  (initial) => {
     const writeState = vi.fn();
     const reset = createReset({
       initState: () => {
-        return fresh;
+        return initial;
       },
       readState: () => {
-        return fresh;
+        return initial;
       },
       writeState,
     });

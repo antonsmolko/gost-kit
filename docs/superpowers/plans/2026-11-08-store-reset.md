@@ -15,7 +15,7 @@ Svelte связывает его с одним $state.raw; root factory комп
 
 - initState вызывается без аргументов; готовые значения больше не принимаются.
 - excluded — readonly root keys; partial reset только для фиксированного record.
-- Ключ существует в current И fresh; иначе TypeError до writeState.
+- Сохраняются ключи current И initial; недоступные ключи пропускаются.
 - Один writeState, отсутствие мутаций; исключённые ссылки сохраняются.
 - Нет отмены эффектов, router/persistence API, deep clone или legacy config.
 - Публичные типы по одному на файл, common без Svelte, тесты рядом с кодом.
@@ -23,7 +23,7 @@ Svelte связывает его с одним $state.raw; root factory комп
 ## Review Focus
 
 - Union root с общим discriminator: исключения запрещены типами (Task 1).
-- Optional scope отсутствует с одной стороны: TypeError без записи (Task 1).
+- Optional scope отсутствует с одной стороны: ключ пропускается, сброс продолжается (Task 1).
 - __proto__/numeric/symbol own keys: сохранение значений без изменения prototype (Task 1).
 - Замена config.initState после создания: snapshot factory остаётся прежней (Task 2).
 - Эффект завершается после reset: dispatch видит текущее состояние (Task 2).
@@ -50,8 +50,8 @@ ResetOptions содержит excluded?: readonly keys[], union/primitive/array/
   nested union accepted, readonly keys accepted, unknown keys rejected.
 - [x] Run `npm test --workspace @gost-kit/common -- create-reset.test.ts`.
   Expected: RED — createReset отсутствует.
-- [x] Реализовать API/exports; partial result — shallow copy fresh с собственными
-  data properties исключений; не использовать присваивание __proto__.
+- [x] Реализовать API/exports; partial result — filter с проверкой Object.hasOwn обоих roots, затем reduce с
+  object spread и computed keys; проверка ключей остаётся inline.
 - [x] Run common test + check. Expected: GREEN.
 - [x] Commit `[gost-kit-32] Add framework-independent store reset`.
 
@@ -90,7 +90,7 @@ example docs при наличии initState snippets; `.changeset/store-reset.m
 contract and changeset common minor + Svelte minor (breaking 0.x API).
 
 - [x] Обновить docs: factory composition/overrides, reset API, excluded own keys,
-  strict missing keys, union boundary, factory freshness responsibility, pending
+  skip unavailable keys, union boundary, factory freshness responsibility, pending
   effects, snapshot config. Исправить все старые value initState snippets.
 - [x] Run root `npm run check`, example build + `test:e2e`, Svelte autofixer.
   Expected: GREEN/no rune issues. Доказательства сохранять в plan scratch.
