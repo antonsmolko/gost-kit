@@ -1,5 +1,11 @@
 # @gost-kit/eslint-config
 
+## 0.2.1
+
+### Patch Changes
+
+- 12b4d28: Rewrite package descriptions and README quick starts with installation requirements, complete examples and consumer-facing reference. Replace links that cannot resolve from npm package archives.
+
 ## 0.2.0
 
 ### Minor Changes
