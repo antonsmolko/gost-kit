@@ -74,4 +74,5 @@ Merge и публикация выполняются по отдельному �
 Редактура завершена. Проверены семь common TS examples, ESLint/Prettier configs,
 Svelte typecheck/build/browser flow и autofixer. Полный check: 823 теста.
 Все относительные README links разрешаются в tarballs; GitHub source targets
-существуют на main. Независимое финальное ревью — перед draft PR.
+существуют на main. Независимое финальное ревью завершено без замечаний; дополнительно проверена
+загрузка TS-конфигов без package.json type:module. Результат подготовлен к draft PR.

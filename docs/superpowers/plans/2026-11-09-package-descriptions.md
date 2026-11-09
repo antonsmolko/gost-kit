@@ -48,5 +48,5 @@ Produce six installable quick starts, accurate descriptions and patch changeset.
 - [x] Run format check and npm run check. Expected: existing 823 tests pass,
   no policy or implementation changes.
 - [x] Commit [gost-kit-31] Rewrite package descriptions and npm quick starts.
-- [ ] One independent whole-branch review; fix important findings with relevant
+- [x] One independent whole-branch review; fix important findings with relevant
   snippet/link verification. Prepare draft PR with six-description table and evidence.
