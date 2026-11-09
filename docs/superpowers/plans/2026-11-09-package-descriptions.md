@@ -35,18 +35,18 @@ README; lint rule details link to shipped RULES.md. No runtime/API/policy change
 **Interfaces:** Consume current public exports/manifests and shipped RULES.
 Produce six installable quick starts, accurate descriptions and patch changeset.
 
-- [ ] Record current broken links/internal prose; inspect current source contracts.
+- [x] Record current broken links/internal prose; inspect current source contracts.
   Expected: common example links and unshipped spec links fail package containment.
-- [ ] Rewrite six descriptions and README files, keeping reference details below
+- [x] Rewrite six descriptions and README files, keeping reference details below
   installation/example. Replace repository source links with GitHub URLs.
-- [ ] Add patch changeset for all six packages. Expected: no runtime diff.
-- [ ] Build packages, pack actual tarballs and extract outside the repository.
+- [x] Add patch changeset for all six packages. Expected: no runtime diff.
+- [x] Build packages, pack actual tarballs and extract outside the repository.
   Check all README relative links/anchors and package contents. Expected: no broken links.
-- [ ] Verify common TypeScript examples, config loading for ESLint/Prettier,
+- [x] Verify common TypeScript examples, config loading for ESLint/Prettier,
   Svelte compilation and reactive rendering/dispatch/reset for the quick start.
   Use disposable consumers/fixtures; do not add implementation-mirroring tests.
-- [ ] Run format check and npm run check. Expected: existing 823 tests pass,
+- [x] Run format check and npm run check. Expected: existing 823 tests pass,
   no policy or implementation changes.
-- [ ] Commit [gost-kit-31] Rewrite package descriptions and npm quick starts.
+- [x] Commit [gost-kit-31] Rewrite package descriptions and npm quick starts.
 - [ ] One independent whole-branch review; fix important findings with relevant
   snippet/link verification. Prepare draft PR with six-description table and evidence.

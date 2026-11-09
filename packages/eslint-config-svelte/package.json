@@ -1,7 +1,7 @@
 {
   "name": "@gost-kit/eslint-config-svelte",
   "version": "0.2.1",
-  "description": "Shared Svelte 5 ESLint configuration with the GOST JavaScript and TypeScript baseline.",
+  "description": "ESLint configuration for Svelte 5 with JavaScript and TypeScript rules.",
   "type": "module",
   "license": "MIT",
   "engines": {

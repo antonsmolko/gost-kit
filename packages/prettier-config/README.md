@@ -1,30 +1,33 @@
 # @gost-kit/prettier-config
 
-Shared framework-independent Prettier settings, independently versioned.
-Consult package.json and CHANGELOG.md for the version. Install this package
-alongside the required Prettier peer dependency.
+Prettier settings with two-space indentation, single quotes and semicolons.
+Use the same formatting options across projects; add language plugins where needed.
 
-Requires Node ^26.0.0 and Prettier ^3.9.10; tested with Prettier 3.9.10.
-No language/framework plugin is included.
+## Install
 
-## Usage
+Requires Node 26.x (`^26.0.0`) and Prettier `^3.9.10`.
 
-Install this package and Prettier as devDependencies. In `prettier.config.mjs`:
+```sh
+npm install -D @gost-kit/prettier-config prettier
+```
 
-```js
+## Configure
+
+Create `prettier.config.ts`. Node 26 loads this TypeScript config directly:
+
+```ts
 export { default } from '@gost-kit/prettier-config';
 ```
 
-Or extend it explicitly:
-
-```js
-import config from '@gost-kit/prettier-config';
-
-export default {
-  ...config,
-  printWidth: 100,
-};
+```sh
+npx prettier . --write
+npx prettier . --check
 ```
+
+Use --write locally and --check in CI. Projects own their .prettierignore and
+generated-source policy.
+
+## Settings and overrides
 
 | Option        | Value    |
 | ------------- | -------- |
@@ -38,15 +41,41 @@ export default {
 | endOfLine     | lf       |
 | objectWrap    | preserve |
 
-`printWidth` guides wrapping and is not a hard maximum. `objectWrap: preserve`
-keeps deliberately multiline objects; it does not force every short object onto
-multiple lines. Other options use the pinned tested Prettier baseline's defaults.
+printWidth guides wrapping; it is not a hard maximum. objectWrap preserves
+deliberately multiline objects without forcing every short object to wrap.
+Other options use Prettier defaults.
 
-Run `prettier . --check` in CI and `prettier . --write` to format. Projects own
-ignore files, generated-source policy and any framework plugin. This package
-never walks files or modifies an application when imported.
+To override an option, replace the config with:
 
-Use `@gost-kit/eslint-config` for the separately agreed braces, arrow bodies,
-blank lines and correctness policies. The tested fix sequence is ESLint fix,
-Prettier write, then both read-only checks. Config versions remain independent;
-review output changes and changelog before upgrading a project.
+```ts
+import config from '@gost-kit/prettier-config';
+
+export default {
+  ...config,
+  printWidth: 100,
+};
+```
+
+## Svelte
+
+Install the language plugin separately:
+
+```sh
+npm install -D prettier-plugin-svelte
+```
+
+Then use this prettier.config.ts:
+
+```ts
+import config from '@gost-kit/prettier-config';
+
+export default {
+  ...config,
+  plugins: ['prettier-plugin-svelte'],
+};
+```
+
+Use [@gost-kit/eslint-config](https://www.npmjs.com/package/@gost-kit/eslint-config)
+or its Svelte adapter for correctness, braces, arrow bodies and blank-line
+policies. Run ESLint --fix before Prettier --write, then both read-only checks.
+Prettier alone does not enforce those lint policies.

@@ -1,7 +1,7 @@
 {
   "name": "@gost-kit/svelte",
   "version": "0.2.0",
-  "description": "Svelte bindings for GOST functional core.",
+  "description": "Reactive Svelte 5 state driven by reducers and effects.",
   "type": "module",
   "license": "MIT",
   "engines": {

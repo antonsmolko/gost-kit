@@ -1,62 +1,97 @@
 # @gost-kit/eslint-plugin
 
-GOST architecture rules for frontend development. Independently versioned;
-see package.json and the release changelog. Requires Node ^26.0.0,
-ESLint ^10.14.0 and TypeScript ^5.9.3.
+ESLint rules for reactive state selection, presenters and UI handlers.
+Use them to check selected application components while keeping independent
+UI-Kit components under their own state policy.
 
-## Usage
+## Install
 
-`@gost-kit/eslint-config-svelte` installs and enables the plugin for typed Svelte
-components and `.svelte.ts` modules. The selector rule is enabled by default;
-`gost/no-component-state`, `gost/single-intent-dispatch` and
-`gost/ready-boolean-condition` and `gost/require-presenter` require explicit
-consumer overrides for business component paths. UI-Kit paths can opt out.
-No separate plugin registration is needed.
-Other consumers may register the named public export in their flat config:
+Requires Node 26.x (`^26.0.0`), ESLint `^10.14.0` and TypeScript `^5.9.3`.
+The example also needs Svelte 5, the Svelte parser and jiti to load a TypeScript config.
+
+```sh
+npm install -D @gost-kit/eslint-plugin eslint typescript svelte svelte-eslint-parser jiti
+```
+
+For a complete Svelte/TypeScript configuration, use
+[@gost-kit/eslint-config-svelte](https://www.npmjs.com/package/@gost-kit/eslint-config-svelte)
+instead. It includes this plugin and enables the selector rule; the other four
+rules require explicit opt-in.
+
+## Use a rule directly
+
+This minimal `eslint.config.ts` enables the syntax-only component-state rule.
+It does not need TypeScript parser services:
 
 ```ts
 import { plugin } from '@gost-kit/eslint-plugin';
+import svelteParser from 'svelte-eslint-parser';
 
 export default [
-  // Configure a typed parser and a consumer TypeScript project first.
   {
-    files: ['**/*.svelte', '**/*.svelte.ts'],
+    files: ['src/**/*.svelte'],
+    languageOptions: { parser: svelteParser },
     plugins: { gost: plugin },
-    rules: { 'gost/require-feature-state-selector': 'error' },
+    rules: { 'gost/no-component-state': 'error' },
+  },
+  {
+    files: ['src/ui-kit/**/*.svelte'],
+    rules: { 'gost/no-component-state': 'off' },
   },
 ];
 ```
 
-The plugin does not install application runtime packages. Store detection uses
-`@gost-kit/common` types already present in the consumer's TypeScript program.
-Nested common installations are supported; a direct common dependency of the
-application is not required for inferred Store detection.
-Local `$state.raw` bindings are recognized from their original lexical scope.
-For `require-feature-state-selector`, type information is required; an enabled typed rule without parser services
-reports a configuration error. For the selector rule, stateless and JavaScript-script
-components are skipped. Mixed components are checked per script: a typed module script does
-not enable the rule for a JavaScript instance script. The Svelte config does not enable this typed rule for `.svelte.js`.
+For example, `src/Panel.svelte`:
 
-`single-intent-dispatch` uses an `on*` name heuristic, including function-valued
-non-event props such as `once`/`only`. Its whole-handler condition policy also
-reports conditions after an unconditional Dispatch, without control-flow proof.
-Optional invocation/access that gates a genuine Dispatch is conditional delivery;
-ordinary optional data reads remain outside that gate check.
+```svelte
+<script>
+  let open = $state(false);
+</script>
 
-See [RULES.md](RULES.md) for diagnostics, autofix boundaries and examples.
-Tests and test helpers are excluded from published artifacts.
+<p>{open}</p>
+```
 
-`ready-boolean-condition` checks Svelte if/else-if conditions: true/false or
-ready boolean identifier/static field reads. Computations and truthiness are
-reported; typed reads require strictNullChecks and parser services. JS/stateless
-reads are checked too when services are available. No autofix or presenter
-provenance guarantee is provided. See the inventory for opt-in boundaries.
+```sh
+npx eslint src/Panel.svelte
+```
 
-`require-presenter` moves visible calculations from derived bindings and template
-display slots to functions declared in `*.presenter.ts` modules. Named/default
-imports and public barrel exports are supported; compiled TypeScript packages use
-`*.presenter.d.ts` declarations. Ready reads and containers remain valid.
-Presenter calls belong in derived or template const bindings, with ready values
-used for display. Typed parser services are required to resolve candidate calls.
-The selector rule also checks typed template const computations, without template
-autofix. See the inventory for exact contexts and known analysis boundaries.
+The rule reports component-owned state. Move business state into root/feature
+state, or exclude the file if it is an independent UI component. The direct
+example parses JavaScript scripts only; use the shared Svelte config for
+lang="ts" components and typed rules.
+
+## Rules
+
+The full contracts and examples are in [RULES.md](RULES.md).
+
+| Rule                           | Checks                                                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| require-feature-state-selector | Direct replaceable Store/raw inputs to calls inside derived and typed template const bindings.              |
+| no-component-state             | Intrinsic $state, $state.raw and $bindable creation, allowing simple empty bind:this refs.                  |
+| single-intent-dispatch         | Multiple or conditional genuine Dispatch calls in discovered UI handlers.                                   |
+| ready-boolean-condition        | Ready boolean literals/reads in if/else-if; computations and nullable truthiness report.                    |
+| require-presenter              | Calculations in derived and template display slots; presenter bindings resolve *.presenter.ts declarations. |
+
+The selector supports conservative autofix for simple derived declarations.
+Template const diagnostics and the other rules have no autofix.
+
+## Type information and limits
+
+Store/Dispatch detection uses the public @gost-kit/common declaration provenance
+in the consumer's TypeScript program, including nested installations.
+The plugin does not install common or Svelte application runtime dependencies.
+Explicit local $state.raw bindings are recognized lexically; types alone cannot
+distinguish a reactive value from an ordinary object.
+
+Typed checks need real parser services. Boolean reads also require strictNullChecks;
+candidate presenter calls need a TypeScript program. The shared Svelte config
+supplies parser/project setup. Missing services produce configuration errors
+when a rule needs them.
+
+Selector checks skip JS-script/stateless components and inspect mixed components
+per typed script. The shared config registers GOST rules for .svelte and
+.svelte.ts, not .svelte.js. Handler discovery uses an on* name heuristic, so
+function props such as once/only can also qualify. Conditional-delivery checks
+are syntactic, including conditions after a dispatch; they are not control-flow
+proof. Presenter provenance does not prove purity or trace hidden helper logic.
+Consult RULES for exact contexts and exclusions.

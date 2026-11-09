@@ -71,4 +71,7 @@ Merge и публикация выполняются по отдельному �
 ## Status
 
 Дизайн с тремя уточнениями ревью принят владельцем 2026-11-09.
-Начата редактура; runtime/API/lint policy остаются вне задачи.
+Редактура завершена. Проверены семь common TS examples, ESLint/Prettier configs,
+Svelte typecheck/build/browser flow и autofixer. Полный check: 823 теста.
+Все относительные README links разрешаются в tarballs; GitHub source targets
+существуют на main. Независимое финальное ревью — перед draft PR.

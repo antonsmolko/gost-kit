@@ -1,7 +1,7 @@
 {
   "name": "@gost-kit/eslint-config",
   "version": "0.2.0",
-  "description": "Framework-independent shared ESLint rules.",
+  "description": "ESLint configuration for JavaScript and TypeScript.",
   "type": "module",
   "license": "MIT",
   "engines": {
