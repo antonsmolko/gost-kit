@@ -69,7 +69,7 @@ The full contracts and examples are in [RULES.md](RULES.md).
 | require-feature-state-selector | Direct replaceable Store/raw inputs to calls inside derived and typed template const bindings.              |
 | no-component-state             | Intrinsic $state, $state.raw and $bindable creation, allowing simple empty bind:this refs.                  |
 | single-intent-dispatch         | Multiple or conditional genuine Dispatch calls in discovered UI handlers.                                   |
-| ready-boolean-condition        | Ready boolean literals/reads in if/else-if; computations and nullable truthiness report.                    |
+| ready-boolean-condition        | Reports computations and nullable truthiness in if/else-if; ready boolean reads and literals are allowed.   |
 | require-presenter              | Calculations in derived and template display slots; presenter bindings resolve *.presenter.ts declarations. |
 
 The selector supports conservative autofix for simple derived declarations.

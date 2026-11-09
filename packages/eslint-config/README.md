@@ -7,7 +7,7 @@ imports and code structure. Formatting runs separately through Prettier.
 
 Requires Node 26.x (`^26.0.0`), ESLint `^10.14.0` and TypeScript `^5.9.3`.
 The example uses jiti to load a TypeScript ESLint config, and globals to declare
-browser globals. @types/node supplies types for the config’s Node APIs.
+browser globals. @types/node supplies types for the config's Node APIs.
 
 ```sh
 npm install -D @gost-kit/eslint-config eslint typescript jiti globals @types/node

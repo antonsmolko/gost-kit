@@ -7,7 +7,7 @@ ESLint configuration for Svelte 5. Includes the JavaScript/TypeScript rules from
 
 Requires Node 26.x (`^26.0.0`), ESLint `^10.14.0`, TypeScript `^5.9.3`
 and Svelte `^5.57.2`. jiti loads the TypeScript ESLint config; globals supplies
-browser global names. @types/node supplies types for the config’s Node APIs.
+browser global names. @types/node supplies types for the config's Node APIs.
 
 ```sh
 npm install -D @gost-kit/eslint-config-svelte eslint typescript jiti globals @types/node

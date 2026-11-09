@@ -189,8 +189,10 @@ successfully. A pending effect keeps dispatch pending. onError is not awaited;
 without it errors go to console. A throwing onError uses a console fallback.
 
 The logger prototype only outputs info; error/warn/trace/debug are currently
-no-ops. Do not use those methods as an application error reporter. `logReducer`
-includes feature scopes in titles; root actions and effects use plain type names.
+no-ops. Do not use those methods as an application error reporter. info passes
+messages as data to a fixed console format, so `%s`/`%o` stay literal and do not
+consume the payload. `logReducer` includes feature scopes in titles; root actions
+and effects use plain type names.
 
 ## Reset adapters
 
@@ -328,8 +330,10 @@ const effector: Effector<Action, Effect> = effecting(
 
 Construction returns a plain object and performs no request, mapping or dispatch.
 The effect holds type ApiEffect, the operation identity, method/url, options and
-callbacks. Reducer tests can assert type, operation and payload. Method/url belong
-to the operation; data/API modules do not import feature actions.
+callbacks. Effect metadata is removed before the handler calls api.request;
+the transport receives only the method, URL and request options. Reducer tests
+can assert type, operation and payload. Method/url belong to the operation;
+data/API modules do not import feature actions.
 
 mapResponse receives the schema DTO; its return type (Awaited for async mapping)
 determines onSuccess data. Without a mapper the operation uses identity. JSON
@@ -346,7 +350,7 @@ does not narrow values at runtime. The handler table uses define.effector and
 is composed with effecting, like other effectors.
 
 Request failures skip mapping. Mapper throws/rejections become contract failures;
-onError receives defaultError when the failure has no mapped errors and can
+onError receives `[defaultError]` when the failure has no mapped errors and can
 return an action that leaves loading and displays the error. No HTTP status is
 invented and mapErrors is not called again. Mapping still runs without onSuccess.
 Without onError a failure reaches the store reporter. Callback/dispatch errors
