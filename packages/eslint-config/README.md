@@ -1,129 +1,115 @@
 # @gost-kit/eslint-config
 
-Shared framework-independent JavaScript and TypeScript flat configuration.
-Independently versioned; consult package.json and CHANGELOG.md for the version.
-Install alongside the required peer dependencies.
+ESLint configuration for JavaScript and TypeScript. It checks types, promises,
+imports and code structure. Formatting runs separately through Prettier.
 
-Requires Node ^26.0.0, ESLint ^10.14.0 and TypeScript ^5.9.3. The tested baseline
-uses ESLint 10.14.0 and TypeScript 5.9.3. No framework parser/plugin or runtime
-`@gost-kit/common`/`@gost-kit/svelte` dependency is installed by this package.
+## Install
 
-## Usage
+Requires Node 26.x (`^26.0.0`), ESLint `^10.14.0` and TypeScript `^5.9.3`.
+The example uses jiti to load a TypeScript ESLint config, and globals to declare
+browser globals. @types/node supplies types for the config's Node APIs.
 
-Install this config, ESLint, TypeScript and any environment globals you use as
-devDependencies. In `eslint.config.mjs`:
+```sh
+npm install -D @gost-kit/eslint-config eslint typescript jiti globals @types/node
+```
 
-```js
+## Configure
+
+Create `eslint.config.ts` at your project root:
+
+```ts
 import { createConfig } from '@gost-kit/eslint-config';
 import globals from 'globals';
 
 export default [
   ...createConfig({ tsconfigRootDir: import.meta.dirname }),
   {
-    files: ['src/**/*.ts'],
+    files: ['src/**/*.{js,jsx,ts,tsx}'],
     languageOptions: { globals: globals.browser },
-  },
-  {
-    files: ['scripts/**/*.js', '*.config.mjs'],
-    languageOptions: { globals: globals.node },
   },
 ];
 ```
 
-The absolute `tsconfigRootDir` belongs to the consumer, not the installed package.
-Relative roots throw an explicit error. TS files need a discoverable consumer
-`tsconfig.json`; Project Service uses their nearest project, including monorepos.
-A missing/excluded project file gives a parser diagnostic, not a policy finding.
-JS files do not require a tsconfig or type-aware linting.
+TypeScript files must belong to a discoverable tsconfig. For a new project,
+this is a minimal `tsconfig.json`:
 
-The base matches `**/*.{js,jsx,mjs,cjs}` and `**/*.{ts,tsx,mts,cts}` in any directory. It
-supports JSX/TSX syntax and general JS/TS rules, including JSX component
-references. TSX requires the consumer tsconfig to include the files and a suitable
-`jsx` setting. JSX works without a TypeScript project. Browser/Node/test globals,
-framework-specific JSX presets, aliases and application-generated ignores remain
-with the project's additional configuration. No application directory layout is assumed.
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2024",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true
+  },
+  "include": ["src/**/*.ts", "eslint.config.ts"]
+}
+```
 
-## Policies and overrides
+```sh
+npx eslint .
+npx eslint . --fix
+```
 
-All enabled rules are errors, including in tests. The complete resolved list,
-options, inherited baseline and disabled compatibility rules are in [RULES.md](RULES.md).
-Selected policies include braces, blank lines before if/return, declaration-group
-spacing, type imports, merged imports, safe promises and exhaustive switches.
-For spacing, const/let/var and all export statements form a declaration group;
-adjacent members may remain together, with a blank line before surrounding steps.
+Existing projects should use their own compiler options. Include TSX files
+and a suitable jsx setting when needed. The absolute tsconfigRootDir is the
+consumer project root; relative roots are rejected. Project Service finds the
+nearest project. Missing/excluded TypeScript files produce parser errors.
+JavaScript/JSX does not require a TypeScript project.
 
-Every arrow has a block body. Named exports are required, except in the known
-`eslint`, `prettier`, `vite`, `vitest`, `playwright`, `rollup`, and `webpack`
-`*.config.{js,mjs,cjs,ts,mts,cts}` files. Default imports remain permitted. Merely
-putting a source file in a `config/` directory grants no exception.
+## Rules and overrides
 
-Parameters and their properties cannot be assigned. This rule does not detect
-all mutation through method calls. Await in loops, ++/-- and for...of are disabled.
-A sequential operation must not be made concurrent merely to satisfy a rule.
-Necessary exceptions are explicit consumer overrides or targeted disable comments
-with a reason; this config grants no blanket test exception.
+The complete rule list and options are in [RULES.md](RULES.md).
+Enabled rules are errors, including in tests. The configuration covers
+js/jsx/mjs/cjs and ts/tsx/mts/cts files, without imposing an application layout.
 
-Append local overrides after the shared config, for example:
+Policies include braces, block-bodied arrows, spacing before if/return, type
+imports, merged imports, safe promises and exhaustive switches. Adjacent
+declarations/exports may form a group. Named exports are required except in
+known eslint/prettier/vite/vitest/playwright/rollup/webpack config files;
+default imports remain allowed.
 
-```js
+Parameters/properties cannot be assigned. This does not prove the absence of
+mutation through methods. await in loops, ++/-- and for...of are reported;
+keep necessary sequential work explicit with a targeted override. Only unused
+arguments prefixed with an underscore are exempt; ordinary variables are not.
+any and non-null assertions are errors. Necessary type assertions are permitted.
+
+Append overrides after createConfig:
+
+```ts
 {
   files: ['scripts/ordered-migration.ts'],
   rules: { 'no-await-in-loop': 'off' },
 }
 ```
 
-Only intentionally unused arguments starting with `_` are exempt from unused
-argument reports. Unused ordinary variables are not exempt merely by naming.
-`any` and non-null assertions are errors. Required casts are not globally banned;
-`no-unnecessary-type-assertion` reports assertions that do not affect the type.
+This is an additional array entry in eslint.config.ts. Projects own environment
+globals, aliases/resolvers, framework presets and generated-source ignores.
+node_modules, dist, coverage, test-results and playwright-report are ignored.
+No blanket test exception is applied.
 
-`node_modules`, `dist`, `coverage`, `test-results` and `playwright-report`
-directories are ignored. Add your own generated/framework output ignores with
-ESLint's normal flat config. Module aliases and custom resolver settings are
-consumer-owned; import merging is tested for the same resolvable module source.
+## Prettier
 
-## Prettier and fix workflow
-
-Use `@gost-kit/prettier-config` separately. This ESLint package uses
-`eslint-config-prettier` to disable conflicts; it does not run Prettier as a rule.
-The selected arrow/braces/padding policies remain enabled after compatibility.
+The config disables conflicting rules with eslint-config-prettier. It does not
+run Prettier as an ESLint rule. Install
+[@gost-kit/prettier-config](https://www.npmjs.com/package/@gost-kit/prettier-config)
+separately, then use:
 
 ```sh
-eslint . --fix
-prettier . --write
-eslint .
-prettier . --check
+npx eslint . --fix
+npx prettier . --write
+npx eslint . --max-warnings=0
+npx prettier . --check
 ```
-
-The tested JS/TS fixtures converge: another fix/format pass changes nothing.
-Neither command silently configures framework plugins or validates application
-behavior. Adopting and formatting an existing project is a separate change.
-
-## Maintenance
-
-Versions are independent of Prettier config and runtime packages. Review the
-resolved rule inventory when upgrading pinned presets. Rule/option changes that
-reject accepted source or change formatting require a documented breaking-change
-assessment; do not silently track new upstream defaults.
-
-Prefer supported upstream rules. When a concrete new custom rule is needed,
-create its ESLint plugin with valid/invalid RuleTester cases, exact diagnostics,
-and autofix output/idempotence tests if a fix is provided. Do not insert an
-untested local rule or require a particular framework/AI tool.
-
-Package tests use common guards only as a development dependency. They and test
-helpers are excluded from tarballs; published config execution is independent.
 
 ## Framework adapters
 
-`createTypeScriptPolicy({ tsconfigRootDir })` returns a composed flat policy:
-recommended JS/TS rules, selected rules, Prettier compatibility, plugins and
-TypeScript parser options. It has no filename selectors; the adapter chooses
-its files/parser and preserves its own syntax and project options. Both the
-common config and Svelte adapter use this public factory. No ESLint instance or
-synthetic source filename is needed to extract the shared rules.
+createTypeScriptPolicy({ tsconfigRootDir }) returns the same composed rules,
+plugins and TypeScript parser options without file selectors. An adapter chooses
+its files/parser and retains framework options. For Svelte, use
+[@gost-kit/eslint-config-svelte](https://www.npmjs.com/package/@gost-kit/eslint-config-svelte),
+which already includes this baseline.
 
-Legacy import resolver options requiring `eslint-import-resolver-node` are
-consumer-owned: install that optional peer explicitly if using them. The default
-import-x resolver is bundled upstream; this package does not install the legacy
-fallback or declare unused utilities as direct runtime dependencies.
+The default import resolver is included upstream. If configuring the legacy
+eslint-import-resolver-node fallback, install that optional peer yourself.

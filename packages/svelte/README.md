@@ -1,119 +1,133 @@
 # @gost-kit/svelte
 
-Reactive Svelte 5 binding for `@gost-kit/common` functional core.
-Requires Node 26 (`^26.0.0`) and Svelte 5.57.2 or later in the 5.x series.
-The store implementation lives in `src/shell/domain/createStore.svelte.ts`.
+Reactive state for Svelte 5, driven by reducers and effects.
+Keep state transitions in TypeScript and read the current state from Svelte
+components.
 
-```ts
-import { createStore } from '@gost-kit/svelte';
+## Install
 
-const counter = createStore<number, { type: 'IncrementAction' }, never>({
-  initState: () => 0,
-  reducer: (state) => ({ state: state + 1, effects: [] }),
-  effector: async () => {},
-});
+Requires Node 26.x (`^26.0.0`) for installation/tooling and Svelte
+`^5.57.2`. Node is not required in the browser. Use a Svelte build toolchain
+that compiles the package's rune modules.
 
-await counter.dispatch({ type: 'IncrementAction' });
-// counter.state is now 1; reading it in a Svelte template is reactive.
-counter.reset();
-// counter.state is now 0.
+```sh
+npm install @gost-kit/svelte @gost-kit/common svelte
 ```
 
-`createStore` accepts `StoreConfig` and returns `Store`, both exported from
-`@gost-kit/common`. It replaces the complete state through `$state.raw`; it does not
-merge or deeply proxy state. Each instance has independent state. Dispatch,
-parallel effects, awaited nested dispatch and error reporting are implemented
-by `@gost-kit/common` without a framework dependency.
+## Create a store
 
-`initState` is a synchronous factory called without arguments once when creating
-the store and once per reset. Migrate `initState: initialState()` to
-`initState: initialState`. Each scope has its own factory; the root composes them:
+This counter is a complete component example:
+
+```svelte
+<script lang="ts">
+  import { createStore } from '@gost-kit/svelte';
+
+  type Action = { type: 'IncrementAction' };
+
+  const counter = createStore<number, Action, never>({
+    initState: () => 0,
+    reducer: (state) => {
+      return { state: state + 1, effects: [] };
+    },
+    effector: async () => {},
+  });
+
+  const increment = () => {
+    void counter.dispatch({ type: 'IncrementAction' });
+  };
+  const reset = () => {
+    counter.reset();
+  };
+</script>
+
+<p>{counter.state}</p>
+<button type="button" onclick={increment}>Increment</button>
+<button type="button" onclick={reset}>Reset</button>
+```
+
+For application-wide state, create the store once at the application's
+composition root and provide the same instance to its components.
+Reducers, actions and effect handlers come from
+[@gost-kit/common](https://www.npmjs.com/package/@gost-kit/common);
+the Svelte binding only supplies reactivity.
+
+## State and factories
+
+createStore accepts StoreConfig and returns Store, both public common types.
+It replaces the complete state through `$state.raw`; it does not merge state
+or deeply proxy it. Each store has independent state. Reducers must return
+immutable replacements and preserve unchanged feature references.
+
+initState is a synchronous zero-argument factory, called once at creation and
+once per reset. Use a factory per scope and compose the root from them:
 
 ```ts
 import { define } from '@gost-kit/common';
 
-const usersState = define.state<UsersState>((options = {}) => ({
-  data: [],
-  errors: [],
-  ...options,
-}));
-const rootState = define.state<RootState>((options = {}) => ({
-  users: usersState(),
-  auth: authState(),
-  ...options,
-}));
+type UsersState = { names: string[] };
+type RootState = { users: UsersState; authenticated: boolean };
 
-// In store config: initState: rootState
-// In reducer tests: rootState({ users: usersState({ errors: [apiError()] }) })
+const usersState = define.state<UsersState>((options = {}) => {
+  return { names: [], ...options };
+});
+const rootState = define.state<RootState>((options = {}) => {
+  return { users: usersState(), authenticated: false, ...options };
+});
+
+// Store config: initState: rootState
+// Reducer test: rootState({ users: usersState({ names: ['Ada'] }) })
 ```
 
-The factories above use application-defined state types and error/auth factories.
-Each call should allocate fresh mutable nested defaults. Supplied overrides are
-used by reference with a shallow replacement; the store does not clone them.
-`define.state(object)` shares nested defaults and cannot guarantee this freshness.
+Allocate fresh nested defaults on each call. Overrides are shallow and used by
+reference; the store does not clone them. `define.state(object)` shares nested
+defaults. Primitive/array roots use the same replacement model; class instances
+are outside the intended state contract.
 
-`store.reset()` resets all state. `store.reset({ excluded: ['auth'] })` preserves
-the current `auth` reference and resets other scopes. The list is readonly and
-checked against root keys, not action namespaces. An absent/empty list is a full
-reset. The entire root factory runs even for excluded scopes, followed by a
-single state publication. Reset returns void and retains the same store/dispatch.
+## Reset
 
-Partial reset supports fixed object roots with independent scopes. Primitive,
-array, function and union roots permit full reset only at the type level; a union
-inside a scope is fine. Union detection uses the represented TypeScript type;
-type widening or assertions can erase that information. Runtime checks do not
-detect unions. An excluded key is preserved only if it is an own property of both
-the current and initial roots. Missing or inherited keys are skipped, including
-optional scopes deleted or added by reducers. Such scopes take their presence
-and value from the initial root. Errors during reset go to the store's `onError`
-as `{ kind: 'reset', error }`; reset stops without throwing outward. Factory or
-validation failures leave state unchanged. Without `onError`, the shared reporter
-logs the failure to console. Initial creation still calls the factory directly:
-if that fails, creation throws and no store is returned.
+`store.reset()` restores fresh defaults. For a record with independent scopes,
+`store.reset({ excluded: ['auth'] })` keeps the current auth reference and resets
+other scopes. A missing/empty list means full reset. The entire root factory
+runs, including excluded scopes, followed by one publication.
 
-Reset does not cancel pending effects or ignore late responses. A later dispatch
-reads the current state after reset and may populate it again. Routing and request
-cancellation belong to the application.
+Excluded values survive only for own keys present in both current and fresh
+roots. Missing/inherited keys, including optional scopes added/deleted by
+reducers, take their presence/value from the fresh root. Types permit partial
+reset for fixed record roots; primitive/array/function/union roots support full
+reset only. A union inside a scope is allowed. Runtime cannot detect erased
+TypeScript unions.
 
-The optional `onError` callback is supplied when the store is created, for example
-to connect application logging. Replacing it on the original config afterwards
-does not change the store's handler.
-The same snapshot rule applies to `initState`: replacing it on config does not
-change the factory captured by an existing store.
+Reset errors go to onError as `{ kind: 'reset', error }` and do not throw
+outward. Validation/factory/read failures occur before writing; a write adapter
+can already have side effects when it fails. Initial factory failures throw
+during creation, before a store exists. Reset does not cancel effects or ignore
+late responses: a later dispatch reads the post-reset state and may populate it
+again.
+
+## Feature selectors
 
 Select a feature before computing its presentation:
 
 ```ts
 const user = $derived(root.state.user);
-const viewState = $derived(userPresenter(user));
+const view = $derived(userPresenter(user));
 ```
 
-Replacing the root reevaluates the selection. If `user` retains its reference,
-Svelte skips the downstream presenter. Replacing `user` updates its view state.
-Keep the selection separate: `$derived(userPresenter(root.state.user))` depends
-directly on the root and calls the presenter on unrelated root replacements.
+Here root is the application store and userPresenter is a pure function from
+its presenter module. This fragment belongs in a Svelte component/rune module.
+When the root is replaced, the selector reevaluates. If the selected reference
+is unchanged, Svelte skips the downstream presenter. A direct
+`$derived(userPresenter(root.state.user))` depends on root replacements instead.
 
-The store keeps one ordinary snapshot, without an additional UI representation.
-Root identity follows reducer commits; feature references are preserved by the
-reducers. Primitive and array roots keep the same raw replacement model.
-Class instances are outside the intended state contract.
-Presenters stay pure; reactive bindings belong to components or Svelte adapters.
+## Effects and errors
 
-Reducers still construct immutable root snapshots. Feature selection may rerun
-when the root is replaced; an unchanged selected reference does not cause
-another presenter call.
+State commits synchronously before effects start. Effects run in parallel;
+dispatch waits for them and nested dispatches they await. Reducer/effect errors
+are reported and dispatch resolves successfully. onError is synchronous and
+not awaited; the default is console reporting, also used if the handler throws.
 
-The [createStore contract and test cases](docs/createStore.spec.md) describe
-the Svelte integration checks; dispatch execution is tested in common.
-
-Build common first, then run `npm run build --workspace @gost-kit/svelte` from the
-repository root. Packaging follows the official
-[Svelte library packaging guide](https://svelte.dev/docs/kit/packaging) using
-`@sveltejs/package`. The `svelte` export condition points to JavaScript containing
-runes; consumers compile it with their Svelte tooling. Declarations are shipped
-alongside it. Svelte is a peer dependency, and is not bundled into the library.
-The `default` condition resolves the same entry for tools without the `svelte`
-condition. Calling `createStore` still requires Svelte compilation of the runes.
-
-Source imports omit `.ts` and `.js`, retaining `.svelte` for components and rune
-modules. The build resolves emitted paths to `.js` with `tsc-alias`.
+The store captures config values at creation: replacing initState or onError on
+the original config later does not change an existing store. The package ships
+rune-bearing JavaScript and declarations, with Svelte as a peer dependency.
+Calling createStore requires Svelte compilation, including when the caller is
+an ordinary TypeScript module.
