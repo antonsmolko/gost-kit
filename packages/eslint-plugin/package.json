@@ -1,6 +1,6 @@
 {
   "name": "@gost-kit/eslint-plugin",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "ESLint rules for reactive state selection, presenters and UI handlers.",
   "type": "module",
   "license": "MIT",
@@ -43,8 +43,8 @@
     "svelte-eslint-parser": "1.10.1",
     "typescript-eslint": "8.72.1",
     "svelte": "5.57.2",
-    "@gost-kit/common": "0.3.0",
-    "@gost-kit/svelte": "0.2.0",
+    "@gost-kit/common": "0.3.1",
+    "@gost-kit/svelte": "0.2.1",
     "@typescript-eslint/rule-tester": "8.72.1"
   },
   "dependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "@gost-kit/common",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "TypeScript types, runtime guards, reducers, effects and a typed API client.",
   "type": "module",
   "license": "MIT",

@@ -1,5 +1,15 @@
 # @gost-kit/eslint-plugin
 
+## 0.3.0
+
+### Minor Changes
+
+- b52d1b4: Add the opt-in gost/require-presenter rule for derived bindings and template display computations, resolving TypeScript presenter declarations through aliases and public exports. Register it off in the shared Svelte configuration. Extend typed feature-state selector diagnostics to template const computations without template autofix.
+
+### Patch Changes
+
+- 12b4d28: Rewrite package descriptions and README quick starts with installation requirements, complete examples and consumer-facing reference. Replace links that cannot resolve from npm package archives.
+
 ## 0.2.0
 
 ### Minor Changes
