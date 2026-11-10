@@ -118,8 +118,12 @@ discriminated union:
 
 Bind-open/$bindable не используются. Mode определяется при создании и фиксирован
 на жизнь экземпляра. Для смены ownership нужно remount. Переход open из boolean
-в undefined или обратно даёт понятный TypeError при следующем чтении/intent
-через adapter; проверяется JS/runtime-тестом. Одновременные open/defaultOpen и
+в undefined или обратно создаёт понятный TypeError через общий validator
+ownership props. При создании модели или прямом чтении state getter ошибка
+бросается наружу. В dispatch/reset validator выполняется внутри readState:
+common сообщает { kind: 'readState', error: TypeError, action } через reporter
+и разрешает Promise, без commit/уведомления. Валидация перед вызовом dispatch
+не дублируется. Оба пути проверяются JS/runtime-тестами. Одновременные open/defaultOpen и
 отсутствующий callback в controlled отвергаются типами и runtime validation.
 Некорректные props — ошибки использования, не бизнес-валидация или AppError.
 
@@ -208,5 +212,8 @@ merge/publish по отдельной команде владельца.
 
 ## Status
 
-Два режима согласованы. Подготовлен дизайн; перед планированием — независимый
-builder check и утверждение документа владельцем. Product implementation не начат.
+Два режима согласованы. Независимый builder check завершён: единственный вопрос
+касался TypeError внутри dispatch/reset; контракт уточнён в соответствии с
+существующим createDispatch (reporter + resolved Promise), отдельно от прямого
+getter/создания. Дизайн готов к утверждению владельцем. Product implementation
+не начат.
