@@ -73,6 +73,12 @@ defaultOpen при создании; при отсутствии defaultOpen э�
 dispatch коммитит state до уведомления; onOpenChange опционален. Его отсутствие
 не мешает локальной работе. Прямые записи в state не используются.
 
+defaultOpen и initialOpen проверяются/захватываются при создании. На каждом
+intent остаётся только проверка текущего props.open: он должен оставаться
+undefined, иначе потребитель пытается сменить ownership. defaultOpen и baseline
+не пересчитываются и заново не валидируются. Текущий callback читается при
+выполнении OpenChangeEffect.
+
 ### Controlled
 
 Mutable local store/open не создаётся. createDispatch читает текущий props.open
@@ -84,7 +90,9 @@ Mutable local store/open не создаётся. createDispatch читает т
 Потребитель может принять, изменить, отложить или проигнорировать предложение.
 До нового props.open интерфейс показывает прежнее значение. Внешние prop updates
 обновляют UI и не вызывают onOpenChange. Несколько intents до принятия нового
-value считаются от текущего value владельца, без optimistic buffer.
+value считаются от текущего value владельца, без optimistic buffer. При
+props.open=false два ToggleAction до принятия предложения дают уведомления
+true, true. No-op — это SetOpenAction(false), а не повторный ToggleAction.
 
 ### Error, reset and lifecycle semantics
 
@@ -99,8 +107,11 @@ model.reset() отправляет SetOpenAction с initialOpen, захваче�
 Baseline — неизменяемый boolean для reset, не mutable текущее состояние.
 Reset вызывает onOpenChange только при отличии от текущего value; в controlled
 это запрос, который владелец вправе не принять. Метод возвращает Promise<void>.
-Он не подменяет синхронный Store.reset: внутренний Store не выдаётся потребителю.
-Компонент экспортирует reset(), делегирующий model.reset().
+Он намеренно не использует синхронный Store.reset: тот не создаёт effects и
+не уведомляет потребителя. Внутренний Store не выдаётся потребителю.
+Компонент объявляет export function reset(), делегирующий model.reset().
+Потребитель получает этот export через bind:this и вызывает instance.reset();
+документация показывает типизированный ref и вызов после mount.
 
 Модель не создаёт timers, subscriptions, observers или DOM refs. Поэтому отдельный
 dispose/destroy API и фиктивный cleanup не добавляются. Уничтожение компонента
@@ -118,13 +129,24 @@ discriminated union:
 
 Bind-open/$bindable не используются. Mode определяется при создании и фиксирован
 на жизнь экземпляра. Для смены ownership нужно remount. Переход open из boolean
-в undefined или обратно создаёт понятный TypeError через общий validator
-ownership props. При создании модели или прямом чтении state getter ошибка
-бросается наружу. В dispatch/reset validator выполняется внутри readState:
-common сообщает { kind: 'readState', error: TypeError, action } через reporter
-и разрешает Promise, без commit/уведомления. Валидация перед вызовом dispatch
-не дублируется. Оба пути проверяются JS/runtime-тестами. Одновременные open/defaultOpen и
-отсутствующий callback в controlled отвергаются типами и runtime validation.
+в undefined или обратно создаёт понятный TypeError через validator ownership
+props. При создании модели или прямом чтении state getter ошибка бросается наружу.
+
+В controlled на каждом intent внутри readState проверяются текущий boolean open,
+отсутствие defaultOpen и обязательный callback. В uncontrolled проверяется только
+сохранение open=undefined. Поскольку createStore сам замыкает readState и не даёт
+его подменять, эту проверку выполняет тонкая async dispatch-обёртка до делегирования
+store.dispatch. При ошибке она вызывает публичный common report с
+{ kind: 'readState', error: TypeError, action } и возвращает resolved Promise,
+не вызывая store.dispatch. Controlled получает тот же результат через
+существующий catch внутри createDispatch. Reset проходит через тот же dispatch.
+Дополнительный dispatch engine не создаётся; проверки не дублируются.
+
+В обоих режимах invalid intent даёт ровно одно сообщение reporter, без commit,
+effect и callback; Promise не отклоняется. Прямое чтение getter и оба dispatch
+пути проверяются JS/runtime-тестами. Одновременные open/defaultOpen и отсутствующий
+callback в controlled отвергаются типами и runtime validation при создании;
+контролируемые изменяемые props проверяются при последующих чтениях/intents.
 Некорректные props — ошибки использования, не бизнес-валидация или AppError.
 
 UI не выбирает бизнес-actions. Native button handler отправляет ToggleAction,
@@ -161,7 +183,8 @@ UI-Kit собственный interaction state; business ownership не пер�
 - src/ui-kit/disclosure/model/ — private Svelte adapter и модельные тесты.
 - src/ui-kit/disclosure/ui/ — Disclosure.svelte, presenter и его pure tests.
 - src/ui-kit/disclosure/index.ts — удобный public entry примера.
-- документация примера: подключение, оба режима, reset и границы.
+- документация примера: подключение, оба режима, export function reset() через
+  bind:this, reset baseline и границы.
 - src/DisclosureExamples.svelte — потребитель для демонстрации двух независимых
   uncontrolled экземпляров и controlled экземпляра с app-owned значением.
 
@@ -175,6 +198,10 @@ DisclosureExamples выбирает root.state.detailsOpen, передаёт г�
 src/ui-kit/**/*.svelte: no-component-state/single-intent-dispatch/
 ready-boolean-condition/require-presenter выключены. Typed selector rule и обычные
 Svelte/TypeScript проверки остаются. Глобальные config packages/policies не меняются.
+Override фиксирует границу политики: UI-Kit владеет interaction state, и
+бизнес-политики компонентов на него не распространяются. Он нужен как явная
+граница ответственности, даже если текущий Disclosure соблюдает эти четыре
+правила и без отключения; это не подавление конкретных diagnostics.
 
 ## Verification
 
@@ -186,7 +213,9 @@ Svelte/TypeScript проверки остаются. Глобальные config
   не меняют seed; actual callback replacement; optional callback и ошибки.
 - Controlled: актуальное внешнее значение, принятие/отклонение/задержка,
   повторные requests до принятия, отсутствие optimistic copy; reset proposal;
-  внешние updates не дают callback; mode/conflicting props errors.
+  внешние updates не дают callback; mode/conflicting props errors, включая
+  uncontrolled wrapper и controlled readState: один report, resolved Promise,
+  неизменный state и отсутствие effects/callback.
 - Real Svelte browser fixtures: две независимо открываемые панели, reset первой
   сохраняет вторую; unmount/remount первой сохраняет вторую; controlled внешний
   update и непринятое предложение; callback replacement; unique aria-controls/id,
@@ -217,3 +246,10 @@ merge/publish по отдельной команде владельца.
 существующим createDispatch (reporter + resolved Promise), отдельно от прямого
 getter/создания. Дизайн готов к утверждению владельцем. Product implementation
 не начат.
+
+## Micro-review clarifications
+
+Уточнены изменяемые ownership-проверки отдельно от initial defaultOpen/baseline,
+обоснование UI-Kit override как границы политики и доступ к exported reset через
+bind:this. Uncontrolled guard учитывает закрытый readState существующего createStore.
+Контракт повторных ToggleAction явно отличён от SetOpenAction no-op.
