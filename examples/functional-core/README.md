@@ -256,8 +256,10 @@ State is immutable by convention and TypeScript readonly fields; it is not froze
 at runtime. Components send actions instead of mutating state directly. Previous
 loaded data is retained during loading/error. Global alerts remain in state.
 
-No reset, pipes, hooks, persistence, SSR demo, cancellation or stale-response
-protection is included. Separate root instances are isolated.
+The API-flow UI has no root-reset control; Disclosure exposes the component reset
+described in the [local-state guide](docs/ui-component-state.md).
+Pipes, hooks, persistence, an SSR demo, cancellation and stale-response protection
+are not included. Separate root instances are isolated.
 The form disables loading while a request is pending; programmatic overlapping
 requests have no ordering guarantees beyond their completion order.
 
@@ -294,9 +296,11 @@ changes. `check` includes lint/format checks, type checking and tests; the root
 `check` performs the same coverage without repeating the style checks.
 The project consumes the Svelte ESLint configuration and the shared Prettier
 configuration; the Prettier Svelte plugin is connected locally. The repository's [adapter](../../tooling/eslint-config.ts) adds project globals
-and explicitly enables `gost/no-component-state` and
-`gost/single-intent-dispatch` and `gost/ready-boolean-condition` for `src/**/*.svelte`;
-`bind:this` refs remain permitted while logical state lives in root/features;
+and explicitly enables `gost/no-component-state`, `gost/single-intent-dispatch`,
+`gost/ready-boolean-condition` and `gost/require-presenter` for business components.
+The example's late override excludes `src/ui-kit/**/*.svelte` from these four
+business policies. `bind:this` refs remain permitted; business state belongs in
+root/features and UI-Kit interaction state belongs to its component model;
 the published Svelte config owns component parsing and shared policies. Dependencies/config
 exports must be prepared in the repository first; the example is not a standalone
 copy of the published packages.
@@ -316,8 +320,9 @@ The example demonstrates FC/shell integration using native DOM controls. Its
 `SubmitEvent`/input adaptation is not a reference for the business/UI-Kit boundary:
 in application business features, library components own browser events and
 expose semantic callbacks/ready values. The intent rule catches direct dispatch
-cascades/branches; it does not prove the absence of every browser API. A UI-Kit
-component extraction and local-state design are separate work (#27).
+cascades/branches; it does not prove the absence of every browser API. The
+Disclosure demonstrates this UI-Kit boundary and local-state composition; see
+the [implemented component-state guide](docs/ui-component-state.md).
 
 The boolean condition policy is enabled for this example. userPresenter returns
 hasLoadedUser plus loadedUserName/loadedUserEmail; globalAlertPresenter returns

@@ -102,5 +102,5 @@ ready-boolean-condition/require-presenter, only src/ui-kit/**/*.svelte.
   Run Svelte autofixer for new components/rune fixtures; resolve justified issues.
 - [x] Run full npm run check. Expected existing 823 tests plus new meaningful cases pass.
 - [x] Commit [gost-kit-27] Demonstrate isolated UI component state.
-- [ ] One fresh whole-branch review; important fixes RED→GREEN and full suite.
+- [x] One fresh whole-branch review; important fixes RED→GREEN and full suite.
   Prepare draft PR with validation, no merge/publish.

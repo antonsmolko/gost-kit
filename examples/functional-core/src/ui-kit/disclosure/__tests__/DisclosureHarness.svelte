@@ -1,6 +1,6 @@
 <script lang="ts">
   import { guard, type Ulx } from '@gost-kit/common';
-  import { Disclosure, type DisclosureHandle } from '../index';
+  import { Disclosure, type DisclosureHandle } from '..';
   import type { OpenChangeHandler } from '../types/open-change-handler';
 
   let first = $state<DisclosureHandle>();
