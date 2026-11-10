@@ -15,6 +15,9 @@ const appReducer = define.reducer<
   ActionsInScope<RootAction, 'root'>,
   RootEffect
 >()({
+  SetDetailsOpenAction: ({ state, action }) => {
+    return { state: { ...state, detailsOpen: action.open } };
+  },
   ShowAlertAction: ({ state, action }) => {
     return {
       state: {
