@@ -244,8 +244,7 @@ merge/publish по отдельной команде владельца.
 Два режима согласованы. Независимый builder check завершён: единственный вопрос
 касался TypeError внутри dispatch/reset; контракт уточнён в соответствии с
 существующим createDispatch (reporter + resolved Promise), отдельно от прямого
-getter/создания. Дизайн готов к утверждению владельцем. Product implementation
-не начат.
+getter/создания. Дизайн утверждён владельцем 2026-11-10. Выполнение плана начато.
 
 ## Micro-review clarifications
 
