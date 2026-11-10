@@ -6,6 +6,7 @@ export const initialState = define.state<RootState>((options = {}) => {
   return {
     user: userState(),
     alert: null,
+    detailsOpen: false,
     ...options,
   };
 });

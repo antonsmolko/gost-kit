@@ -1,4 +1,5 @@
 <script lang="ts">
+  import DisclosureExamples from './DisclosureExamples.svelte';
   import UserForm from './UserForm.svelte';
   import GlobalAlert from './GlobalAlert.svelte';
 </script>
@@ -8,6 +9,7 @@
   <p>Change an email, load a user and observe the root state.</p>
   <GlobalAlert />
   <UserForm />
+  <DisclosureExamples />
 </main>
 
 <style>

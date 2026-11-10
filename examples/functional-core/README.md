@@ -21,6 +21,17 @@ The synthetic API returns Ada Lovelace after a short delay. Use
 `error@example.test` to get an error and a global notification. Change the email
 and retry. There are no API network requests.
 
+## Local UI-component state
+
+The “Local UI state” section also demonstrates two independent Disclosure
+instances and an app-controlled one. Reset the first local instance without
+changing the second. The controlled instance forwards a boolean through one root
+action; its UI-Kit implementation knows nothing about application actions.
+
+See [the component-state guide](docs/ui-component-state.md) for both ownership
+modes, typed bind:this/reset, error semantics and tests. This example uses existing
+public APIs; it adds no package or library exports.
+
 ## Read the example
 
 Start with `src/UserForm.svelte`. It imports `rootStore` from `src/store/root.ts`,

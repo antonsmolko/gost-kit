@@ -40,12 +40,12 @@ DisclosureEffect=OpenChangeEffect(open:boolean).
 disclosureReducer: Reducer<DisclosureState,DisclosureAction,DisclosureEffect>.
 disclosurePresenter({state}): DisclosureView {isOpen:boolean,isHidden:boolean}.
 
-- [ ] Write failing pure tests: toggle false/true; SetOpen changes/no-op identity;
+- [x] Write failing pure tests: toggle false/true; SetOpen changes/no-op identity;
   exact effects; frozen inputs; independent states; presenter full results/input preservation.
   Run npm --prefix examples/functional-core test -- disclosure. Expected RED missing modules.
-- [ ] Implement using define.state/reducer + reducing and pure presenter.
-- [ ] Run example tests and TypeScript/style checks on touched files. Expected GREEN.
-- [ ] Commit [gost-kit-27] Add pure disclosure transitions and view data.
+- [x] Implement using define.state/reducer + reducing and pure presenter.
+- [x] Run example tests and TypeScript/style checks on touched files. Expected GREEN.
+- [x] Commit [gost-kit-27] Add pure disclosure transitions and view data.
 
 ### Task 2: Instance model and ownership contract
 
@@ -58,21 +58,21 @@ uncontrolled open?:undefined/defaultOpen?:boolean/onOpenChange optional.
 createDisclosureModel(readOptions: AnyFn<[],DisclosureOptions>): DisclosureModel.
 DisclosureModel readonly state, Dispatch<DisclosureAction>, reset():Promise<void>.
 
-- [ ] Write RED tests for defaults/instance independence, immediate commits,
+- [x] Write RED tests for defaults/instance independence, immediate commits,
   ordered rapid true/false notifications, reset-only-own-instance, ignored new defaultOpen,
   callback replacement, absent callback, callback throw/rejection, pending callback Promise.
-- [ ] Add controlled acceptance/ignore/delay/external updates, repeat true/true proposals,
+- [x] Add controlled acceptance/ignore/delay/external updates, repeat true/true proposals,
   reset baseline/no-op and no local optimistic state assertions.
-- [ ] Add runtime-invalid JS probes: setup conflicts/missing callback/default types;
+- [x] Add runtime-invalid JS probes: setup conflicts/missing callback/default types;
   controlled→uncontrolled and reverse; direct getter throws; dispatch/reset resolve
   and console reporter receives one readState/TypeError/action without state/effect/callback.
   Add compile-time probes for invalid unions.
-- [ ] Run model tests before implementation. Expected RED missing model.
-- [ ] Implement shared define.effector/effecting callback effect; construction modes;
+- [x] Run model tests before implementation. Expected RED missing model.
+- [x] Implement shared define.effector/effecting callback effect; construction modes;
   uncontrolled thin guard wrapper reports before store.dispatch; controlled validator inside readState.
   Keep no-op writeState; model reset delegates SetOpenAction(initialOpen).
-- [ ] Run all example tests/type/style. Expected GREEN.
-- [ ] Commit [gost-kit-27] Bind local and controlled disclosure state.
+- [x] Run all example tests/type/style. Expected GREEN.
+- [x] Commit [gost-kit-27] Bind local and controlled disclosure state.
 
 ### Task 3: Component, application integration and browser proof
 
@@ -87,20 +87,20 @@ RootState.detailsOpen=false; root SetDetailsOpenAction(open:boolean).
 Example UI-Kit override off for no-component-state/single-intent-dispatch/
 ready-boolean-condition/require-presenter, only src/ui-kit/**/*.svelte.
 
-- [ ] Add RED root reducer test: action updates detailsOpen only, preserving user/alert refs.
+- [x] Add RED root reducer test: action updates detailsOpen only, preserving user/alert refs.
   Add config assertion for UI-Kit off vs business on with unchanged selector/general checks.
-- [ ] Write browser regressions with real Svelte mount/unmount fixtures: two local instances,
+- [x] Write browser regressions with real Svelte mount/unmount fixtures: two local instances,
   reset via actual exported component handle, remount isolation, child input state retained,
   unique controls/id and Enter/Space, controlled rejected/accepted/external updates,
   callback replacement. Existing fixture infrastructure; no new dependencies.
-- [ ] Observe RED against missing component/behavior. Implement component and late override;
+- [x] Observe RED against missing component/behavior. Implement component and late override;
   integrate root flag and single-dispatch named callback demo. Use public Svelte mount/unmount
   in test-only source fixtures; no production debug globals.
-- [ ] Document both modes and typed bind:this/reset after mount, fixed ownership,
+- [x] Document both modes and typed bind:this/reset after mount, fixed ownership,
   error reporting and no cancellation/dispose. Explain no public package additions.
-- [ ] Run example tests, Svelte/type checks, build and all Playwright tests. Expected GREEN.
+- [x] Run example tests, Svelte/type checks, build and all Playwright tests. Expected GREEN.
   Run Svelte autofixer for new components/rune fixtures; resolve justified issues.
-- [ ] Run full npm run check. Expected existing 823 tests plus new meaningful cases pass.
-- [ ] Commit [gost-kit-27] Demonstrate isolated UI component state.
+- [x] Run full npm run check. Expected existing 823 tests plus new meaningful cases pass.
+- [x] Commit [gost-kit-27] Demonstrate isolated UI component state.
 - [ ] One fresh whole-branch review; important fixes RED→GREEN and full suite.
   Prepare draft PR with validation, no merge/publish.

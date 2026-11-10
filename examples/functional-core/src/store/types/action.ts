@@ -9,5 +9,5 @@ type ShowAlertAction = {
 
 export type RootAction = ScopedActions<{
   users: UserAction;
-  root: ShowAlertAction;
+  root: ShowAlertAction | { type: 'SetDetailsOpenAction'; open: boolean };
 }>;

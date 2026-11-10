@@ -244,7 +244,8 @@ merge/publish по отдельной команде владельца.
 Два режима согласованы. Независимый builder check завершён: единственный вопрос
 касался TypeError внутри dispatch/reset; контракт уточнён в соответствии с
 существующим createDispatch (reporter + resolved Promise), отдельно от прямого
-getter/создания. Дизайн утверждён владельцем 2026-11-10. Выполнение плана начато.
+getter/создания. Дизайн утверждён владельцем 2026-11-10. Реализация выполнена; финальное
+независимое ревью — перед draft PR.
 
 ## Micro-review clarifications
 
@@ -252,3 +253,11 @@ getter/создания. Дизайн утверждён владельцем 20
 обоснование UI-Kit override как границы политики и доступ к exported reset через
 bind:this. Uncontrolled guard учитывает закрытый readState существующего createStore.
 Контракт повторных ToggleAction явно отличён от SetOpenAction no-op.
+
+## Implementation evidence
+
+Реализация в private example: pure FC/presenter, два model bindings,
+Disclosure + app integration, typed reset handle и UI-Kit policy override.
+Новых package exports/dependencies/changesets нет. Полный check: 866 тестов,
+Svelte/type check без ошибок/предупреждений; example build и 7 browser scenarios
+проходят. Svelte autofixer: issues/suggestions пусты для всех четырёх компонентов.
