@@ -7,12 +7,12 @@
   const viewState = $derived(userPresenter({ state: user }));
 
   const handleInput = (email: string) => {
-    void root.dispatch({ scope: 'users', type: 'SetEmailAction', email });
+    void root.dispatch('users/SetEmailAction', { email });
   };
 
   const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault();
-    await root.dispatch({ scope: 'users', type: 'LoadAction' });
+    await root.dispatch('users/LoadAction');
   };
 </script>
 

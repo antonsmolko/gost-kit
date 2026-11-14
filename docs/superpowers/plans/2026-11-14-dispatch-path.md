@@ -1,6 +1,6 @@
 # Typed Dispatch Path Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Ввести `dispatch('namespace/ActionType', payload)` и отдельный `action.payload` любого типа.
 
@@ -40,11 +40,11 @@
 - Consumes: union действий `{ type; payload? }` и существующий `ScopedActions`.
 - Produces: `DispatchPath<TAction>`, `DispatchArguments<TAction>` и `Dispatch<TAction> = (...args: DispatchArguments<TAction>) => Promise<void>`.
 
-- [ ] Написать compile-time тесты: объект, number, string, boolean, null, массив, union payload; действие без данных; optional payload; объект с optional-полями; обязательный undefined. Проверить неизвестный namespace/action, пропущенные обязательные данные, лишний аргумент и неправильный тип через `@ts-expect-error`. Для `path: 'users/SetPageAction' | 'users/LoadAction'` вызов с `2` должен отклоняться.
-- [ ] Запустить `npm run check --workspace @gost-kit/common`; подтвердить ошибки текущего контракта.
-- [ ] Реализовать коррелированный union кортежей аргументов. Служебный Trigger не менять для эффектов; данные действий явно объявляются как payload. Вывести путь без повторного Extract по всем действиям.
-- [ ] Согласованно перевести объявления действий и их чтения в тестах common на payload; повторно проверить типы common и compile-эксперимент с 2000 действиями/100 namespace. Ожидается отсутствие неожиданных diagnostic и срабатывание всех отрицательных тестов.
-- [ ] Закоммитить типы и миграцию тестовых деклараций: `[gost-kit-44] Define typed dispatch paths and payload arguments`.
+- [x] Написать compile-time тесты: объект, number, string, boolean, null, массив, union payload; действие без данных; optional payload; объект с optional-полями; обязательный undefined. Проверить неизвестный namespace/action, пропущенные обязательные данные, лишний аргумент и неправильный тип через `@ts-expect-error`. Для `path: 'users/SetPageAction' | 'users/LoadAction'` вызов с `2` должен отклоняться.
+- [x] Запустить `npm run check --workspace @gost-kit/common`; подтвердить ошибки текущего контракта.
+- [x] Реализовать коррелированный union кортежей аргументов. Служебный Trigger не менять для эффектов; данные действий явно объявляются как payload. Вывести путь без повторного Extract по всем действиям.
+- [x] Согласованно перевести объявления действий и их чтения в тестах common на payload; повторно проверить типы common и compile-эксперимент с 2000 действиями/100 namespace. Ожидается отсутствие неожиданных diagnostic и срабатывание всех отрицательных тестов.
+- [x] Закоммитить типы и миграцию тестовых деклараций: `[gost-kit-44] Define typed dispatch paths and payload arguments`.
 
 ### Task 2: Исполнение dispatch и эффекты
 
@@ -57,13 +57,13 @@
 - Consumes: Task 1 `Dispatch<TAction>`, `DispatchArguments<TAction>`.
 - Produces: прежний `createDispatch(config): Dispatch<TAction>` с новым вызовом; внутренний `forwardAction<TAction>(dispatch: Dispatch<TAction>, action: DispatchAction<TAction>): Promise<void>` для результата API callbacks.
 
-- [ ] Написать RED-тесты точного объекта на входе reducer: `dispatch('users/SetPageAction', 2)` → `{scope:'users', type:'SetPageAction', payload:2}`; для объекта/массива проверить сохранение ссылки; для null — точного значения; без второго аргумента — отсутствие поля payload, с явным undefined — присутствие поля.
-- [ ] Добавить runtime-тесты root/feature routing, нескольких быстрых dispatch, API success/error callbacks и вложенных dispatch с прежней семантикой ожидания и reporting. Для неверного формата пути проверить один TypeError в reporter и отсутствие readState/reducer/writeState/effects.
-- [ ] Запустить `npm test --workspace @gost-kit/common`; подтвердить RED новых сценариев.
-- [ ] Обновить dispatch: разделить путь, собрать объект с отдельным payload, затем использовать существующее исполнение. Для ошибки формата ввести `DispatchError = { kind: 'dispatch'; path: unknown; error: TypeError }` в StoreError, сохранив разрешённый Promise. Проверка формата требует ровно один `/` и непустые части. Поведение reducer для неизвестного действия не расширять в этой задаче при принятии предложенной границы.
-- [ ] В API adapter направлять возвращённые callbacks объекты через внутренний forwardAction; сохранить их payload и обработку ошибок. Type erasure, если потребуется при динамической передаче union, ограничить этим адаптером и покрыть type tests публичного API.
-- [ ] Запустить `npm run check --workspace @gost-kit/common` и `npm test --workspace @gost-kit/common`; ожидать PASS всех контрактных тестов, включая reset и dispatch errors.
-- [ ] Закоммитить: `[gost-kit-44] Execute namespaced dispatch with separate payload`.
+- [x] Написать RED-тесты точного объекта на входе reducer: `dispatch('users/SetPageAction', 2)` → `{scope:'users', type:'SetPageAction', payload:2}`; для объекта/массива проверить сохранение ссылки; для null — точного значения; без второго аргумента — отсутствие поля payload, с явным undefined — присутствие поля.
+- [x] Добавить runtime-тесты root/feature routing, нескольких быстрых dispatch, API success/error callbacks и вложенных dispatch с прежней семантикой ожидания и reporting. Для неверного формата пути проверить один TypeError в reporter и отсутствие readState/reducer/writeState/effects.
+- [x] Запустить `npm test --workspace @gost-kit/common`; подтвердить RED новых сценариев.
+- [x] Обновить dispatch: разделить путь, собрать объект с отдельным payload, затем использовать существующее исполнение. Для ошибки формата ввести `DispatchError = { kind: 'dispatch'; path: unknown; error: TypeError }` в StoreError, сохранив разрешённый Promise. Проверка формата требует ровно один `/` и непустые части. Поведение reducer для неизвестного действия не расширять в этой задаче при принятии предложенной границы.
+- [x] В API adapter направлять возвращённые callbacks объекты через внутренний forwardAction; сохранить их payload и обработку ошибок. Type erasure, если потребуется при динамической передаче union, ограничить этим адаптером и покрыть type tests публичного API.
+- [x] Запустить `npm run check --workspace @gost-kit/common` и `npm test --workspace @gost-kit/common`; ожидать PASS всех контрактных тестов, включая reset и dispatch errors.
+- [x] Закоммитить: `[gost-kit-44] Execute namespaced dispatch with separate payload`.
 
 ### Task 3: Svelte и правила ESLint
 
@@ -75,12 +75,12 @@
 - Consumes: новый `Dispatch<TAction>` из common.
 - Produces: Store.dispatch с тем же новым контрактом; прежнее распознавание genuine dispatch в ESLint.
 
-- [ ] Добавить/мигрировать Svelte tests: dispatch(path, payload) обновляет наблюдаемое state, независимые stores и reset сохраняют поведение.
-- [ ] Добавить ESLint fixtures: один `dispatch('users/LoadAction')` и один `dispatch('users/SetPageAction', 2)` валидны; условный выбор действия и несколько dispatch по-прежнему запрещены. Одноимённая посторонняя функция не считается dispatch.
-- [ ] Запустить тесты Svelte/plugin; проверить RED новых контрактов там, где текущая реализация распознаёт старую сигнатуру.
-- [ ] Адаптировать recognition только при подтверждённой необходимости. Сохранить границу UI-Kit и бизнес-компонентов; настройки severity не менять.
-- [ ] Запустить `npm run check --workspace @gost-kit/svelte`, `npm test --workspace @gost-kit/svelte`, `npm test --workspace @gost-kit/eslint-plugin` — PASS.
-- [ ] Закоммитить: `[gost-kit-44] Integrate dispatch paths with Svelte and lint checks`.
+- [x] Добавить/мигрировать Svelte tests: dispatch(path, payload) обновляет наблюдаемое state, независимые stores и reset сохраняют поведение.
+- [x] Добавить ESLint fixtures: один `dispatch('users/LoadAction')` и один `dispatch('users/SetPageAction', 2)` валидны; условный выбор действия и несколько dispatch по-прежнему запрещены. Одноимённая посторонняя функция не считается dispatch.
+- [x] Запустить тесты Svelte/plugin; проверить RED новых контрактов там, где текущая реализация распознаёт старую сигнатуру.
+- [x] Адаптировать recognition только при подтверждённой необходимости. Сохранить границу UI-Kit и бизнес-компонентов; настройки severity не менять.
+- [x] Запустить `npm run check --workspace @gost-kit/svelte`, `npm test --workspace @gost-kit/svelte`, `npm test --workspace @gost-kit/eslint-plugin` — PASS.
+- [x] Закоммитить: `[gost-kit-44] Integrate dispatch paths with Svelte and lint checks`.
 
 ### Task 4: Сквозной пример и поставка
 
@@ -94,10 +94,10 @@
 - Consumes: Tasks 1–3 API и типы.
 - Produces: полностью мигрированный пример, публичная документация и changeset.
 
-- [ ] Перевести примеры деклараций на payload, reducer — на action.payload, компоненты и эффект глобального уведомления — на вызов path/payload. Проверить unit-тестами точные commits и error context, не ослабляя assertions ради миграции.
-- [ ] Обновить README с примерами: без payload, primitive, array, object и вызов из эффекта; описать breaking migration и выбранный root-синтаксис.
-- [ ] Добавить changeset common и Svelte; ESLint plugin/configs добавить только при изменениях поставляемого поведения/зависимостей согласно правилам версионирования репозитория.
-- [ ] Выполнить `npm run check`, затем в example `npm run build` и `npm run test:e2e -- --workers=1`. Ожидается PASS, отсутствие Svelte errors/warnings, сохранение двух текущих browser flows.
-- [ ] Проверить реальные tarballs common/Svelte в disposable consumer: typed path/payload и API effector доступны через публичные exports; тесты отсутствуют в поставке. Прогнать `git diff --check`.
-- [ ] Закоммитить: `[gost-kit-44] Migrate example and document dispatch payload API`.
+- [x] Перевести примеры деклараций на payload, reducer — на action.payload, компоненты и эффект глобального уведомления — на вызов path/payload. Проверить unit-тестами точные commits и error context, не ослабляя assertions ради миграции.
+- [x] Обновить README с примерами: без payload, primitive, array, object и вызов из эффекта; описать breaking migration и выбранный root-синтаксис.
+- [x] Добавить changeset common и Svelte; ESLint plugin/configs добавить только при изменениях поставляемого поведения/зависимостей согласно правилам версионирования репозитория.
+- [x] Выполнить `npm run check`, затем в example `npm run build` и `npm run test:e2e -- --workers=1`. Ожидается PASS, отсутствие Svelte errors/warnings, сохранение двух текущих browser flows.
+- [x] Проверить реальные tarballs common/Svelte в disposable consumer: typed path/payload и API effector доступны через публичные exports; тесты отсутствуют в поставке. Прогнать `git diff --check`.
+- [x] Закоммитить: `[gost-kit-44] Migrate example and document dispatch payload API`.
 - [ ] Провести одно независимое ревью всей ветки; исправить подтверждённые дефекты и повторить затронутые проверки. PR/merge/publication — по дальнейшему указанию владельца.

@@ -2,6 +2,7 @@ import {
   createApiEffector,
   define,
   effecting,
+  forwardAction,
   type Effector,
 } from '@gost-kit/common';
 import type { Paths } from '../../api/paths';
@@ -15,7 +16,7 @@ import type {
 
 const shellEffector = define.effector<RootAction, DispatchActionEffect>({
   DispatchActionEffect: async ({ effect, dispatch }) => {
-    await dispatch(effect.action);
+    await forwardAction(dispatch, effect.action);
   },
 });
 

@@ -4,7 +4,6 @@ import { loadUser } from '../../features/user/data/api/load-user';
 import { createEffector } from './effector';
 import { createSyntheticApi } from '../../api/create-synthetic-api';
 import type { ApiEffect } from '../types/effect';
-import type { RootAction } from '../types/action';
 import type { UserDto } from '../../features/user/data/dto/user-dto';
 
 const user: UserDto = {
@@ -20,15 +19,19 @@ const effect: ApiEffect = createApiEffect(loadUser, {
     path: [],
   },
   onSuccess: (response) => {
-    return { scope: 'users', type: 'SuccessReceiveAction', response };
+    return {
+      scope: 'users',
+      type: 'SuccessReceiveAction',
+      payload: { response },
+    };
   },
   onError: (errors) => {
-    return { scope: 'users', type: 'ErrorReceiveAction', errors };
+    return { scope: 'users', type: 'ErrorReceiveAction', payload: { errors } };
   },
 });
 
 test('request failure dispatches the configured default error', async () => {
-  const actions: RootAction[] = [];
+  const actions: unknown[][] = [];
   const requests: { email: string }[] = [];
   const effector = createEffector(
     createSyntheticApi(async (request) => {
@@ -37,21 +40,17 @@ test('request failure dispatches the configured default error', async () => {
     }),
   );
 
-  await effector(effect, async (action) => {
-    actions.push(action);
+  await effector(effect, async (...args) => {
+    actions.push(args);
   });
   expect(requests).toEqual([{ email: user.email }]);
   expect(actions).toEqual([
-    {
-      scope: 'users',
-      type: 'ErrorReceiveAction',
-      errors: [effect.defaultError],
-    },
+    ['users/ErrorReceiveAction', { errors: [effect.defaultError] }],
   ]);
 });
 
 test('unknown request failures are normalized for the error receiver', async () => {
-  const actions: RootAction[] = [];
+  const actions: unknown[][] = [];
   const effector = createEffector(
     createSyntheticApi(() => {
       return Promise.reject(null);
@@ -62,19 +61,19 @@ test('unknown request failures are normalized for the error receiver', async () 
     {
       ...effect,
       onError: (errors) => {
-        return { scope: 'users', type: 'ErrorReceiveAction', errors };
+        return {
+          scope: 'users',
+          type: 'ErrorReceiveAction',
+          payload: { errors },
+        };
       },
     },
-    async (action) => {
-      actions.push(action);
+    async (...args) => {
+      actions.push(args);
     },
   );
   expect(actions).toEqual([
-    {
-      scope: 'users',
-      type: 'ErrorReceiveAction',
-      errors: [effect.defaultError],
-    },
+    ['users/ErrorReceiveAction', { errors: [effect.defaultError] }],
   ]);
 });
 
@@ -96,7 +95,11 @@ test('success receiver exceptions reject without calling the error receiver', as
         onError: (errors) => {
           errorCalls += 1;
 
-          return { scope: 'users', type: 'ErrorReceiveAction', errors };
+          return {
+            scope: 'users',
+            type: 'ErrorReceiveAction',
+            payload: { errors },
+          };
         },
       },
       async () => {},
@@ -120,7 +123,11 @@ test('dispatch failures reject without being reclassified as API failures', asyn
         onError: (errors) => {
           errorCalls += 1;
 
-          return { scope: 'users', type: 'ErrorReceiveAction', errors };
+          return {
+            scope: 'users',
+            type: 'ErrorReceiveAction',
+            payload: { errors },
+          };
         },
       },
       async () => {
@@ -153,7 +160,7 @@ test('error receiver exceptions propagate without retry', async () => {
 
 test('DispatchActionEffect waits for the forwarded action', async () => {
   const completion = Promise.withResolvers<void>();
-  const actions: RootAction[] = [];
+  const actions: unknown[][] = [];
   let completed = false;
   const pending = createEffector(
     createSyntheticApi(async () => {
@@ -164,8 +171,8 @@ test('DispatchActionEffect waits for the forwarded action', async () => {
       type: 'DispatchActionEffect',
       action: { scope: 'users', type: 'LoadAction' },
     },
-    async (action) => {
-      actions.push(action);
+    async (...args) => {
+      actions.push(args);
       await completion.promise;
     },
   ).then(() => {
@@ -173,7 +180,7 @@ test('DispatchActionEffect waits for the forwarded action', async () => {
   });
 
   await Promise.resolve();
-  expect(actions).toEqual([{ scope: 'users', type: 'LoadAction' }]);
+  expect(actions).toEqual([['users/LoadAction']]);
   expect(completed).toBe(false);
   completion.resolve();
   await pending;

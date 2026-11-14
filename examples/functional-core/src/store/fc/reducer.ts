@@ -19,7 +19,10 @@ const appReducer = define.reducer<
     return {
       state: {
         ...state,
-        alert: { status: action.status, message: action.message },
+        alert: {
+          status: action.payload.status,
+          message: action.payload.message,
+        },
       },
     };
   },

@@ -43,18 +43,18 @@ presenter when that reference is unchanged. The store uses ordinary immutable
 snapshots and raw reactive replacement; no separate UI root view is needed.
 
 ```text
-component: dispatch({ scope: 'users', type: 'SetEmailAction', email })
+component: dispatch('users/SetEmailAction', { email })
 → reducer returns { state, effects: [] }
 → shell replaces the complete state
 → Svelte updates the component
 
-component: await dispatch({ scope: 'users', type: 'LoadAction' })
+component: await dispatch('users/LoadAction')
 → reducer returns loading state + ApiEffect
 → shell commits state and starts the effect
 → shared API client executes the injected synthetic fetch and normalizes the DTO result
 → operation.mapResponse converts DTO to the domain User
 → onSuccess/onError creates SuccessReceiveAction / ErrorReceiveAction with scope: 'users'
-→ await dispatch(callback action)
+→ await forwardAction(dispatch, callback action)
 → on failure: DispatchActionEffect sends global ShowAlertAction
 → the original dispatch completes after the nested actions/effects complete
 ```
@@ -87,11 +87,12 @@ component: await dispatch({ scope: 'users', type: 'LoadAction' })
 Feature action declarations contain only local type names and payloads.
 `src/store/types/action.ts` passes the central scope map directly to `ScopedActions`:
 `RootAction = ScopedActions<{ users: UserAction; root: ShowAlertAction }>`. The helper
-builds the root union and adds scopes automatically. UI calls and API callbacks
-supply `scope: 'users'`; application-level `ShowAlertAction` omits scope by default.
+builds the root union and adds scopes automatically. UI calls use typed paths
+such as `users/LoadAction`. API callbacks return objects with `scope: 'users'`
+and data in payload; application-level object actions may omit scope.
 `reducing` first selects the table by `action.scope ?? 'root'`, then selects
 the handler by `action.type`. Different namespaces can use the same action type
-with different payloads. The original action object is preserved.
+with different payloads. Dispatch creates the object consumed by the reducer.
 
 `define.reducer<UserState, UserAction, RootEffect, RootState>()({...})` defines a feature table.
 Its keys are action type names, and each handler receives `({ state, action }, rootState)`
