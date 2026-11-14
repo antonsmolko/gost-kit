@@ -100,4 +100,4 @@
 - [x] Выполнить `npm run check`, затем в example `npm run build` и `npm run test:e2e -- --workers=1`. Ожидается PASS, отсутствие Svelte errors/warnings, сохранение двух текущих browser flows.
 - [x] Проверить реальные tarballs common/Svelte в disposable consumer: typed path/payload и API effector доступны через публичные exports; тесты отсутствуют в поставке. Прогнать `git diff --check`.
 - [x] Закоммитить: `[gost-kit-44] Migrate example and document dispatch payload API`.
-- [ ] Провести одно независимое ревью всей ветки; исправить подтверждённые дефекты и повторить затронутые проверки. PR/merge/publication — по дальнейшему указанию владельца.
+- [x] Провести одно независимое ревью всей ветки; исправить подтверждённые дефекты и повторить затронутые проверки. PR/merge/publication — по дальнейшему указанию владельца.

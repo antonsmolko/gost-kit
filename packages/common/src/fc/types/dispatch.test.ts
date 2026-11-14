@@ -2,6 +2,7 @@ import { expect, test } from 'vitest';
 import type { Dispatch } from './dispatch';
 import type { ScopedActions } from './scoped-actions';
 import { define } from '../lib/define';
+import { forwardAction } from '../lib/forward-action';
 
 type Action = ScopedActions<{
   users:
@@ -74,7 +75,28 @@ const checkOptionalObject = () => {
   });
 };
 
+const checkInvalidDeclarations = (
+  flat: Dispatch<{ type: 'SetAction'; count: number }>,
+  paths: Dispatch<
+    | { scope: ''; type: 'LoadAction' }
+    | { scope: 'admin/users'; type: 'LoadAction' }
+    | { scope: 'users'; type: 'Load/UserAction' }
+  >,
+) => {
+  // @ts-expect-error Data must be declared in payload before it can be dispatched.
+  void flat('root/SetAction');
+  // @ts-expect-error The adapter must not silently discard action data.
+  void forwardAction(flat, { type: 'SetAction', count: 41 });
+  // @ts-expect-error Empty namespace cannot produce a valid dispatch path.
+  void paths('/LoadAction');
+  // @ts-expect-error A namespace cannot include the path separator.
+  void paths('admin/users/LoadAction');
+  // @ts-expect-error An action name cannot include the path separator.
+  void paths('users/Load/UserAction');
+};
+
 test('dispatch checks namespaced paths and their payloads', () => {
   expect(checkDispatch).toBeTypeOf('function');
   expect(checkOptionalObject).toBeTypeOf('function');
+  expect(checkInvalidDeclarations).toBeTypeOf('function');
 });
