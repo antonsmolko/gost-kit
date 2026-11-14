@@ -5,7 +5,7 @@ import { createStore } from './createStore.svelte';
 import { observe } from './__tests__/observe.svelte';
 
 type CounterState = { counter: number };
-type CounterAction = { type: 'SetCounterAction'; counter: number };
+type CounterAction = { type: 'SetCounterAction'; payload: { counter: number } };
 
 describe('createStore', () => {
   test('preserves initial state without adding deep reactivity', () => {
@@ -30,7 +30,7 @@ describe('createStore', () => {
         return { counter: 0 };
       },
       reducer: (_state, action) => {
-        return { state: { counter: action.counter }, effects: [] };
+        return { state: { counter: action.payload.counter }, effects: [] };
       },
       effector: async () => {},
     });
@@ -46,7 +46,7 @@ describe('createStore', () => {
     try {
       expect(observed.values).toEqual([0]);
 
-      await store.dispatch({ type: 'SetCounterAction', counter: 7 });
+      await store.dispatch('root/SetCounterAction', { counter: 7 });
       flushSync();
 
       expect(observed.values).toEqual([0, 7]);
@@ -57,7 +57,10 @@ describe('createStore', () => {
 
   test('preserves presentation when another root branch changes', async () => {
     type RootState = { user: { name: string }; alert: string };
-    type ReplaceAction = { type: 'ReplaceAction'; state: RootState };
+    type ReplaceAction = {
+      type: 'ReplaceAction';
+      payload: { state: RootState };
+    };
 
     const initial: RootState = { user: { name: 'Ada' }, alert: '' };
     const store = createStore<RootState, ReplaceAction, never>({
@@ -65,7 +68,7 @@ describe('createStore', () => {
         return initial;
       },
       reducer: (_state, action) => {
-        return { state: action.state, effects: [] };
+        return { state: action.payload.state, effects: [] };
       },
       effector: async () => {},
     });
@@ -86,8 +89,7 @@ describe('createStore', () => {
       expect(userPresenter).toHaveBeenCalledTimes(1);
       expect(observed.values).toEqual([{ label: 'ADA' }]);
 
-      await store.dispatch({
-        type: 'ReplaceAction',
+      await store.dispatch('root/ReplaceAction', {
         state: { ...initial, alert: 'Opened' },
       });
       flushSync();
@@ -97,8 +99,7 @@ describe('createStore', () => {
       expect(directPresenter).toHaveBeenCalledTimes(2);
       expect(direct.values).toEqual([{ label: 'ADA' }, { label: 'ADA' }]);
 
-      await store.dispatch({
-        type: 'ReplaceAction',
+      await store.dispatch('root/ReplaceAction', {
         state: { user: { name: 'Grace' }, alert: 'Opened' },
       });
       flushSync();
@@ -119,7 +120,7 @@ describe('createStore', () => {
         return { ...initial };
       },
       reducer: (_state, action) => {
-        return { state: { counter: action.counter }, effects: [] };
+        return { state: { counter: action.payload.counter }, effects: [] };
       },
       effector: async () => {},
     };
@@ -147,14 +148,14 @@ describe('createStore', () => {
       expect(second.state).toEqual(initial);
       expect(first.state).not.toBe(second.state);
 
-      await first.dispatch({ type: 'SetCounterAction', counter: 7 });
+      await first.dispatch('root/SetCounterAction', { counter: 7 });
       flushSync();
 
       expect(firstView.values).toEqual([0, 7]);
       expect(secondView.values).toEqual([0]);
       expect(second.state).toEqual(initial);
 
-      await second.dispatch({ type: 'SetCounterAction', counter: 9 });
+      await second.dispatch('root/SetCounterAction', { counter: 9 });
       flushSync();
 
       expect(firstView.values).toEqual([0, 7]);
@@ -202,7 +203,7 @@ describe('createStore', () => {
     try {
       expect(store.state).toBe(initial);
 
-      await store.dispatch({ type: 'ReplaceAction' });
+      await store.dispatch('root/ReplaceAction');
       flushSync();
 
       expect(store.state).toBe(next);
@@ -228,7 +229,7 @@ test('captures the factory and calls it without arguments on creation and every 
     initState: initialState,
     reducer: (_state, action) => {
       return {
-        state: { counter: action.counter },
+        state: { counter: action.payload.counter },
         effects: [],
       };
     },
@@ -243,7 +244,7 @@ test('captures the factory and calls it without arguments on creation and every 
     return { counter: 99 };
   };
   expect(initialState.mock.calls).toEqual([[]]);
-  await store.dispatch({ type: 'SetCounterAction', counter: 8 });
+  await store.dispatch('root/SetCounterAction', { counter: 8 });
   store.reset();
   expect(store.state).toEqual({ counter: 0 });
   store.reset({ excluded: ['counter'] });
@@ -252,27 +253,26 @@ test('captures the factory and calls it without arguments on creation and every 
   expect(store).toBe(originalStore);
   expect(store.dispatch).toBe(originalDispatch);
   expect(store.reset).toBe(originalReset);
-  await store.dispatch({ type: 'SetCounterAction', counter: 12 });
+  await store.dispatch('root/SetCounterAction', { counter: 12 });
   expect(store.state.counter).toBe(12);
 });
 
 test('publishes a complete reset once and preserves excluded scope presentation', async () => {
   type RootState = { user: { name: string }; alerts: string[]; count: number };
-  type ReplaceAction = { type: 'ReplaceAction'; state: RootState };
+  type ReplaceAction = { type: 'ReplaceAction'; payload: { state: RootState } };
 
   const store = createStore<RootState, ReplaceAction, never>({
     initState: () => {
       return { user: { name: '' }, alerts: [], count: 0 };
     },
     reducer: (_state, action) => {
-      return { state: action.state, effects: [] };
+      return { state: action.payload.state, effects: [] };
     },
     effector: async () => {},
   });
   const selected = { name: 'Ada' };
 
-  await store.dispatch({
-    type: 'ReplaceAction',
+  await store.dispatch('root/ReplaceAction', {
     state: { user: selected, alerts: ['open'], count: 8 },
   });
 
@@ -374,11 +374,11 @@ test('allows an already pending effect to dispatch against the reset state', asy
     },
     effector: async (_effect, dispatch) => {
       await gate.promise;
-      await dispatch({ type: 'CompleteAction' });
+      await dispatch('root/CompleteAction');
     },
   });
   let settled = false;
-  const pending = store.dispatch({ type: 'StartAction' }).then(() => {
+  const pending = store.dispatch('root/StartAction').then(() => {
     settled = true;
   });
 

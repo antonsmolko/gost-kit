@@ -39,13 +39,13 @@ writeFileSync(
 
 const prelude = `import Ui from './Ui.svelte';
 import type { Dispatch, Store, AsyncTap } from '@gost-kit/common';
-type Action = { type: 'OneAction' } | { type: 'TwoAction' } | { type: 'EmailAction'; email: string };
+type Action = { type: 'OneAction' } | { type: 'TwoAction' } | { type: 'EmailAction'; payload: string } | { type: 'PageAction'; payload: number };
 declare const send: Dispatch<Action>;
 declare const store: Store<{ value: number }, Action>;
 declare const ready: boolean;
 `;
-const one = "void send({ type: 'OneAction' });";
-const two = "void send({ type: 'TwoAction' });";
+const one = "void send('root/OneAction');";
+const two = "void send('root/TwoAction');";
 let counter = 0;
 const fixture = (
   script: string,
@@ -74,32 +74,35 @@ RuleTester.itOnly = test.only;
 
 const valid = [
   fixture(
-    "declare const consume: (value: Promise<void>) => (() => void) | undefined; const handle = () => { consume(send({type:'OneAction'}))?.(); };",
+    "const handle = (page: number) => { void send('root/PageAction', page); };",
   ),
   fixture(
-    "declare const data: {name: string} | undefined; const handle = () => { void send({type:'EmailAction', email: String(data?.name)}); };",
+    "declare const consume: (value: Promise<void>) => (() => void) | undefined; const handle = () => { consume(send('root/OneAction'))?.(); };",
   ),
   fixture(
-    "declare const accept: (value: Promise<void>) => unknown; const handle = () => { (store?.state, accept)(send({type:'OneAction'})); };",
+    "declare const data: {name: string} | undefined; const handle = () => { void send('root/EmailAction', String(data?.name)); };",
+  ),
+  fixture(
+    "declare const accept: (value: Promise<void>) => unknown; const handle = () => { (store?.state, accept)(send('root/OneAction')); };",
   ),
 
   fixture(
     `declare const details: {name: string} | undefined; const handle = () => { const value = details?.name; void value; ${one} };`,
   ),
   fixture(
-    "const handle = () => { void send({type:'OneAction'})?.then(() => {}); };",
+    "const handle = () => { void send('root/OneAction')?.then(() => {}); };",
   ),
   fixture(
     "const handle = () => { void (store?.dispatch)({type:'OneAction'}); };",
   ),
 
   fixture(
-    "const handle = (email = '') => { void send({type:'EmailAction', email}); };",
+    "const handle = (email = '') => { void send('root/EmailAction', email); };",
   ),
   fixture(`const handle = (deferred = () => { ${one} ${two} }) => { ${one} };`),
 
   fixture(
-    `const handle = () => { class Deferred { value = send({type:'OneAction'}); } ${one} };`,
+    `const handle = () => { class Deferred { value = send('root/OneAction'); } ${one} };`,
   ),
   fixture(
     `const handle = () => { type Dispatch<T> = (action: T) => Promise<void>; const dispatch: Dispatch<Action> = async () => {}; void dispatch({type:'OneAction'}); void dispatch({type:'TwoAction'}); };`,
@@ -113,9 +116,9 @@ const valid = [
   ),
 
   fixture(`const handle = () => { ${one} };`),
-  fixture(`const handle = async () => { await send({ type: 'OneAction' }); };`),
+  fixture(`const handle = async () => { await send('root/OneAction'); };`),
   fixture(
-    "const handle = (email: string) => { void send({ type: 'EmailAction', email }); };",
+    "const handle = (email: string) => { void send('root/EmailAction', email); };",
     '<Ui onemailchange={handle} />',
   ),
   fixture(
@@ -160,34 +163,34 @@ const valid = [
   fixture(
     'const title = "Ready";',
     '<Ui onconfirm={handle} />',
-    `<script lang="ts" module>import type { Dispatch } from '@gost-kit/common'; declare const send: Dispatch<{type:'OneAction'}>; const handle = () => { void send({type:'OneAction'}); void send({type:'OneAction'}); };</script>`,
+    `<script lang="ts" module>import type { Dispatch } from '@gost-kit/common'; declare const send: Dispatch<{type:'OneAction'}>; const handle = () => { void send('root/OneAction'); void send('root/OneAction'); };</script>`,
   ),
 ];
 const invalid = [
   [
     'optional outer call argument',
-    "declare const maybe: ((value: Promise<void>) => unknown) | undefined; const handle = () => { void maybe?.(send({type:'OneAction'})); };",
+    "declare const maybe: ((value: Promise<void>) => unknown) | undefined; const handle = () => { void maybe?.(send('root/OneAction')); };",
     'conditionalDispatch',
   ],
   [
     'optional member argument',
-    "declare const maybe: { consume: (value: Promise<void>) => unknown } | undefined; const handle = () => { void maybe?.consume(send({type:'OneAction'})); };",
+    "declare const maybe: { consume: (value: Promise<void>) => unknown } | undefined; const handle = () => { void maybe?.consume(send('root/OneAction')); };",
     'conditionalDispatch',
   ],
   [
     'optional computed key',
-    "declare const maybe: Record<string, unknown> | undefined; const handle = () => { void maybe?.[String(send({type:'OneAction'}))]; };",
+    "declare const maybe: Record<string, unknown> | undefined; const handle = () => { void maybe?.[String(send('root/OneAction'))]; };",
     'conditionalDispatch',
   ],
   [
     'earlier optional access before computed key',
-    "declare const maybe: { values: Record<string, unknown> } | undefined; const handle = () => { void maybe?.values[String(send({type:'OneAction'}))]; };",
+    "declare const maybe: { values: Record<string, unknown> } | undefined; const handle = () => { void maybe?.values[String(send('root/OneAction'))]; };",
     'conditionalDispatch',
   ],
 
   [
     'optional store access',
-    "declare const maybe: Store<{value:number}, Action> | undefined; const handle = () => { void maybe?.dispatch({type:'OneAction'}); };",
+    "declare const maybe: Store<{value:number}, Action> | undefined; const handle = () => { void maybe?.dispatch('root/OneAction'); };",
     'conditionalDispatch',
   ],
   [
@@ -202,7 +205,7 @@ const invalid = [
   ],
   [
     'optional earlier call in chain',
-    "declare const locator: {getStore: () => Store<{value:number}, Action>} | undefined; const handle = () => { void locator?.getStore().dispatch({type:'OneAction'}); };",
+    "declare const locator: {getStore: () => Store<{value:number}, Action>} | undefined; const handle = () => { void locator?.getStore().dispatch('root/OneAction'); };",
     'conditionalDispatch',
   ],
 
@@ -218,25 +221,25 @@ const invalid = [
   ],
   [
     'default parameter cascade',
-    `const handle = (pending = send({type:'OneAction'})) => { ${two} };`,
+    `const handle = (pending = send('root/OneAction')) => { ${two} };`,
     'multipleDispatch',
   ],
   [
     'default parameter conditional dispatch',
-    "const handle = (pending = send({type:'OneAction'})) => { void pending; };",
+    "const handle = (pending = send('root/OneAction')) => { void pending; };",
     'conditionalDispatch',
   ],
   ...['??=', '&&=', '||='].map((operator) => {
     return [
       `logical assignment ${operator}`,
-      `let pending: Promise<void> | undefined; const handle = () => { pending ${operator} send({type:'OneAction'}); };`,
+      `let pending: Promise<void> | undefined; const handle = () => { pending ${operator} send('root/OneAction'); };`,
       'conditionalDispatch',
     ] as const;
   }),
 
   [
     'static field executes',
-    `const handle = () => { class Active { static value = send({type:'OneAction'}); } ${one} };`,
+    `const handle = () => { class Active { static value = send('root/OneAction'); } ${one} };`,
     'multipleDispatch',
   ],
   [
@@ -288,37 +291,37 @@ const invalid = [
   ],
   [
     'ternary action',
-    "const handle = () => { void send({ type: ready ? 'OneAction' : 'TwoAction' }); };",
+    "const handle = () => { void send(ready ? 'root/OneAction' : 'root/TwoAction'); };",
     'conditionalDispatch',
   ],
   [
     'short circuit',
-    "const handle = () => { ready && send({ type: 'OneAction' }); };",
+    "const handle = () => { ready && send('root/OneAction'); };",
     'conditionalDispatch',
   ],
   [
     'store member',
-    "const handle = () => { void store.dispatch({ type: 'OneAction' }); void store.dispatch({ type: 'TwoAction' }); };",
+    "const handle = () => { void store.dispatch('root/OneAction'); void store.dispatch('root/TwoAction'); };",
     'multipleDispatch',
   ],
   [
     'const dispatch alias',
-    `const dispatch = send; const handle = () => { void dispatch({type:'OneAction'}); void dispatch({type:'TwoAction'}); };`,
+    `const dispatch = send; const handle = () => { void dispatch('root/OneAction'); void dispatch('root/TwoAction'); };`,
     'multipleDispatch',
   ],
   [
     'destructured dispatch',
-    "const { dispatch } = store; const handle = () => { void dispatch({type:'OneAction'}); void dispatch({type:'TwoAction'}); };",
+    "const { dispatch } = store; const handle = () => { void dispatch('root/OneAction'); void dispatch('root/TwoAction'); };",
     'multipleDispatch',
   ],
   [
     'type alias',
-    `type Alias<T extends Action> = Dispatch<T>; declare const dispatch: Alias<Action>; const handle = () => { void dispatch({type:'OneAction'}); void dispatch({type:'TwoAction'}); };`,
+    `type Alias<T extends Action> = Dispatch<T>; declare const dispatch: Alias<Action>; const handle = () => { void dispatch('root/OneAction'); void dispatch('root/TwoAction'); };`,
     'multipleDispatch',
   ],
   [
     'reexport type',
-    "import type { Send } from './aliases'; declare const dispatch: Send<Action>; const handle = () => { void dispatch({type:'OneAction'}); void dispatch({type:'TwoAction'}); };",
+    "import type { Send } from './aliases'; declare const dispatch: Send<Action>; const handle = () => { void dispatch('root/OneAction'); void dispatch('root/TwoAction'); };",
     'multipleDispatch',
   ],
   [
@@ -334,7 +337,7 @@ const invalid = [
   ],
   [
     'inferred Store',
-    "import { createStore } from '@gost-kit/svelte'; const app = createStore({ initState: () => ({value:0}), reducer: (state, _action: Action) => ({ state, effects: [] }), effector: async () => {} }); const handle = () => { void app.dispatch({type:'OneAction'}); void app.dispatch({type:'TwoAction'}); };",
+    "import { createStore } from '@gost-kit/svelte'; const app = createStore({ initState: () => ({value:0}), reducer: (state, _action: Action) => ({ state, effects: [] }), effector: async () => {} }); const handle = () => { void app.dispatch('root/OneAction'); void app.dispatch('root/TwoAction'); };",
     'multipleDispatch',
   ],
 ] as const;
