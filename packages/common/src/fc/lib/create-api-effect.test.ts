@@ -14,8 +14,8 @@ const operation = defineApiOperation<TestPaths>()({
   },
 });
 
-type SuccessAction = { type: 'LoadedAction'; label: string };
-type ErrorAction = { type: 'FailedAction'; errors: AppError[] };
+type SuccessAction = { type: 'LoadedAction'; payload: { label: string } };
+type ErrorAction = { type: 'FailedAction'; payload: { errors: AppError[] } };
 
 const checkTypes = () => {
   const effect = createApiEffect(operation, {
@@ -25,10 +25,10 @@ const checkTypes = () => {
     onSuccess: (user) => {
       expectTypeOf(user).toEqualTypeOf<{ label: string }>();
 
-      return { type: 'LoadedAction', label: user.label };
+      return { type: 'LoadedAction', payload: { label: user.label } };
     },
     onError: (errors) => {
-      return { type: 'FailedAction', errors };
+      return { type: 'FailedAction', payload: { errors } };
     },
   });
   const rootEffect: ApiEffect<typeof operation, SuccessAction, ErrorAction> =
@@ -74,7 +74,7 @@ const checkTypes = () => {
     defaultError: fallback,
     // @ts-expect-error mapped callback receives domain, not DTO
     onSuccess: (_dto: TestUser) => {
-      return { type: 'LoadedAction', label: '' };
+      return { type: 'LoadedAction', payload: { label: '' } };
     },
   });
 
@@ -103,7 +103,7 @@ const checkTypes = () => {
     onSuccess: (id) => {
       expectTypeOf(id).toEqualTypeOf<number>();
 
-      return { type: 'LoadedAction', label: String(id) };
+      return { type: 'LoadedAction', payload: { label: String(id) } };
     },
   });
   const union: ApiEffect<
@@ -119,10 +119,7 @@ const checkTypes = () => {
   > = {
     ...otherEffect,
     onSuccess: (_user: { label: string }) => {
-      return {
-        type: 'LoadedAction' as const,
-        label: '',
-      };
+      return { type: 'LoadedAction' as const, payload: { label: '' } };
     },
   };
   const queryOperation = defineApiOperation<{
@@ -166,7 +163,7 @@ const checkTypes = () => {
     onSuccess: (user) => {
       expectTypeOf(user).toEqualTypeOf<{ label: string }>();
 
-      return { type: 'LoadedAction', label: user.label };
+      return { type: 'LoadedAction', payload: { label: user.label } };
     },
   });
 
@@ -183,13 +180,10 @@ test('factory describes one effect without executing mapper or callbacks', () =>
     mapResponse,
   });
   const onSuccess = vi.fn(() => {
-    return {
-      type: 'LoadedAction' as const,
-      label: 'Ada',
-    };
+    return { type: 'LoadedAction' as const, payload: { label: 'Ada' } };
   });
   const onError = vi.fn(() => {
-    return { type: 'FailedAction' as const, errors: [] };
+    return { type: 'FailedAction' as const, payload: { errors: [] } };
   });
   const effect = createApiEffect(load, {
     params: { path: { id: 1 } },

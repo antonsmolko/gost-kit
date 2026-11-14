@@ -2,7 +2,7 @@ import { expect, expectTypeOf, test } from 'vitest';
 import type { StoreError } from './store-error';
 import type { ResetError } from './reset-error';
 
-type Action = { type: 'RunAction'; value: number };
+type Action = { type: 'RunAction'; payload: { value: number } };
 type Effect = { type: 'RunEffect'; id: string };
 
 const checkFailure = (failure: StoreError<Action, Effect>) => {
@@ -10,6 +10,12 @@ const checkFailure = (failure: StoreError<Action, Effect>) => {
     expectTypeOf(failure).toEqualTypeOf<ResetError>();
     // @ts-expect-error Reset errors have no action.
     void failure.action;
+
+    return;
+  }
+
+  if (failure.kind === 'dispatch') {
+    expectTypeOf(failure.path).toEqualTypeOf<unknown>();
 
     return;
   }

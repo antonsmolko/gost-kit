@@ -87,14 +87,14 @@ test('logs the effect before its nested dispatch', async () => {
   });
 
   const effector: Effector<Action, Effect> = async (_effect, dispatch) => {
-    await dispatch({ type: 'SavedAction' });
+    await dispatch('root/SavedAction');
   };
 
   await logEffector(effector, { isEnabled: true })(
     { type: 'SaveEffect' },
     async (action) => {
-      events.push(action.type);
+      events.push(action);
     },
   );
-  expect(events).toEqual(['effect log', 'SavedAction']);
+  expect(events).toEqual(['effect log', 'root/SavedAction']);
 });

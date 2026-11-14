@@ -1,10 +1,9 @@
 import type { Trigger } from './trigger';
 
 /**
- * Dispatch input: feature actions keep their required scope; unscoped root
- * declarations also accept an explicit scope: 'root'. This only changes types;
- * dispatch passes the original object through without injecting a scope field.
- * Only root may have an optional scope; feature scopes must be required.
+ * Object action returned by API callbacks or passed to reducers.
+ * Feature scopes are required; local root declarations may omit scope.
+ * Public dispatch receives a path and payload, rather than this object.
  */
 export type DispatchAction<TAction extends Trigger> = TAction extends {
   scope: string;

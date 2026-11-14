@@ -12,7 +12,7 @@ test('define.reducer infers feature handlers and checks their returned state', (
     user: FeatureState;
     auth: { user: { id: string }; roles: string[] };
   };
-  type Action = { type: 'LoadAction'; count: number };
+  type Action = { type: 'LoadAction'; payload: { count: number } };
 
   const handlers = define.reducer<FeatureState, Action, never, RootState>()({
     LoadAction: ({ state, action }, rootState) => {
@@ -20,7 +20,7 @@ test('define.reducer infers feature handlers and checks their returned state', (
         state: {
           ...state,
           status: 'loading',
-          nested: { count: action.count },
+          nested: { count: action.payload.count },
           items: [rootState.auth.user.id],
         },
       };
@@ -38,7 +38,7 @@ test('define.reducer infers feature handlers and checks their returned state', (
 
   expect(
     handlers.LoadAction(
-      { state, action: { type: 'LoadAction', count: 7 } },
+      { state, action: { type: 'LoadAction', payload: { count: 7 } } },
       rootState,
     ),
   ).toEqual({
@@ -60,7 +60,9 @@ test('define.reducer infers feature handlers and checks their returned state', (
   define.reducer<FeatureState, Action>()({
     // @ts-expect-error Returning void in another branch must not bypass the state check.
     LoadAction: ({ state, action }) => {
-      return action.count ? { state: { ...state, wrongKey: true } } : undefined;
+      return action.payload.count
+        ? { state: { ...state, wrongKey: true } }
+        : undefined;
     },
   });
   define.reducer<FeatureState, Action>()({

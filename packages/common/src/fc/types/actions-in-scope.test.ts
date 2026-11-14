@@ -4,10 +4,10 @@ import type { ScopedActions } from './scoped-actions';
 
 test('selection by scope preserves the corresponding action variants and payloads', () => {
   type UserAction =
-    | { type: 'LoadAction'; page: number }
-    | { type: 'SetEmailAction'; email: string };
-  type RoleAction = { type: 'LoadAction'; roleId: string };
-  type GlobalAction = { type: 'ShowAlertAction'; message: string };
+    | { type: 'LoadAction'; payload: { page: number } }
+    | { type: 'SetEmailAction'; payload: { email: string } };
+  type RoleAction = { type: 'LoadAction'; payload: { roleId: string } };
+  type GlobalAction = { type: 'ShowAlertAction'; payload: { message: string } };
   type Action = ScopedActions<{
     users: UserAction;
     roles: RoleAction;

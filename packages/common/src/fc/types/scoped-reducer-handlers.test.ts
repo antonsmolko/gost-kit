@@ -3,9 +3,9 @@ import type { ScopedReducerHandlers } from './scoped-reducer-handlers';
 import type { ScopedActions } from './scoped-actions';
 
 type State = { count: number };
-type UserAction = { type: 'LoadAction'; page: number };
-type RoleAction = { type: 'LoadAction'; roleId: string };
-type GlobalAction = { type: 'ShowAlertAction'; message: string };
+type UserAction = { type: 'LoadAction'; payload: { page: number } };
+type RoleAction = { type: 'LoadAction'; payload: { roleId: string } };
+type GlobalAction = { type: 'ShowAlertAction'; payload: { message: string } };
 type Action = ScopedActions<{
   users: UserAction;
   roles: RoleAction;
@@ -18,21 +18,21 @@ test('equal action names in different scopes retain their own payload types', ()
       LoadAction: ({ action }) => {
         expectTypeOf(action).toEqualTypeOf<UserAction & { scope: 'users' }>();
 
-        return { state: { count: action.page } };
+        return { state: { count: action.payload.page } };
       },
     },
     roles: {
       LoadAction: ({ action }) => {
         expectTypeOf(action).toEqualTypeOf<RoleAction & { scope: 'roles' }>();
 
-        return { state: { count: action.roleId.length } };
+        return { state: { count: action.payload.roleId.length } };
       },
     },
     root: {
       ShowAlertAction: ({ action }) => {
         expectTypeOf(action).toEqualTypeOf<GlobalAction & { scope?: 'root' }>();
 
-        return { state: { count: action.message.length } };
+        return { state: { count: action.payload.message.length } };
       },
     },
   };
@@ -40,7 +40,10 @@ test('equal action names in different scopes retain their own payload types', ()
 
   expect(
     handlers.users.LoadAction(
-      { state, action: { scope: 'users', type: 'LoadAction', page: 7 } },
+      {
+        state,
+        action: { scope: 'users', type: 'LoadAction', payload: { page: 7 } },
+      },
       state,
     )?.state,
   ).toEqual({ count: 7 });
@@ -48,14 +51,21 @@ test('equal action names in different scopes retain their own payload types', ()
     handlers.roles.LoadAction(
       {
         state,
-        action: { scope: 'roles', type: 'LoadAction', roleId: 'admin' },
+        action: {
+          scope: 'roles',
+          type: 'LoadAction',
+          payload: { roleId: 'admin' },
+        },
       },
       state,
     )?.state,
   ).toEqual({ count: 5 });
   expect(
     handlers.root.ShowAlertAction(
-      { state, action: { type: 'ShowAlertAction', message: 'Failed' } },
+      {
+        state,
+        action: { type: 'ShowAlertAction', payload: { message: 'Failed' } },
+      },
       state,
     )?.state,
   ).toEqual({ count: 6 });

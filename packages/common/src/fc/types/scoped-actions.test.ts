@@ -3,10 +3,10 @@ import type { Dispatch } from './dispatch';
 import type { ScopedActions } from './scoped-actions';
 
 type UserAction =
-  | { type: 'LoadAction'; page: number }
-  | { type: 'SetEmailAction'; email: string };
-type RoleAction = { type: 'LoadAction'; roleId: string };
-type GlobalAction = { type: 'ShowAlertAction'; message: string };
+  | { type: 'LoadAction'; payload: { page: number } }
+  | { type: 'SetEmailAction'; payload: { email: string } };
+type RoleAction = { type: 'LoadAction'; payload: { roleId: string } };
+type GlobalAction = { type: 'ShowAlertAction'; payload: { message: string } };
 type Action = ScopedActions<{
   users: UserAction;
   roles: RoleAction;
@@ -35,12 +35,12 @@ test('root actions accept omitted or explicit root scope without declaring it lo
   expectTypeOf<{
     scope: 'root';
     type: 'ShowAlertAction';
-    message: string;
+    payload: { message: string };
   }>().toExtend<Action>();
   expectTypeOf<{
     scope: 'users';
     type: 'ShowAlertAction';
-    message: string;
+    payload: { message: string };
   }>().not.toExtend<Action>();
 });
 

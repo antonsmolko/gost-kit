@@ -1,21 +1,23 @@
 import { expect, expectTypeOf, test } from 'vitest';
 import { define } from './define';
 import { effecting } from './effecting';
+import type { Dispatch } from '../types/dispatch';
 import type { Effector } from '../types/effector';
 import type { EffectorHandlers } from '../types/effector-handlers';
 
-type Action = { type: 'SetAction'; count: number } | { type: 'IdleAction' };
+type Action =
+  { type: 'SetAction'; payload: { count: number } } | { type: 'IdleAction' };
 type Effect = { type: 'RecordEffect'; value: number } | { type: 'OtherEffect' };
 
 test('effecting composes effect tables and forwards dispatch and async completion', async () => {
   const completion = Promise.withResolvers<void>();
-  const actions: Action[] = [];
+  const actions: unknown[][] = [];
   const first = define.effector<
     Action,
     Extract<Effect, { type: 'RecordEffect' }>
   >({
     RecordEffect: async ({ effect, dispatch }) => {
-      await dispatch({ type: 'SetAction', count: effect.value });
+      await dispatch('root/SetAction', { count: effect.value });
       await completion.promise;
     },
   });
@@ -24,13 +26,13 @@ test('effecting composes effect tables and forwards dispatch and async completio
     Extract<Effect, { type: 'OtherEffect' }>
   >({
     OtherEffect: async ({ dispatch }) => {
-      await dispatch({ type: 'IdleAction' });
+      await dispatch('root/IdleAction');
     },
   });
   const effector: Effector<Action, Effect> = effecting(first, second);
   let completed = false;
-  const dispatch = async (action: Action) => {
-    actions.push(action);
+  const dispatch: Dispatch<Action> = async (...args) => {
+    actions.push(args);
   };
   const pending = effector({ type: 'RecordEffect', value: 7 }, dispatch).then(
     () => {
@@ -39,12 +41,12 @@ test('effecting composes effect tables and forwards dispatch and async completio
   );
 
   await Promise.resolve();
-  expect(actions).toEqual([{ type: 'SetAction', count: 7 }]);
+  expect(actions).toEqual([['root/SetAction', { count: 7 }]]);
   expect(completed).toBe(false);
   completion.resolve();
   await pending;
   await effector({ type: 'OtherEffect' }, dispatch);
-  expect(actions[1]).toEqual({ type: 'IdleAction' });
+  expect(actions[1]).toEqual(['root/IdleAction']);
 });
 
 test('requires coverage of every declared effect', () => {
@@ -116,22 +118,22 @@ test('requires coverage of every declared effect', () => {
 });
 
 test('retains inline effect inference across complete tables', async () => {
-  const actions: Action[] = [];
+  const actions: unknown[][] = [];
   const effector: Effector<Action, Effect> = effecting(
     {
       RecordEffect: async ({ effect, dispatch }) => {
-        await dispatch({ type: 'SetAction', count: effect.value });
+        await dispatch('root/SetAction', { count: effect.value });
       },
     },
     {
       OtherEffect: async ({ dispatch }) => {
-        await dispatch({ type: 'IdleAction' });
+        await dispatch('root/IdleAction');
       },
     },
   );
 
-  await effector({ type: 'RecordEffect', value: 3 }, async (action) => {
-    actions.push(action);
+  await effector({ type: 'RecordEffect', value: 3 }, async (...args) => {
+    actions.push(args);
   });
-  expect(actions).toEqual([{ type: 'SetAction', count: 3 }]);
+  expect(actions).toEqual([['root/SetAction', { count: 3 }]]);
 });

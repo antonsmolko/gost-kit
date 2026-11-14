@@ -1,4 +1,5 @@
 import { expect, test, vi } from 'vitest';
+import type { DispatchAction } from '../types/dispatch-action';
 import { createDispatch } from './dispatch';
 import { createReset } from './create-reset';
 import { reducing } from './reducing';
@@ -68,14 +69,22 @@ test('does not call callbacks when creating dispatch', () => {
   expect(config.onError).not.toHaveBeenCalled();
 });
 
-test('each dispatch reads the current state and passes the original action', async () => {
+test('each dispatch reads the current state and builds the action from its path and payload', async () => {
   type State = { count: number };
-  type AddAction = { type: 'AddAction'; amount: number };
+  type AddAction = { type: 'AddAction'; payload: { amount: number } };
 
   const initial: State = { count: 0 };
   const external: State = { count: 40 };
-  const firstAction: AddAction = { type: 'AddAction', amount: 3 };
-  const secondAction: AddAction = { type: 'AddAction', amount: 2 };
+  const firstAction: DispatchAction<AddAction> = {
+    scope: 'root',
+    type: 'AddAction',
+    payload: { amount: 3 },
+  };
+  const secondAction: DispatchAction<AddAction> = {
+    scope: 'root',
+    type: 'AddAction',
+    payload: { amount: 2 },
+  };
   let state = initial;
   const readState = vi.fn(() => {
     return state;
@@ -85,7 +94,7 @@ test('each dispatch reads the current state and passes the original action', asy
   });
   const reducer = vi.fn((current: State, action: AddAction) => {
     return {
-      state: { count: current.count + action.amount },
+      state: { count: current.count + action.payload.amount },
       effects: [],
     };
   });
@@ -96,19 +105,19 @@ test('each dispatch reads the current state and passes the original action', asy
     effector: async () => {},
   });
 
-  await dispatch(firstAction);
+  await dispatch('root/AddAction', firstAction.payload);
   expect(state).toEqual({ count: 3 });
 
   state = external;
-  await dispatch(secondAction);
+  await dispatch('root/AddAction', secondAction.payload);
 
   expect(state).toEqual({ count: 42 });
   expect(readState).toHaveBeenCalledTimes(2);
   expect(reducer).toHaveBeenCalledTimes(2);
   expect(reducer.mock.calls[0][0]).toBe(initial);
-  expect(reducer.mock.calls[0][1]).toBe(firstAction);
+  expect(reducer.mock.calls[0][1]).toEqual(firstAction);
   expect(reducer.mock.calls[1][0]).toBe(external);
-  expect(reducer.mock.calls[1][1]).toBe(secondAction);
+  expect(reducer.mock.calls[1][1]).toEqual(secondAction);
   expect(writeState).toHaveBeenCalledTimes(2);
   expect(writeState).toHaveBeenNthCalledWith(1, { count: 3 });
   expect(writeState).toHaveBeenNthCalledWith(2, { count: 42 });
@@ -139,7 +148,7 @@ test('reads state, runs the reducer and writes the commit synchronously before e
     },
   });
 
-  const pending = dispatch({ type: 'RunAction' });
+  const pending = dispatch('root/RunAction');
 
   expect(state).toBe(7);
   expect(steps).toEqual(['read', 'reducer', 'write', 'effect']);
@@ -164,15 +173,15 @@ test('accepts a synchronous onError in dispatch config', async () => {
     },
   };
   const dispatch = createDispatch(config);
-  const action: Action = { type: 'RunAction' };
+  const action: DispatchAction<Action> = { scope: 'root', type: 'RunAction' };
 
-  const pending = dispatch(action);
+  const pending = dispatch('root/RunAction');
 
   expect(reported).toEqual([{ kind: 'reducer', action, error: failure }]);
   await expect(pending).resolves.toBeUndefined();
 });
 
-test('dispatch accepts explicit root scope without requiring it in the source action type', async () => {
+test('dispatch routes root paths independently of optional scope in source types', async () => {
   const received: Action[] = [];
   const root = createTestStore<number, Action, never>({
     initState: () => {
@@ -185,25 +194,19 @@ test('dispatch accepts explicit root scope without requiring it in the source ac
     },
     effector: async () => {},
   });
-  const implicit: Action = { type: 'RunAction' };
-  const explicit = { scope: 'root', type: 'RunAction' } as const;
 
-  await root.dispatch(implicit);
-  await root.dispatch({ scope: 'root', type: 'RunAction' });
-  await root.dispatch(explicit);
+  await root.dispatch('root/RunAction');
 
-  expect(root.state).toBe(3);
-  expect(received[0]).toBe(implicit);
-  expect(received[0]).not.toHaveProperty('scope');
-  expect(received[2]).toBe(explicit);
+  expect(root.state).toBe(1);
+  expect(received).toEqual([{ scope: 'root', type: 'RunAction' }]);
 });
 
 test('dispatch commits before effects and awaits nested actions across namespaces', async () => {
   type State = { users: number; roles: string; message: string };
   type Action = ScopedActions<{
-    users: { type: 'LoadAction'; page: number };
-    roles: { type: 'LoadAction'; roleId: string };
-    root: { type: 'LoadAction'; reason: string };
+    users: { type: 'LoadAction'; payload: { page: number } };
+    roles: { type: 'LoadAction'; payload: { roleId: string } };
+    root: { type: 'LoadAction'; payload: { reason: string } };
   }>;
   type Effect = { type: 'NextEffect'; target: 'roles' | 'root' };
 
@@ -218,7 +221,7 @@ test('dispatch commits before effects and awaits nested actions across namespace
       users: {
         LoadAction: ({ state, action }) => {
           return {
-            state: { ...state, users: action.page },
+            state: { ...state, users: action.payload.page },
             effects: { type: 'NextEffect', target: 'roles' },
           };
         },
@@ -226,14 +229,14 @@ test('dispatch commits before effects and awaits nested actions across namespace
       roles: {
         LoadAction: ({ state, action }) => {
           return {
-            state: { ...state, roles: action.roleId },
+            state: { ...state, roles: action.payload.roleId },
             effects: { type: 'NextEffect', target: 'root' },
           };
         },
       },
       root: {
         LoadAction: ({ state, action }) => {
-          return { state: { ...state, message: action.reason } };
+          return { state: { ...state, message: action.payload.reason } };
         },
       },
     }),
@@ -241,21 +244,19 @@ test('dispatch commits before effects and awaits nested actions across namespace
       if (effect.target === 'roles') {
         expect(root.state.users).toBe(7);
         await firstRequest.promise;
-        await dispatch({ scope: 'roles', type: 'LoadAction', roleId: 'admin' });
+        await dispatch('roles/LoadAction', { roleId: 'admin' });
       } else {
         expect(root.state.roles).toBe('admin');
         rootEffectStarted.resolve();
         await lastRequest.promise;
-        await dispatch({ type: 'LoadAction', reason: 'ready' });
+        await dispatch('root/LoadAction', { reason: 'ready' });
       }
     },
   });
   let completed = false;
-  const pending = root
-    .dispatch({ scope: 'users', type: 'LoadAction', page: 7 })
-    .then(() => {
-      completed = true;
-    });
+  const pending = root.dispatch('users/LoadAction', { page: 7 }).then(() => {
+    completed = true;
+  });
 
   expect(root.state).toEqual({ users: 7, roles: '', message: '' });
   firstRequest.resolve();
@@ -270,8 +271,8 @@ test('dispatch commits before effects and awaits nested actions across namespace
 
 test('scoped reducer and effect failures retain the original action and effect context', async () => {
   type Action = ScopedActions<{
-    users: { type: 'LoadAction'; page: number };
-    roles: { type: 'LoadAction'; roleId: string };
+    users: { type: 'LoadAction'; payload: { page: number } };
+    roles: { type: 'LoadAction'; payload: { roleId: string } };
   }>;
 
   const reducerFailure = new Error('Users reducer failed');
@@ -290,7 +291,7 @@ test('scoped reducer and effect failures retain the original action and effect c
       },
       roles: {
         LoadAction: ({ action }) => {
-          return { state: action.roleId.length, effects: effect };
+          return { state: action.payload.roleId.length, effects: effect };
         },
       },
     }),
@@ -301,12 +302,24 @@ test('scoped reducer and effect failures retain the original action and effect c
       reported.push(failure);
     },
   });
-  const users: Action = { scope: 'users', type: 'LoadAction', page: 7 };
-  const roles: Action = { scope: 'roles', type: 'LoadAction', roleId: 'admin' };
+  const users: Action = {
+    scope: 'users',
+    type: 'LoadAction',
+    payload: { page: 7 },
+  };
+  const roles: Action = {
+    scope: 'roles',
+    type: 'LoadAction',
+    payload: { roleId: 'admin' },
+  };
 
-  await expect(root.dispatch(users)).resolves.toBeUndefined();
+  await expect(
+    root.dispatch('users/LoadAction', users.payload),
+  ).resolves.toBeUndefined();
   expect(root.state).toBe(0);
-  await expect(root.dispatch(roles)).resolves.toBeUndefined();
+  await expect(
+    root.dispatch('roles/LoadAction', roles.payload),
+  ).resolves.toBeUndefined();
   expect(root.state).toBe(5);
   expect(reported).toEqual([
     { kind: 'reducer', action: users, error: reducerFailure },
@@ -314,11 +327,11 @@ test('scoped reducer and effect failures retain the original action and effect c
   ]);
 
   if (reported[0].kind === 'reducer') {
-    expect(reported[0].action).toBe(users);
+    expect(reported[0].action).toEqual(users);
   }
 
   if (reported[1].kind === 'effect') {
-    expect(reported[1].action).toBe(roles);
+    expect(reported[1].action).toEqual(roles);
     expect(reported[1].effect).toBe(effect);
   }
 });
@@ -343,9 +356,9 @@ test('a readState failure is reported before reducer, writeState or effects run'
     effector,
     onError,
   });
-  const action: Action = { type: 'RunAction' };
+  const action: DispatchAction<Action> = { scope: 'root', type: 'RunAction' };
 
-  await expect(dispatch(action)).resolves.toBeUndefined();
+  await expect(dispatch('root/RunAction')).resolves.toBeUndefined();
 
   expect(onError).toHaveBeenCalledExactlyOnceWith({
     kind: 'readState',
@@ -379,9 +392,9 @@ test('a writeState failure is reported after reducer and prevents effects', asyn
     effector,
     onError,
   });
-  const action: Action = { type: 'RunAction' };
+  const action: DispatchAction<Action> = { scope: 'root', type: 'RunAction' };
 
-  await expect(dispatch(action)).resolves.toBeUndefined();
+  await expect(dispatch('root/RunAction')).resolves.toBeUndefined();
 
   expect(onError).toHaveBeenCalledExactlyOnceWith({
     kind: 'writeState',
@@ -419,7 +432,7 @@ test('effects start in parallel after state commit and dispatch waits for all', 
     },
   });
   let completed = false;
-  const pending = root.dispatch({ type: 'RunAction' }).then(() => {
+  const pending = root.dispatch('root/RunAction').then(() => {
     completed = true;
   });
 
@@ -455,7 +468,7 @@ test('writes the complete state without merging and skips effects when the list 
     onError,
   });
 
-  await expect(dispatch({ type: 'RunAction' })).resolves.toBeUndefined();
+  await expect(dispatch('root/RunAction')).resolves.toBeUndefined();
 
   expect(writeState).toHaveBeenCalledExactlyOnceWith(next);
   expect(writeState.mock.calls[0][0]).toBe(next);
@@ -481,10 +494,14 @@ test('a reducer exception is reported with the action and dispatch resolves', as
     },
   });
 
-  await expect(root.dispatch({ type: 'RunAction' })).resolves.toBeUndefined();
+  await expect(root.dispatch('root/RunAction')).resolves.toBeUndefined();
   expect(root.state).toBeNull();
   expect(reported).toEqual([
-    { kind: 'reducer', action: { type: 'RunAction' }, error: failure },
+    {
+      kind: 'reducer',
+      action: { scope: 'root', type: 'RunAction' },
+      error: failure,
+    },
   ]);
 });
 
@@ -519,13 +536,13 @@ test('dispatch waits for another effect and its nested state update after a reje
       await requests[effect.id].promise;
 
       if (effect.id === 1) {
-        await dispatch({ type: 'DoneAction' });
+        await dispatch('root/DoneAction');
       }
     },
   });
   let settled = false;
   let failure: unknown;
-  const pending = root.dispatch({ type: 'RunAction' }).then(
+  const pending = root.dispatch('root/RunAction').then(
     () => {
       settled = true;
     },
@@ -550,7 +567,7 @@ test('dispatch waits for another effect and its nested state update after a reje
   expect(reported).toEqual([
     {
       kind: 'effect',
-      action: { type: 'RunAction' },
+      action: { scope: 'root', type: 'RunAction' },
       effect: { type: 'WorkEffect', id: 0 },
       error: firstError,
     },
@@ -588,7 +605,7 @@ test('synchronous effect throws do not skip siblings and all failures are collec
     },
   });
   const failure: unknown = await root
-    .dispatch({ type: 'RunAction' })
+    .dispatch('root/RunAction')
     .catch((error: unknown) => {
       return error;
     });
@@ -599,7 +616,7 @@ test('synchronous effect throws do not skip siblings and all failures are collec
     failures.map((error, id) => {
       return {
         kind: 'effect',
-        action: { type: 'RunAction' },
+        action: { scope: 'root', type: 'RunAction' },
         effect: { type: 'WorkEffect', id },
         error,
       };
@@ -624,17 +641,21 @@ test('a nested reducer failure is reported once by the nested dispatch', async (
       return { state: { count: 1 }, effects: [{ type: 'WorkEffect', id: 0 }] };
     },
     effector: async (_effect, dispatch) => {
-      await dispatch({ type: 'NestedAction' });
+      await dispatch('root/NestedAction');
     },
     onError: (error) => {
       reported.push(error);
     },
   });
 
-  await expect(root.dispatch({ type: 'RunAction' })).resolves.toBeUndefined();
+  await expect(root.dispatch('root/RunAction')).resolves.toBeUndefined();
   expect(root.state.count).toBe(1);
   expect(reported).toEqual([
-    { kind: 'reducer', action: { type: 'NestedAction' }, error: failure },
+    {
+      kind: 'reducer',
+      action: { scope: 'root', type: 'NestedAction' },
+      error: failure,
+    },
   ]);
 });
 
@@ -655,10 +676,10 @@ test('the default error handler logs context without rejecting dispatch', async 
       },
     });
 
-    await expect(root.dispatch({ type: 'RunAction' })).resolves.toBeUndefined();
+    await expect(root.dispatch('root/RunAction')).resolves.toBeUndefined();
     expect(log).toHaveBeenCalledExactlyOnceWith({
       kind: 'effect',
-      action: { type: 'RunAction' },
+      action: { scope: 'root', type: 'RunAction' },
       effect: { type: 'WorkEffect', id: 0 },
       error: failure,
     });
@@ -673,7 +694,7 @@ test('a throwing error handler is logged by the fallback without rejecting dispa
   const reporterFailure = new Error('Reporter failed');
   const context = {
     kind: 'reducer',
-    action: { type: 'RunAction' },
+    action: { scope: 'root', type: 'RunAction' },
     error: failure,
   };
 
@@ -691,7 +712,7 @@ test('a throwing error handler is logged by the fallback without rejecting dispa
       },
     });
 
-    await expect(root.dispatch({ type: 'RunAction' })).resolves.toBeUndefined();
+    await expect(root.dispatch('root/RunAction')).resolves.toBeUndefined();
     expect(log).toHaveBeenCalledExactlyOnceWith('Error handler failed', {
       failure: context,
       error: reporterFailure,
@@ -719,6 +740,6 @@ test('invalid reducer output is caught inside dispatch as a reducer failure', as
     },
   });
 
-  await expect(root.dispatch({ type: 'RunAction' })).resolves.toBeUndefined();
+  await expect(root.dispatch('root/RunAction')).resolves.toBeUndefined();
   expect(reported[0].kind).toBe('reducer');
 });
