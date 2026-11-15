@@ -6,6 +6,7 @@ Select an immutable reactive branch before passing it to a computation in
 `$derived`, the synchronous callback of `$derived.by`, or a template `{@const}` initializer:
 
 ```ts
+// Reported; a simple standalone declaration can be fixed with eslint --fix.
 const view = $derived(userPresenter(root.state.user));
 
 // Correct.
@@ -239,6 +240,7 @@ not part of the enclosing handler's evaluation. Static initialization/computed
 keys remain included. Helper/constructor call graphs are not followed.
 
 ```ts
+// Reported: business choice remains in the component.
 const handleSubmit = () => {
   if (hasUser) {
     void dispatch('root/UpdateUserAction');

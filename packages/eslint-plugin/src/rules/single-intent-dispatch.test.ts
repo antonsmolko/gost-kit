@@ -38,7 +38,7 @@ writeFileSync(
 );
 
 const prelude = `import Ui from './Ui.svelte';
-import type { Dispatch, Store, AsyncTap } from '@gost-kit/common';
+import type { Dispatch, Store, AsyncTap, AsyncFn, DispatchArguments } from '@gost-kit/common';
 type Action = { type: 'OneAction' } | { type: 'TwoAction' } | { type: 'EmailAction'; payload: string } | { type: 'PageAction'; payload: number };
 declare const send: Dispatch<Action>;
 declare const store: Store<{ value: number }, Action>;
@@ -93,7 +93,7 @@ const valid = [
     "const handle = () => { void send('root/OneAction')?.then(() => {}); };",
   ),
   fixture(
-    "const handle = () => { void (store?.dispatch)({type:'OneAction'}); };",
+    "const handle = () => { void (store?.dispatch)('root/OneAction'); };",
   ),
 
   fixture(
@@ -146,7 +146,7 @@ const valid = [
     "declare const other: AsyncTap<Action>; const handle = () => { void other({ type: 'OneAction' }); void other({ type: 'TwoAction' }); };",
   ),
   fixture(
-    "declare const other: Dispatch<Action> | AsyncTap<Action>; const handle = () => { void other({ type: 'OneAction' }); void other({ type: 'TwoAction' }); };",
+    "declare const other: Dispatch<Action> | AsyncFn<DispatchArguments<Action>>; const handle = () => { void other('root/OneAction'); void other('root/TwoAction'); };",
   ),
   fixture(
     'declare const other: any; const handle = () => { other(); other(); };',
@@ -200,7 +200,7 @@ const invalid = [
   ],
   [
     'optional member call',
-    "const handle = () => { void store.dispatch?.({type:'OneAction'}); };",
+    "const handle = () => { void store.dispatch?.('root/OneAction'); };",
     'conditionalDispatch',
   ],
   [
@@ -326,7 +326,7 @@ const invalid = [
   ],
   [
     'nullable',
-    "declare const dispatch: Dispatch<Action> | undefined; const handle = () => { void dispatch?.({type:'OneAction'}); void dispatch?.({type:'TwoAction'}); };",
+    "declare const dispatch: Dispatch<Action> | undefined; const handle = () => { void dispatch?.('root/OneAction'); void dispatch?.('root/TwoAction'); };",
     'multipleDispatch',
   ],
   ['named function', `function handle() { ${one} ${two} }`, 'multipleDispatch'],

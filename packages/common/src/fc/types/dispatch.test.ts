@@ -3,6 +3,7 @@ import type { Dispatch } from './dispatch';
 import type { ScopedActions } from './scoped-actions';
 import { define } from '../lib/define';
 import { forwardAction } from '../lib/forward-action';
+import type { DispatchArguments } from './dispatch-arguments';
 
 type Action = ScopedActions<{
   users:
@@ -59,6 +60,12 @@ const checkDispatch = (dispatch: Dispatch<Action>) => {
 
   // @ts-expect-error A union path does not establish the matching payload.
   void dispatch(path, 2);
+
+  const args: DispatchArguments<Action> = Math.random()
+    ? ['users/PageAction', 2]
+    : ['users/LoadAction'];
+
+  void dispatch(...args);
 };
 
 const checkOptionalObject = () => {

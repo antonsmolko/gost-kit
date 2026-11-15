@@ -16,8 +16,7 @@ export const createDispatch = <
   onError,
 }: DispatchConfig<TState, TAction, TEffect>): Dispatch<TAction> => {
   const dispatch: Dispatch<TAction> = async (...args) => {
-    const input: readonly [unknown, unknown?] = args;
-    const [path, payload] = input;
+    const [path, payload] = args as readonly [unknown, unknown?];
 
     if (!guard.string(path) || !/^[^/]+\/[^/]+$/u.test(path)) {
       report(

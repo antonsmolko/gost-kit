@@ -186,7 +186,11 @@ has that action's declared payload type. Payloads may be objects, primitives,
 arrays or other values; actions without data need no second argument.
 
 ```ts
-import type { Dispatch, ScopedActions } from '@gost-kit/common';
+import type {
+  Dispatch,
+  DispatchArguments,
+  ScopedActions,
+} from '@gost-kit/common';
 
 type UserAction =
   | { type: 'LoadAction' }
@@ -200,7 +204,17 @@ await send('users/LoadAction');
 await send('users/SetPageAction', 2);
 await send('users/SelectAction', ['1', '2']);
 await send('users/FiltersAction');
+
+const replay = (args: DispatchArguments<UserActions>) => {
+  return send(...args);
+};
+
+await replay(['users/SetPageAction', 2]);
 ```
+
+For saved or computed intents, keep the path and payload together as a
+`DispatchArguments` tuple and spread it into dispatch. An independently computed
+union of paths does not establish which payload belongs to the selected path.
 
 Optional payloads and object payloads with no required fields may be omitted.
 `ActionInput<TAction>` reflects that omission in reducer and error-handler inputs.
