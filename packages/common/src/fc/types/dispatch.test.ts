@@ -89,6 +89,23 @@ const checkDispatch = (dispatch: Dispatch<Action>) => {
     : { action: 'users/LoadAction' };
 
   void dispatch(saved);
+
+  const noData = { action: 'users/LoadAction' as const, payload: 2 };
+
+  // @ts-expect-error Saved objects cannot add data to a no-data action.
+  void dispatch(noData);
+
+  // @ts-expect-error A dispatch object preserves the same no-data restriction.
+  const invalidSaved: DispatchAction<Action> = noData;
+
+  const selected: 'users/LoadAction' | 'users/PageAction' = Math.random()
+    ? 'users/LoadAction'
+    : 'users/PageAction';
+  const uncorrelated = { action: selected, payload: 2 };
+
+  // @ts-expect-error The saved path does not guarantee this payload is valid.
+  void dispatch(uncorrelated);
+  void invalidSaved;
 };
 
 const checkOptionalObject = () => {

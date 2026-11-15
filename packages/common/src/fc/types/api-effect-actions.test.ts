@@ -74,6 +74,14 @@ const checkActionRoles = () => {
       return { action: 'root/FailedAction' };
     },
   };
+  const noData = { action: 'root/EmptyAction' as const, payload: 2 };
+  const extraPayload: Effect = {
+    ...valid,
+    // @ts-expect-error Callback results cannot add data to a no-data action.
+    onSuccess: () => {
+      return noData;
+    },
+  };
 
   createApiEffect<
     typeof operation,
@@ -174,6 +182,7 @@ const checkActionRoles = () => {
     valid,
     secondSuccess,
     wrongPayload,
+    extraPayload,
     scoped,
     wrongScope,
     swappedSuccess,

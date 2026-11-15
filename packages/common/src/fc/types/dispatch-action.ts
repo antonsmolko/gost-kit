@@ -7,8 +7,10 @@ import type { ActionInput } from './action-input';
  * Payload requirements are shared with string calls and reducer inputs.
  */
 export type DispatchAction<TAction extends Trigger> = TAction extends Trigger
-  ? { action: DispatchPath<TAction> } & Pick<
-      ActionInput<TAction>,
-      Extract<keyof ActionInput<TAction>, 'payload'>
-    >
+  ? { action: DispatchPath<TAction> } & ('payload' extends keyof TAction
+      ? Pick<
+          ActionInput<TAction>,
+          Extract<keyof ActionInput<TAction>, 'payload'>
+        >
+      : { payload?: never })
   : never;
