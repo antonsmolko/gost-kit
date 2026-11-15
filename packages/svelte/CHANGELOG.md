@@ -1,5 +1,23 @@
 # @gost-kit/svelte
 
+## 0.3.0
+
+### Minor Changes
+
+- a5e85b8: Replace object dispatch calls with `dispatch('namespace/ActionType', payload)`.
+  Action data moves to `action.payload`; payloads may have any declared type or be
+  absent. Root calls use `root/ActionType`. Dispatch also accepts
+  `{ action: 'namespace/ActionType', payload }`, including objects returned by API
+  callbacks and held by custom effect handlers. Ordinary calls use the string form.
+
+  Update the single-intent rule examples for the new dispatch syntax. Rule behavior
+  is unchanged.
+
+### Patch Changes
+
+- Updated dependencies [a5e85b8]
+  - @gost-kit/common@0.4.0
+
 ## 0.2.1
 
 ### Patch Changes

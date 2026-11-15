@@ -1,5 +1,12 @@
 # @gost-kit/eslint-config-svelte
 
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [a5e85b8]
+  - @gost-kit/eslint-plugin@0.3.1
+
 ## 0.2.2
 
 ### Patch Changes
