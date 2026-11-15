@@ -6,9 +6,10 @@ import { effecting } from './effecting';
 import type { AppError } from '../../app-error';
 import type { TestPaths } from '../../api/types/api-client.test';
 import type { ApiEffect } from '../types/api-effect';
+import type { DispatchAction } from '../types/dispatch-action';
 
-type SuccessAction = { type: 'LoadedAction'; name: string };
-type ErrorAction = { type: 'FailedAction'; errors: AppError[] };
+type SuccessAction = { type: 'LoadedAction'; payload: { name: string } };
+type ErrorAction = { type: 'FailedAction'; payload: { errors: AppError[] } };
 type TestAction = SuccessAction | ErrorAction;
 
 const fallback: AppError = {
@@ -16,7 +17,10 @@ const fallback: AppError = {
   message: 'Could not load user',
   path: [],
 };
-const action: TestAction = { type: 'LoadedAction', name: 'Ada' };
+const action: DispatchAction<TestAction> = {
+  action: 'root/LoadedAction' as const,
+  payload: { name: 'Ada' },
+};
 const operation = defineApiOperation<TestPaths>()({
   method: 'post',
   url: '/users/{id}',
@@ -27,10 +31,13 @@ const effect: ApiEffect<typeof operation, SuccessAction, ErrorAction> =
     body: { name: 'Ada' },
     defaultError: fallback,
     onSuccess: (user) => {
-      return { type: 'LoadedAction', name: user.name };
+      return {
+        action: 'root/LoadedAction' as const,
+        payload: { name: user.name },
+      };
     },
     onError: (errors) => {
-      return { type: 'FailedAction', errors };
+      return { action: 'root/FailedAction' as const, payload: { errors } };
     },
   });
 const setup = (response: Response, mapErrors?: () => AppError[]) => {
@@ -54,7 +61,10 @@ test('handler composes with effecting and dispatches the typed success action', 
   >(setup(Response.json({ id: 1, name: 'Ada' })));
 
   await effector(effect, dispatch);
-  expect(dispatch).toHaveBeenCalledExactlyOnceWith(action);
+  expect(dispatch).toHaveBeenCalledExactlyOnceWith({
+    action: 'root/LoadedAction',
+    payload: action.payload,
+  });
 });
 
 test('request errors dispatch defaultError, preserving failure classification', async () => {
@@ -66,8 +76,10 @@ test('request errors dispatch defaultError, preserving failure classification', 
     dispatch,
   });
   expect(dispatch).toHaveBeenCalledExactlyOnceWith({
-    type: 'FailedAction',
-    errors: [fallback],
+    action: 'root/FailedAction',
+    payload: {
+      errors: [fallback],
+    },
   });
   expect(onError).toHaveBeenCalledWith([fallback], {
     kind: 'http',
@@ -86,8 +98,10 @@ test('mapped AppErrors replace the fallback', async () => {
     return errors;
   }).ApiEffect({ effect, dispatch });
   expect(dispatch).toHaveBeenCalledExactlyOnceWith({
-    type: 'FailedAction',
-    errors,
+    action: 'root/FailedAction',
+    payload: {
+      errors,
+    },
   });
 });
 

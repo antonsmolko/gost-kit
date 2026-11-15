@@ -10,6 +10,7 @@ import { createApiEffect } from './create-api-effect';
 import { createApiEffector } from './create-api-effector';
 import { effecting } from './effecting';
 import type { ApiEffect } from '../types/api-effect';
+import type { DispatchAction } from '../types/dispatch-action';
 
 const fallback: AppError = {
   code: 'LOAD',
@@ -17,11 +18,10 @@ const fallback: AppError = {
   path: [],
 };
 
-type SuccessAction = { type: 'LoadedAction'; label: string };
+type SuccessAction = { type: 'LoadedAction'; payload: { label: string } };
 type ErrorAction = {
   type: 'FailedAction';
-  errors: AppError[];
-  failure: ApiFailure;
+  payload: { errors: AppError[]; failure: ApiFailure };
 };
 type Action = SuccessAction | ErrorAction;
 
@@ -30,8 +30,11 @@ const request = {
   body: { name: 'Ada' },
   defaultError: fallback,
 };
-const onError = (errors: AppError[], failure: ApiFailure): Action => {
-  return { type: 'FailedAction', errors, failure };
+const onError = (
+  errors: AppError[],
+  failure: ApiFailure,
+): DispatchAction<Action> => {
+  return { action: 'root/FailedAction' as const, payload: { errors, failure } };
 };
 const setup = <TMap extends (dto: TestUser) => unknown>(
   mapResponse: TMap,
@@ -78,7 +81,10 @@ test('shared effector maps DTO and dispatches a domain action without leaking ef
   const effect = createApiEffect(operation, {
     ...request,
     onSuccess: (user) => {
-      return { type: 'LoadedAction', label: user.label };
+      return {
+        action: 'root/LoadedAction' as const,
+        payload: { label: user.label },
+      };
     },
   });
   const effector = effecting<
@@ -89,8 +95,10 @@ test('shared effector maps DTO and dispatches a domain action without leaking ef
 
   await effector(effect, dispatch);
   expect(dispatch).toHaveBeenCalledExactlyOnceWith({
-    type: 'LoadedAction',
-    label: 'ADA',
+    action: 'root/LoadedAction',
+    payload: {
+      label: 'ADA',
+    },
   });
   expect(invoke).toHaveBeenCalledExactlyOnceWith('post', '/users/{id}', {
     params: { path: { id: 1 } },
@@ -115,7 +123,7 @@ test.each(['sync', 'async'] as const)(
     });
     const { operation, handler } = setup(mapper, undefined, mapErrors);
     const success = vi.fn(() => {
-      return { type: 'LoadedAction' as const, label: '' };
+      return { action: 'root/LoadedAction' as const, payload: { label: '' } };
     });
     const dispatch = vi.fn(async () => {});
 
@@ -128,9 +136,11 @@ test.each(['sync', 'async'] as const)(
       dispatch,
     });
     expect(dispatch).toHaveBeenCalledExactlyOnceWith({
-      type: 'FailedAction',
-      errors: [fallback],
-      failure: { kind: 'contract', errors: [] },
+      action: 'root/FailedAction',
+      payload: {
+        errors: [fallback],
+        failure: { kind: 'contract', errors: [] },
+      },
     });
     expect(success).not.toHaveBeenCalled();
     expect(mapErrors).not.toHaveBeenCalled();
@@ -149,9 +159,11 @@ test('mapper executes without onSuccess and rejects failure without onError', as
     dispatch,
   });
   expect(dispatch).toHaveBeenCalledExactlyOnceWith({
-    type: 'FailedAction',
-    errors: [fallback],
-    failure: { kind: 'contract', errors: [] },
+    action: 'root/FailedAction',
+    payload: {
+      errors: [fallback],
+      failure: { kind: 'contract', errors: [] },
+    },
   });
   await expect(
     handler.ApiEffect({
@@ -193,16 +205,18 @@ test.each(['http', 'network', 'aborted', 'contract'] as const)(
     });
     expect(mapper).not.toHaveBeenCalled();
     expect(dispatch).toHaveBeenCalledExactlyOnceWith({
-      type: 'FailedAction',
-      errors: [fallback],
-      failure: {
-        kind,
-        ...(kind === 'http'
-          ? { status: 503 }
-          : kind === 'contract'
-            ? { status: 200 }
-            : {}),
-        errors: [],
+      action: 'root/FailedAction',
+      payload: {
+        errors: [fallback],
+        failure: {
+          kind,
+          ...(kind === 'http'
+            ? { status: 503 }
+            : kind === 'contract'
+              ? { status: 200 }
+              : {}),
+          errors: [],
+        },
       },
     });
   },
@@ -230,9 +244,11 @@ test('http AppErrors are retained instead of defaultError', async () => {
     dispatch,
   });
   expect(dispatch).toHaveBeenCalledExactlyOnceWith({
-    type: 'FailedAction',
-    errors,
-    failure: { kind: 'http', status: 422, errors },
+    action: 'root/FailedAction',
+    payload: {
+      errors,
+      failure: { kind: 'http', status: 422, errors },
+    },
   });
 });
 
@@ -251,7 +267,10 @@ test('async mapper completes before success and dispatch is awaited', async () =
       onSuccess: (user) => {
         events.push('success');
 
-        return { type: 'LoadedAction', label: user.label };
+        return {
+          action: 'root/LoadedAction' as const,
+          payload: { label: user.label },
+        };
       },
     }),
     dispatch: async () => {
@@ -288,7 +307,10 @@ test.each(['success', 'error', 'dispatch'] as const)(
               throw problem;
             }
 
-            return { type: 'LoadedAction', label: user.label };
+            return {
+              action: 'root/LoadedAction' as const,
+              payload: { label: user.label },
+            };
           },
           onError:
             phase === 'error'
@@ -337,10 +359,10 @@ test('identity operations preserve null, 204 and HEAD undefined', async () => {
     typeof get | typeof empty | typeof head
   >(api);
   const values: unknown[] = [];
-  const done = (data: unknown): Action => {
+  const done = (data: unknown): DispatchAction<Action> => {
     values.push(data);
 
-    return { type: 'LoadedAction', label: 'done' };
+    return { action: 'root/LoadedAction' as const, payload: { label: 'done' } };
   };
   const dispatch = async () => {};
 
@@ -372,7 +394,10 @@ const checkHandlerTypes = () => {
     onSuccess: (user) => {
       expectTypeOf(user).toEqualTypeOf<{ label: string }>();
 
-      return { type: 'LoadedAction', label: user.label };
+      return {
+        action: 'root/LoadedAction' as const,
+        payload: { label: user.label },
+      };
     },
   });
 
@@ -381,7 +406,7 @@ const checkHandlerTypes = () => {
   const invalid = createApiEffect(operation, {
     ...request,
     onSuccess: () => {
-      return { type: 'OtherAction' };
+      return { action: 'root/OtherAction' };
     },
   });
 
@@ -425,9 +450,11 @@ test('mapper AbortError is a contract failure even after a late abort', async ()
     dispatch,
   });
   expect(dispatch).toHaveBeenCalledExactlyOnceWith({
-    type: 'FailedAction',
-    errors: [fallback],
-    failure: { kind: 'contract', errors: [] },
+    action: 'root/FailedAction',
+    payload: {
+      errors: [fallback],
+      failure: { kind: 'contract', errors: [] },
+    },
   });
 });
 

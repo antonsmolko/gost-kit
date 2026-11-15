@@ -113,13 +113,13 @@ import {
 
 type UsersState = { name: string };
 type RootState = { users: UsersState };
-type UserAction = { type: 'RenameAction'; name: string };
+type UserAction = { type: 'RenameAction'; payload: { name: string } };
 type Action = ScopedActions<{ users: UserAction }>;
 
 const userHandlers = define.reducer<UsersState, UserAction, never, RootState>()(
   {
     RenameAction: ({ action }) => {
-      return { state: { name: action.name } };
+      return { state: { name: action.payload.name } };
     },
   },
 );
@@ -129,14 +129,13 @@ const reducer: Reducer<RootState, Action, never> = reducing({
 
 const commit = reducer(
   { users: { name: '' } },
-  { scope: 'users', type: 'RenameAction', name: 'Ada' },
+  { scope: 'users', type: 'RenameAction', payload: { name: 'Ada' } },
 );
 ```
 
-Feature scopes are required on dispatched actions. Root actions may omit scope
-or use `scope: 'root'`. Routing uses `action.scope ?? 'root'`, then action.type;
-the action is passed through unchanged. The action namespace and state property
-name can differ.
+Object actions passed directly to a reducer or returned by API callbacks use
+scope and type for routing, with data in action.payload. Root object actions
+may omit scope. The action namespace and state property name can differ.
 
 `scope` replaces only its selected property and passes effects through. An
 omitted state or the same feature reference preserves the root reference.
@@ -178,9 +177,60 @@ const dispatch = createDispatch<State, Action, never>({
   },
 });
 
-await dispatch({ type: 'IncrementAction' });
+await dispatch('root/IncrementAction');
 // state.count: 1
 ```
+
+The first argument selects a typed namespace/action path. The second argument
+has that action's declared payload type. Payloads may be objects, primitives,
+arrays or other values; actions without data need no second argument.
+
+```ts
+import type {
+  Dispatch,
+  DispatchArguments,
+  ScopedActions,
+} from '@gost-kit/common';
+
+type UserAction =
+  | { type: 'LoadAction' }
+  | { type: 'SetPageAction'; payload: number }
+  | { type: 'SelectAction'; payload: string[] }
+  | { type: 'FiltersAction'; payload?: { active: boolean } };
+type UserActions = ScopedActions<{ users: UserAction }>;
+declare const send: Dispatch<UserActions>;
+
+await send('users/LoadAction');
+await send('users/SetPageAction', 2);
+await send('users/SelectAction', ['1', '2']);
+await send('users/FiltersAction');
+
+const replay = (args: DispatchArguments<UserActions>) => {
+  return send(...args);
+};
+
+await replay(['users/SetPageAction', 2]);
+```
+
+For saved or computed intents, keep the path and payload together as a
+`DispatchArguments` tuple and spread it into dispatch. An independently computed
+union of paths does not establish which payload belongs to the selected path.
+
+Optional payloads and object payloads with no required fields may be omitted.
+`ActionInput<TAction>` reflects that omission in reducer and error-handler inputs.
+Malformed paths are reported as `{ kind: 'dispatch', path, error }`, before state
+is read; dispatch still resolves. Unknown handlers retain the reducer's existing
+behavior. Types validate calls; payload data is not validated at runtime.
+
+Dispatch also accepts an object with the same typed path and payload:
+
+```ts
+await send({ action: 'users/SetPageAction', payload: 2 });
+await send({ action: 'users/LoadAction' });
+```
+
+Prefer string calls in ordinary code. API callbacks and custom effect descriptions
+return `{ action, payload }` objects that can be passed directly to dispatch.
 
 State commits synchronously before effects start. Effects run in parallel;
 dispatch waits for all of them and for nested dispatches awaited by those effects.
@@ -301,9 +351,12 @@ const loadUser = defineApiOperation<Paths>()({
 
 type SuccessAction = {
   type: 'UserLoadedAction';
-  user: { id: string; name: string };
+  payload: { user: { id: string; name: string } };
 };
-type ErrorAction = { type: 'UserLoadFailedAction'; errors: AppError[] };
+type ErrorAction = {
+  type: 'UserLoadFailedAction';
+  payload: { errors: AppError[] };
+};
 type Action = SuccessAction | ErrorAction;
 type Operation = typeof loadUser;
 type Effect = ApiEffect<Operation, SuccessAction, ErrorAction>;
@@ -316,10 +369,10 @@ const effect: Effect = createApiEffect(loadUser, {
     path: [],
   },
   onSuccess: (user) => {
-    return { type: 'UserLoadedAction', user };
+    return { action: 'root/UserLoadedAction', payload: { user } };
   },
   onError: (errors) => {
-    return { type: 'UserLoadFailedAction', errors };
+    return { action: 'root/UserLoadFailedAction', payload: { errors } };
   },
 });
 const effector: Effector<Action, Effect> = effecting(
@@ -360,3 +413,12 @@ mapper exceptions are contract failures.
 See the [working operation](https://github.com/antonsmolko/gost-kit/blob/main/examples/functional-core/src/features/user/data/api/load-user.ts)
 and [mapper](https://github.com/antonsmolko/gost-kit/blob/main/examples/functional-core/src/features/user/data/mappers/map-user.ts)
 for a complete application example.
+
+## Migrating dispatch calls
+
+Replace `dispatch({ scope: 'users', type: 'SetPageAction', page: 2 })` with
+`dispatch('users/SetPageAction', { page: 2 })`. Declare the action as
+`{ type: 'SetPageAction'; payload: { page: number } }` and read
+`action.payload.page` in its reducer. Root calls use `root/ActionType`.
+Actions without data use a path only. API callbacks also put data in payload.
+The previous object call with separate scope/type fields is removed.

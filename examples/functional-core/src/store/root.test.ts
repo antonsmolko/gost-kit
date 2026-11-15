@@ -19,9 +19,7 @@ test('dispatch applies an input action synchronously and returns a promise', asy
       return userDto;
     }),
   );
-  const completed = root.dispatch({
-    scope: 'users',
-    type: 'SetEmailAction',
+  const completed = root.dispatch('users/SetEmailAction', {
     email: user.email,
   });
 
@@ -37,11 +35,9 @@ test('await dispatch waits for API and the success receiver action', async () =>
     }),
   );
   let completed = false;
-  const pending = root
-    .dispatch({ scope: 'users', type: 'LoadAction' })
-    .then(() => {
-      completed = true;
-    });
+  const pending = root.dispatch('users/LoadAction').then(() => {
+    completed = true;
+  });
 
   expect(root.state.user.status).toBe('loading');
   await Promise.resolve();
@@ -59,7 +55,7 @@ test('request rejection reaches a global alert through nested dispatch', async (
     }),
   );
 
-  await root.dispatch({ scope: 'users', type: 'LoadAction' });
+  await root.dispatch('users/LoadAction');
   expect(root.state.user.status).toBe('error');
   expect(root.state.alert).toEqual({
     status: 'error',
@@ -82,9 +78,9 @@ test('retry clears the feature error and can succeed', async () => {
     }),
   );
 
-  await root.dispatch({ scope: 'users', type: 'LoadAction' });
+  await root.dispatch('users/LoadAction');
   failed = false;
-  await root.dispatch({ scope: 'users', type: 'LoadAction' });
+  await root.dispatch('users/LoadAction');
   expect(root.state.user.errors).toEqual([]);
   expect(root.state.user.data).toEqual(user);
 });
@@ -101,11 +97,7 @@ test('root instances do not share state', async () => {
     }),
   );
 
-  await first.dispatch({
-    scope: 'users',
-    type: 'SetEmailAction',
-    email: user.email,
-  });
+  await first.dispatch('users/SetEmailAction', { email: user.email });
   expect(second.state.user.email).toBe('');
 });
 
@@ -118,7 +110,7 @@ test('mapper failure exits loading and reaches the global UI alert', async () =>
   });
   const root = createRootStore(api);
 
-  await root.dispatch({ scope: 'users', type: 'LoadAction' });
+  await root.dispatch('users/LoadAction');
   expect(root.state.user.status).toBe('error');
   expect(root.state.alert).toEqual({
     status: 'error',

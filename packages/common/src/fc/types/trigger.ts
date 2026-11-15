@@ -1,1 +1,1 @@
-export type Trigger = { type: `${string}${'Action' | 'Effect'}` };
+export type Trigger = { type: string };

@@ -2,10 +2,10 @@ import { expect, test } from 'vitest';
 import { scopeHandler } from './scope-handler';
 
 type RootState = { user: { name: string }; auth: { name: string } };
-type Action = { type: 'LoadAction'; name: string };
+type Action = { type: 'LoadAction'; payload: { name: string } };
 type Effect = { type: 'ReportEffect'; name: string };
 
-const action: Action = { type: 'LoadAction', name: 'Ada' };
+const action: Action = { type: 'LoadAction', payload: { name: 'Ada' } };
 
 test('updates only the selected feature without mutating the original state', () => {
   const state: RootState = { user: { name: '' }, auth: { name: 'Grace' } };
@@ -41,7 +41,9 @@ test('passes feature state, action and the supplied current root state to the ha
       expect(rootState).toBe(currentRoot);
 
       return {
-        state: { name: `${params.action.name} / ${rootState.auth.name}` },
+        state: {
+          name: `${params.action.payload.name} / ${rootState.auth.name}`,
+        },
       };
     },
   );

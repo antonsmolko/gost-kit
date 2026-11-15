@@ -13,7 +13,7 @@ export const userReducer = define.reducer<
 >()({
   SetEmailAction: ({ state, action }) => {
     return {
-      state: { ...state, email: action.email },
+      state: { ...state, email: action.payload.email },
     };
   },
   LoadAction: ({ state }) => {
@@ -32,10 +32,13 @@ export const userReducer = define.reducer<
             path: [],
           },
           onSuccess: (response) => {
-            return { scope: 'users', type: 'SuccessReceiveAction', response };
+            return {
+              action: 'users/SuccessReceiveAction',
+              payload: { response },
+            };
           },
           onError: (errors) => {
-            return { scope: 'users', type: 'ErrorReceiveAction', errors };
+            return { action: 'users/ErrorReceiveAction', payload: { errors } };
           },
         }),
       ],
@@ -43,23 +46,30 @@ export const userReducer = define.reducer<
   },
   SuccessReceiveAction: ({ state, action }) => {
     return {
-      state: { ...state, status: 'ready', data: action.response, errors: [] },
+      state: {
+        ...state,
+        status: 'ready',
+        data: action.payload.response,
+        errors: [],
+      },
     };
   },
   ErrorReceiveAction: ({ state, action }) => {
     return {
-      state: { ...state, status: 'error', errors: action.errors },
+      state: { ...state, status: 'error', errors: action.payload.errors },
       effects: {
         type: 'DispatchActionEffect',
         action: {
-          type: 'ShowAlertAction',
-          status: 'error',
-          message:
-            action.errors
-              .map((error) => {
-                return error.message;
-              })
-              .join('; ') || 'Request failed',
+          action: 'root/ShowAlertAction',
+          payload: {
+            status: 'error',
+            message:
+              action.payload.errors
+                .map((error) => {
+                  return error.message;
+                })
+                .join('; ') || 'Request failed',
+          },
         },
       },
     };

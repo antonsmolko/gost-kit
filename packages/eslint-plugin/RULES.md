@@ -204,11 +204,11 @@ aliases/reexports, const/destructured aliases, `Store.dispatch` and inferred
 metadata for structurally equal local callbacks. Name/shape alone, plain
 `AsyncTap`, any/unknown and mixed unions do not prove Dispatch; genuine nullable
 Dispatch is supported. Optional invocation/access that can suppress that
-Dispatch (`send?.(action)`, `store?.dispatch(action)` or `store.dispatch?.(action)`)
+Dispatch (`send?.('root/LoadAction')`, `store?.dispatch('root/LoadAction')` or `store.dispatch?.('root/LoadAction')`)
 is conditional intent delivery and reports `conditionalDispatch` for a single call.
 This includes a Dispatch evaluated in skipped arguments/computed keys of an
-outer optional expression, such as `consume?.(dispatch(action))` or
-`values?.[String(dispatch(action))]`.
+outer optional expression, such as `consume?.(dispatch('root/LoadAction'))` or
+`values?.[String(dispatch('root/LoadAction'))]`.
 Ordinary optional data reads and optional accesses after the Dispatch result are
 not treated as a dispatch gate. Parenthesized chains that end before an
 unconditional call follow JavaScript chain boundaries, not optional-call semantics.
@@ -243,15 +243,15 @@ keys remain included. Helper/constructor call graphs are not followed.
 // Reported: business choice remains in the component.
 const handleSubmit = () => {
   if (hasUser) {
-    void dispatch({ type: 'UpdateUserAction' });
+    void dispatch('root/UpdateUserAction');
   } else {
-    void dispatch({ type: 'CreateUserAction' });
+    void dispatch('root/CreateUserAction');
   }
 };
 
 // Use an intent callback supplied to a UI-Kit component.
 const handleSubmit = () => {
-  void dispatch({ type: 'SubmitUserAction' });
+  void dispatch('root/SubmitUserAction');
 };
 ```
 

@@ -1,5 +1,4 @@
 import type { Keyof, Rec } from '../../types';
-import type { DispatchAction } from './dispatch-action';
 import type { Trigger } from './trigger';
 
 /**
@@ -10,13 +9,13 @@ import type { Trigger } from './trigger';
  *
  * @example
  * type Action = ScopedActions<{
- *   users: { type: 'LoadAction'; page: number };
- *   root: { type: 'ShowAlertAction'; message: string };
+ *   users: { type: 'LoadAction'; payload: { page: number } };
+ *   root: { type: 'ShowAlertAction'; payload: { message: string } };
  * }>;
  */
 export type ScopedActions<TActionMap extends Rec<Trigger & { scope?: never }>> =
   {
     [TScope in Keyof<TActionMap>]: TScope extends 'root'
-      ? DispatchAction<TActionMap[TScope]>
+      ? TActionMap[TScope] & { scope?: 'root' }
       : TActionMap[TScope] & { scope: TScope };
   }[Keyof<TActionMap>];

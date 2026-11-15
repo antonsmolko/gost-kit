@@ -8,7 +8,8 @@ import type { ReducerHandlers } from '../types/reducer-handlers';
 import type { ScopedActions } from '../types/scoped-actions';
 
 type State = { count: number; previous?: boolean };
-type Action = { type: 'SetAction'; count: number } | { type: 'IdleAction' };
+type Action =
+  { type: 'SetAction'; payload: { count: number } } | { type: 'IdleAction' };
 type Effect = { type: 'RecordEffect'; value: number } | { type: 'OtherEffect' };
 
 test('reducing composes root handlers and routes the narrowed action payload', () => {
@@ -18,7 +19,7 @@ test('reducing composes root handlers and routes the narrowed action payload', (
     Effect
   >()({
     SetAction: ({ action }) => {
-      return { state: { count: action.count } };
+      return { state: { count: action.payload.count } };
     },
   });
   const other = define.reducer<
@@ -35,7 +36,10 @@ test('reducing composes root handlers and routes the narrowed action payload', (
   });
 
   expect(
-    reducer({ count: 0, previous: true }, { type: 'SetAction', count: 7 }),
+    reducer(
+      { count: 0, previous: true },
+      { type: 'SetAction', payload: { count: 7 } },
+    ),
   ).toEqual({
     state: { count: 7 },
     effects: [],
@@ -89,13 +93,15 @@ test('effects-only results preserve state and normalize a single effect to an ar
   > = reducing({
     root: {
       SetAction: ({ action }) => {
-        return { effects: { type: 'RecordEffect', value: action.count } };
+        return {
+          effects: { type: 'RecordEffect', value: action.payload.count },
+        };
       },
     },
   });
   const state = { count: 0 };
 
-  expect(reducer(state, { type: 'SetAction', count: 7 })).toEqual({
+  expect(reducer(state, { type: 'SetAction', payload: { count: 7 } })).toEqual({
     state,
     effects: [{ type: 'RecordEffect', value: 7 }],
   });
@@ -123,9 +129,9 @@ test('an effects array passes through without changing its reference', () => {
 
 test('equal action names select their own namespace and retain distinct payloads', () => {
   type ScopedAction = ScopedActions<{
-    users: { type: 'LoadAction'; page: number };
-    roles: { type: 'LoadAction'; roleId: string };
-    root: { type: 'LoadAction'; reason: string };
+    users: { type: 'LoadAction'; payload: { page: number } };
+    roles: { type: 'LoadAction'; payload: { roleId: string } };
+    root: { type: 'LoadAction'; payload: { reason: string } };
   }>;
 
   const received: ScopedAction[] = [];
@@ -137,7 +143,7 @@ test('equal action names select their own namespace and retain distinct payloads
         >();
         received.push(action);
 
-        return { state: { count: action.page } };
+        return { state: { count: action.payload.page } };
       },
     },
     roles: {
@@ -147,7 +153,7 @@ test('equal action names select their own namespace and retain distinct payloads
         >();
         received.push(action);
 
-        return { state: { count: action.roleId.length } };
+        return { state: { count: action.payload.roleId.length } };
       },
     },
     root: {
@@ -157,16 +163,16 @@ test('equal action names select their own namespace and retain distinct payloads
         >();
         received.push(action);
 
-        return { state: { count: action.reason.length } };
+        return { state: { count: action.payload.reason.length } };
       },
     },
   });
   const state = { count: 0 };
   const actions: ScopedAction[] = [
-    { scope: 'users', type: 'LoadAction', page: 7 },
-    { scope: 'roles', type: 'LoadAction', roleId: 'admin' },
-    { type: 'LoadAction', reason: 'refresh' },
-    { scope: 'root', type: 'LoadAction', reason: 'again' },
+    { scope: 'users', type: 'LoadAction', payload: { page: 7 } },
+    { scope: 'roles', type: 'LoadAction', payload: { roleId: 'admin' } },
+    { type: 'LoadAction', payload: { reason: 'refresh' } },
+    { scope: 'root', type: 'LoadAction', payload: { reason: 'again' } },
   ];
 
   expect(
@@ -182,17 +188,18 @@ test('equal action names select their own namespace and retain distinct payloads
   expectTypeOf<{
     scope: 'users';
     type: 'LoadAction';
-    roleId: string;
+    payload: { roleId: string };
   }>().not.toExtend<Parameters<typeof reducer>[1]>();
-  expectTypeOf<{ type: 'LoadAction'; page: number }>().not.toExtend<
-    Parameters<typeof reducer>[1]
-  >();
+  expectTypeOf<{
+    type: 'LoadAction';
+    payload: { page: number };
+  }>().not.toExtend<Parameters<typeof reducer>[1]>();
 });
 
 test('the action namespace is independent of its state key', () => {
   type FeatureState = { name: string };
   type RootState = { user: FeatureState; alert: string };
-  type UserAction = { type: 'SetAction'; name: string };
+  type UserAction = { type: 'SetAction'; payload: { name: string } };
   type RootAction = ScopedActions<{ users: UserAction }>;
 
   const handlers = define.reducer<
@@ -203,8 +210,8 @@ test('the action namespace is independent of its state key', () => {
   >()({
     SetAction: ({ action }, rootState) => {
       return {
-        state: { name: `${rootState.alert}: ${action.name}` },
-        effects: { type: 'RecordEffect', value: action.name.length },
+        state: { name: `${rootState.alert}: ${action.payload.name}` },
+        effects: { type: 'RecordEffect', value: action.payload.name.length },
       };
     },
   });
@@ -215,7 +222,7 @@ test('the action namespace is independent of its state key', () => {
   const commit = reducer(state, {
     scope: 'users',
     type: 'SetAction',
-    name: 'Ada',
+    payload: { name: 'Ada' },
   });
 
   expect(commit).toEqual({
@@ -233,7 +240,7 @@ test('requires complete non-optional handler coverage in every namespace', () =>
 
   const users = define.reducer<State, Action, Effect>()({
     SetAction: ({ action }) => {
-      return { state: { count: action.count } };
+      return { state: { count: action.payload.count } };
     },
     IdleAction: () => {},
   });
@@ -356,7 +363,7 @@ test('requires a result contract or explicit generics for nonempty namespace map
   });
   const handlers = define.reducer<State, Action, Effect>()({
     SetAction: ({ action }) => {
-      return { state: { count: action.count } };
+      return { state: { count: action.payload.count } };
     },
     IdleAction: () => {},
   });
@@ -372,14 +379,15 @@ test('requires a result contract or explicit generics for nonempty namespace map
           Extract<Action, { type: 'SetAction' }>
         >();
 
-        return { state: { count: action.count } };
+        return { state: { count: action.payload.count } };
       },
       IdleAction: () => {},
     },
   });
 
   expect(
-    explicit({ count: 0 }, { type: 'SetAction', count: 7 }).state.count,
+    explicit({ count: 0 }, { type: 'SetAction', payload: { count: 7 } }).state
+      .count,
   ).toBe(7);
   void [untyped, withState, fromVariable, noActions];
 });

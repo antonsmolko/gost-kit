@@ -28,7 +28,7 @@ test('feature handlers receive and return feature state separately from root sta
   const draft = userReducer.SetEmailAction(
     {
       state: rootState.user,
-      action: { type: 'SetEmailAction', email: user.email },
+      action: { type: 'SetEmailAction', payload: { email: user.email } },
     },
     rootState,
   );
@@ -46,7 +46,7 @@ test('setting email returns full state without mutating the previous state', () 
   const commit = reducer(state, {
     scope: 'users',
     type: 'SetEmailAction',
-    email: user.email,
+    payload: { email: user.email },
   });
 
   expect(commit.state).toEqual({
@@ -82,9 +82,8 @@ test('loading only describes a request and its success/error receivers', () => {
   }
 
   expect(effect.onSuccess(user)).toEqual({
-    scope: 'users',
-    type: 'SuccessReceiveAction',
-    response: user,
+    action: 'users/SuccessReceiveAction',
+    payload: { response: user },
   });
   expect(
     effect.onError([{ code: 'OFFLINE', message: 'Offline', path: [] }], {
@@ -92,9 +91,8 @@ test('loading only describes a request and its success/error receivers', () => {
       errors: [],
     }),
   ).toEqual({
-    scope: 'users',
-    type: 'ErrorReceiveAction',
-    errors: [{ code: 'OFFLINE', message: 'Offline', path: [] }],
+    action: 'users/ErrorReceiveAction',
+    payload: { errors: [{ code: 'OFFLINE', message: 'Offline', path: [] }] },
   });
 });
 
@@ -103,7 +101,7 @@ test('API error describes a global alert action through an effect', () => {
   const commit = reducer(state, {
     scope: 'users',
     type: 'ErrorReceiveAction',
-    errors: [{ code: 'OFFLINE', message: 'Offline', path: [] }],
+    payload: { errors: [{ code: 'OFFLINE', message: 'Offline', path: [] }] },
   });
 
   expect(commit.state.user.status).toBe('error');
@@ -111,7 +109,10 @@ test('API error describes a global alert action through an effect', () => {
   expect(commit.effects).toEqual([
     {
       type: 'DispatchActionEffect',
-      action: { type: 'ShowAlertAction', status: 'error', message: 'Offline' },
+      action: {
+        action: 'root/ShowAlertAction',
+        payload: { status: 'error', message: 'Offline' },
+      },
     },
   ]);
 });

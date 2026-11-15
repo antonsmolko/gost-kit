@@ -33,7 +33,7 @@ This counter is a complete component example:
   });
 
   const increment = () => {
-    void counter.dispatch({ type: 'IncrementAction' });
+    void counter.dispatch('root/IncrementAction');
   };
   const reset = () => {
     counter.reset();

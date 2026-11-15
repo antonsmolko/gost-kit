@@ -1,12 +1,11 @@
-import type { AsyncTap } from '../../types';
 import type { Trigger } from './trigger';
+import type { DispatchArguments } from './dispatch-arguments';
 import type { DispatchAction } from './dispatch-action';
 
 /**
- * Accepts both ScopedActions and ordinary unscoped root declarations.
- * DispatchAction also supports explicit root scope for the latter; applying it
- * to an already scoped union preserves the accepted actions.
+ * A correlated namespace/action path and its declared payload.
+ * Actions declared without scope use the explicit root namespace.
  */
-export type Dispatch<TAction extends Trigger> = AsyncTap<
-  DispatchAction<TAction>
->;
+export type Dispatch<TAction extends Trigger> = (
+  ...args: DispatchArguments<TAction> | [action: DispatchAction<TAction>]
+) => Promise<void>;
