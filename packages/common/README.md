@@ -222,9 +222,15 @@ Malformed paths are reported as `{ kind: 'dispatch', path, error }`, before stat
 is read; dispatch still resolves. Unknown handlers retain the reducer's existing
 behavior. Types validate calls; payload data is not validated at runtime.
 
-API callbacks continue to return object actions. Custom effect handlers can
-forward such an object using `await forwardAction(dispatch, action)` from the
-public common API; it preserves the action's payload and awaits dispatch.
+Dispatch also accepts an object with the same typed path and payload:
+
+```ts
+await send({ action: 'users/SetPageAction', payload: 2 });
+await send({ action: 'users/LoadAction' });
+```
+
+Prefer string calls in ordinary code. API callbacks and custom effect descriptions
+return `{ action, payload }` objects that can be passed directly to dispatch.
 
 State commits synchronously before effects start. Effects run in parallel;
 dispatch waits for all of them and for nested dispatches awaited by those effects.
@@ -363,10 +369,10 @@ const effect: Effect = createApiEffect(loadUser, {
     path: [],
   },
   onSuccess: (user) => {
-    return { type: 'UserLoadedAction', payload: { user } };
+    return { action: 'root/UserLoadedAction', payload: { user } };
   },
   onError: (errors) => {
-    return { type: 'UserLoadFailedAction', payload: { errors } };
+    return { action: 'root/UserLoadFailedAction', payload: { errors } };
   },
 });
 const effector: Effector<Action, Effect> = effecting(
@@ -415,4 +421,4 @@ Replace `dispatch({ scope: 'users', type: 'SetPageAction', page: 2 })` with
 `{ type: 'SetPageAction'; payload: { page: number } }` and read
 `action.payload.page` in its reducer. Root calls use `root/ActionType`.
 Actions without data use a path only. API callbacks also put data in payload.
-The previous object call signature is removed.
+The previous object call with separate scope/type fields is removed.

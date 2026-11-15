@@ -16,7 +16,11 @@ export const createDispatch = <
   onError,
 }: DispatchConfig<TState, TAction, TEffect>): Dispatch<TAction> => {
   const dispatch: Dispatch<TAction> = async (...args) => {
-    const [path, payload] = args as readonly [unknown, unknown?];
+    const [input, value] = args as readonly [unknown, unknown?];
+    const objectCall = guard.record(input);
+    const path = objectCall ? input.action : input;
+    const payload = objectCall ? input.payload : value;
+    const hasPayload = objectCall ? 'payload' in input : args.length > 1;
 
     if (!guard.string(path) || !/^[^/]+\/[^/]+$/u.test(path)) {
       report(
@@ -37,7 +41,7 @@ export const createDispatch = <
     const action = {
       scope: path.slice(0, separator),
       type: path.slice(separator + 1) as TAction['type'],
-      ...(args.length > 1 ? { payload } : {}),
+      ...(hasPayload ? { payload } : {}),
     } as unknown as ActionInput<TAction>;
     let state: TState;
 

@@ -1,5 +1,4 @@
 import { expect, test, vi } from 'vitest';
-import type { DispatchAction } from '../types/dispatch-action';
 import { createDispatch } from './dispatch';
 import { createReset } from './create-reset';
 import { reducing } from './reducing';
@@ -75,12 +74,12 @@ test('each dispatch reads the current state and builds the action from its path 
 
   const initial: State = { count: 0 };
   const external: State = { count: 40 };
-  const firstAction: DispatchAction<AddAction> = {
+  const firstAction: AddAction & { scope: 'root' } = {
     scope: 'root',
     type: 'AddAction',
     payload: { amount: 3 },
   };
-  const secondAction: DispatchAction<AddAction> = {
+  const secondAction: AddAction & { scope: 'root' } = {
     scope: 'root',
     type: 'AddAction',
     payload: { amount: 2 },
@@ -173,7 +172,10 @@ test('accepts a synchronous onError in dispatch config', async () => {
     },
   };
   const dispatch = createDispatch(config);
-  const action: DispatchAction<Action> = { scope: 'root', type: 'RunAction' };
+  const action: Action & { scope: 'root' } = {
+    scope: 'root',
+    type: 'RunAction',
+  };
 
   const pending = dispatch('root/RunAction');
 
@@ -356,7 +358,10 @@ test('a readState failure is reported before reducer, writeState or effects run'
     effector,
     onError,
   });
-  const action: DispatchAction<Action> = { scope: 'root', type: 'RunAction' };
+  const action: Action & { scope: 'root' } = {
+    scope: 'root',
+    type: 'RunAction',
+  };
 
   await expect(dispatch('root/RunAction')).resolves.toBeUndefined();
 
@@ -392,7 +397,10 @@ test('a writeState failure is reported after reducer and prevents effects', asyn
     effector,
     onError,
   });
-  const action: DispatchAction<Action> = { scope: 'root', type: 'RunAction' };
+  const action: Action & { scope: 'root' } = {
+    scope: 'root',
+    type: 'RunAction',
+  };
 
   await expect(dispatch('root/RunAction')).resolves.toBeUndefined();
 

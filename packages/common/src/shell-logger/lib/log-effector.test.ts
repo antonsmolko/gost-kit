@@ -10,7 +10,7 @@ afterEach(() => {
 });
 
 test('logs before execution and still waits for the original effector', async () => {
-  const events: string[] = [];
+  const events: unknown[] = [];
   const output = vi.spyOn(console, 'log').mockImplementation(() => {
     events.push('log');
   });
@@ -80,7 +80,7 @@ test('logs the trigger even when the effector rejects and preserves its error', 
 });
 
 test('logs the effect before its nested dispatch', async () => {
-  const events: string[] = [];
+  const events: unknown[] = [];
 
   vi.spyOn(console, 'log').mockImplementation(() => {
     events.push('effect log');

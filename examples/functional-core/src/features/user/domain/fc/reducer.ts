@@ -33,17 +33,12 @@ export const userReducer = define.reducer<
           },
           onSuccess: (response) => {
             return {
-              scope: 'users',
-              type: 'SuccessReceiveAction',
+              action: 'users/SuccessReceiveAction',
               payload: { response },
             };
           },
           onError: (errors) => {
-            return {
-              scope: 'users',
-              type: 'ErrorReceiveAction',
-              payload: { errors },
-            };
+            return { action: 'users/ErrorReceiveAction', payload: { errors } };
           },
         }),
       ],
@@ -65,7 +60,7 @@ export const userReducer = define.reducer<
       effects: {
         type: 'DispatchActionEffect',
         action: {
-          type: 'ShowAlertAction',
+          action: 'root/ShowAlertAction',
           payload: {
             status: 'error',
             message:

@@ -29,7 +29,7 @@ const checkEffectTypes = () => {
       onSuccess: (data) => {
         expectTypeOf(data).toEqualTypeOf<TestUser>();
 
-        return { type: 'DoneAction' };
+        return { action: 'root/DoneAction' };
       },
     },
   );
@@ -40,7 +40,7 @@ const checkEffectTypes = () => {
       onSuccess: (data) => {
         expectTypeOf(data).toEqualTypeOf<undefined>();
 
-        return { type: 'DoneAction' };
+        return { action: 'root/DoneAction' };
       },
     },
   );
@@ -48,7 +48,7 @@ const checkEffectTypes = () => {
     ...post,
     // @ts-expect-error response must correspond to the selected operation
     onSuccess: (_data: string) => {
-      return { type: 'DoneAction' };
+      return { action: 'root/DoneAction' };
     },
   };
   const handler = createApiEffector<TestPaths, Action, Operation>(

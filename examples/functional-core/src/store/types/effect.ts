@@ -1,4 +1,5 @@
 import type {
+  DispatchAction,
   ApiClient as CommonApiClient,
   ApiEffect as CommonApiEffect,
 } from '@gost-kit/common';
@@ -8,7 +9,7 @@ import type { RootAction } from './action';
 
 export type DispatchActionEffect = {
   type: 'DispatchActionEffect';
-  action: RootAction;
+  action: DispatchAction<RootAction>;
 };
 export type ApiOperation = typeof loadUser;
 export type ApiEffect = CommonApiEffect<

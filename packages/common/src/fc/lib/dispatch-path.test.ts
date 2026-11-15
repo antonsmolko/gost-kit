@@ -2,6 +2,34 @@ import { expect, test, vi } from 'vitest';
 import { createDispatch } from './dispatch';
 
 test.each([2, 'Ada', false, null, ['1', '2'], { email: 'ada@example.test' }])(
+  'object calls route the same unchanged payload: %j',
+  async (payload) => {
+    const received: unknown[] = [];
+    const dispatch = createDispatch<
+      number,
+      { scope: 'users'; type: 'SetAction'; payload: typeof payload },
+      never
+    >({
+      readState: () => {
+        return 0;
+      },
+      writeState: () => {},
+      reducer: (state, action) => {
+        received.push(action);
+
+        return { state, effects: [] };
+      },
+      effector: async () => {},
+    });
+
+    await dispatch({ action: 'users/SetAction', payload });
+
+    expect(received).toEqual([{ scope: 'users', type: 'SetAction', payload }]);
+    expect((received[0] as { payload: unknown }).payload).toBe(payload);
+  },
+);
+
+test.each([2, 'Ada', false, null, ['1', '2'], { email: 'ada@example.test' }])(
   'passes the payload unchanged to the selected action: %j',
   async (payload) => {
     const reducer = vi.fn(
@@ -72,6 +100,36 @@ test('distinguishes absent payload from explicitly passed undefined', async () =
   expect(Object.hasOwn(received[1], 'payload')).toBe(true);
 });
 
+test('object calls preserve absent payload and explicit undefined', async () => {
+  const received: object[] = [];
+  const dispatch = createDispatch<
+    number,
+    { type: 'load' } | { type: 'set'; payload: undefined },
+    never
+  >({
+    readState: () => {
+      return 0;
+    },
+    writeState: () => {},
+    reducer: (state, action) => {
+      received.push(action);
+
+      return { state, effects: [] };
+    },
+    effector: async () => {},
+  });
+
+  await dispatch({ action: 'root/load' });
+  await dispatch({ action: 'root/set', payload: undefined });
+
+  expect(received).toEqual([
+    { scope: 'root', type: 'load' },
+    { scope: 'root', type: 'set', payload: undefined },
+  ]);
+  expect(Object.hasOwn(received[0], 'payload')).toBe(false);
+  expect(Object.hasOwn(received[1], 'payload')).toBe(true);
+});
+
 test.each([
   undefined,
   null,
@@ -113,5 +171,36 @@ test.each([
     expect(reducer).not.toHaveBeenCalled();
     expect(writeState).not.toHaveBeenCalled();
     expect(effector).not.toHaveBeenCalled();
+  },
+);
+
+test.each([undefined, 42, 'users//load'])(
+  'reports an invalid object action path %j before reading state',
+  async (path) => {
+    const readState = vi.fn(() => {
+      return 0;
+    });
+    const reducer = vi.fn(() => {
+      return { state: 1, effects: [] };
+    });
+    const onError = vi.fn();
+    const dispatch = createDispatch<number, { type: 'load' }, never>({
+      readState,
+      reducer,
+      writeState: () => {},
+      effector: async () => {},
+      onError,
+    });
+
+    // @ts-expect-error Untyped object boundary.
+    await dispatch({ action: path });
+
+    expect(onError).toHaveBeenCalledExactlyOnceWith({
+      kind: 'dispatch',
+      path,
+      error: expect.any(TypeError),
+    });
+    expect(readState).not.toHaveBeenCalled();
+    expect(reducer).not.toHaveBeenCalled();
   },
 );

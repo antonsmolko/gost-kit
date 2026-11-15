@@ -6,8 +6,9 @@
 
 Replace object dispatch calls with `dispatch('namespace/ActionType', payload)`.
 Action data moves to `action.payload`; payloads may have any declared type or be
-absent. Root calls use `root/ActionType`. Use `forwardAction` to dispatch objects
-returned by API callbacks or held by custom effect handlers.
+absent. Root calls use `root/ActionType`. Dispatch also accepts
+`{ action: 'namespace/ActionType', payload }`, including objects returned by API
+callbacks and held by custom effect handlers. Ordinary calls use the string form.
 
 Update the single-intent rule examples for the new dispatch syntax. Rule behavior
 is unchanged.

@@ -8,6 +8,7 @@ import type { AppError } from '../../app-error';
 import { createApiEffect } from '../lib/create-api-effect';
 import { createApiEffector } from '../lib/create-api-effector';
 import type { ApiEffect } from './api-effect';
+import type { DispatchAction } from './dispatch-action';
 import type { TestPaths } from '../../api/types/api-client.test';
 
 type SuccessAction =
@@ -37,48 +38,52 @@ const checkActionRoles = () => {
     onSuccess: (user) => {
       expectTypeOf(user).toEqualTypeOf<{ label: string }>();
 
-      return { type: 'LoadedAction', payload: { label: user.label } };
+      return { action: 'root/LoadedAction', payload: { label: user.label } };
     },
     onError: (errors, failure) => {
       expectTypeOf(errors).toEqualTypeOf<AppError[]>();
       expectTypeOf(failure).toEqualTypeOf<ApiFailure>();
 
-      return { type: 'FailedAction', payload: { errors } };
+      return { action: 'root/FailedAction', payload: { errors } };
     },
   });
   const secondSuccess: Effect = createApiEffect(operation, {
     ...options,
     onSuccess: () => {
-      return { type: 'EmptyAction' };
+      return { action: 'root/EmptyAction' };
     },
   });
   const swappedSuccess: Effect = {
     ...valid,
     // @ts-expect-error success callback cannot return an error action
     onSuccess: () => {
-      return { type: 'FailedAction', payload: { errors: [] } };
+      return { action: 'root/FailedAction', payload: { errors: [] } };
     },
   };
   const swappedError: Effect = {
     ...valid,
     // @ts-expect-error error callback cannot return a success action
     onError: () => {
-      return { type: 'EmptyAction' };
+      return { action: 'root/EmptyAction' };
     },
   };
   const wrongPayload: Effect = {
     ...valid,
     // @ts-expect-error the correct error discriminator still requires its payload
     onError: () => {
-      return { type: 'FailedAction' };
+      return { action: 'root/FailedAction' };
     },
   };
 
-  createApiEffect<typeof operation, SuccessAction, ErrorAction>(operation, {
+  createApiEffect<
+    typeof operation,
+    DispatchAction<SuccessAction>,
+    DispatchAction<ErrorAction>
+  >(operation, {
     ...options,
     // @ts-expect-error explicit factory action roles are checked too
     onSuccess: () => {
-      return { type: 'FailedAction', payload: { errors: [] } };
+      return { action: 'root/FailedAction', payload: { errors: [] } };
     },
   });
   type FeatureSuccessAction = SuccessAction & { scope: 'users' };
@@ -91,14 +96,10 @@ const checkActionRoles = () => {
   > = createApiEffect(operation, {
     ...options,
     onSuccess: (user) => {
-      return {
-        scope: 'users',
-        type: 'LoadedAction',
-        payload: { label: user.label },
-      };
+      return { action: 'users/LoadedAction', payload: { label: user.label } };
     },
     onError: (errors) => {
-      return { scope: 'users', type: 'FailedAction', payload: { errors } };
+      return { action: 'users/FailedAction', payload: { errors } };
     },
   });
   const wrongScope: ApiEffect<
@@ -109,16 +110,16 @@ const checkActionRoles = () => {
     ...scoped,
     // @ts-expect-error required scope is preserved for the error action
     onError: (errors) => {
-      return { scope: 'other', type: 'FailedAction', payload: { errors } };
+      return { action: 'other/FailedAction', payload: { errors } };
     },
   };
   const swappedFactory = createApiEffect(operation, {
     ...options,
     onSuccess: () => {
-      return { type: 'FailedAction', payload: { errors: [] } };
+      return { action: 'root/FailedAction', payload: { errors: [] } };
     },
     onError: () => {
-      return { type: 'EmptyAction' };
+      return { action: 'root/EmptyAction' };
     },
   });
   // @ts-expect-error inferred factory action roles must match the declared effect
@@ -129,14 +130,14 @@ const checkActionRoles = () => {
     createApiEffect(operation, {
       ...options,
       onSuccess: () => {
-        return { type: 'EmptyAction' };
+        return { action: 'root/EmptyAction' };
       },
     });
   const errorOnly: ApiEffect<typeof operation, never, ErrorAction> =
     createApiEffect(operation, {
       ...options,
       onError: (errors) => {
-        return { type: 'FailedAction', payload: { errors } };
+        return { action: 'root/FailedAction', payload: { errors } };
       },
     });
   const api = createApiClient<TestPaths>({ baseUrl: 'https://example.test' });
@@ -162,7 +163,7 @@ const checkActionRoles = () => {
   const unrelatedError = createApiEffect(operation, {
     ...options,
     onError: () => {
-      return { type: 'UnrelatedAction' };
+      return { action: 'root/UnrelatedAction' };
     },
   });
 

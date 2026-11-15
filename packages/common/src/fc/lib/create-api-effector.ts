@@ -6,7 +6,6 @@ import type { Trigger } from '../types/trigger';
 import type { apiOperationSchema } from '../../api/types/api-operation-schema';
 import { mapApiResult } from './map-api-result';
 import { define } from './define';
-import { forwardAction } from './forward-action';
 
 export const createApiEffector = <
   TPaths extends object,
@@ -51,7 +50,7 @@ export const createApiEffector = <
         if (onSuccess) {
           // The public effect correlates this callback with the operation's
           // mapped data. Only the dynamic payload loses that correlation here.
-          await forwardAction(dispatch, onSuccess(result.data as never));
+          await dispatch(onSuccess(result.data as never));
         }
 
         return;
@@ -65,7 +64,7 @@ export const createApiEffector = <
         ? result.error.errors
         : [defaultError];
 
-      await forwardAction(dispatch, onError(errors, result.error));
+      await dispatch(onError(errors, result.error));
     },
   });
 };

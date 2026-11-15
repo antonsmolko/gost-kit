@@ -2,8 +2,8 @@ import { expect, test } from 'vitest';
 import type { Dispatch } from './dispatch';
 import type { ScopedActions } from './scoped-actions';
 import { define } from '../lib/define';
-import { forwardAction } from '../lib/forward-action';
 import type { DispatchArguments } from './dispatch-arguments';
+import type { DispatchAction } from './dispatch-action';
 
 type Action = ScopedActions<{
   users:
@@ -66,6 +66,29 @@ const checkDispatch = (dispatch: Dispatch<Action>) => {
     : ['users/LoadAction'];
 
   void dispatch(...args);
+
+  void dispatch({ action: 'users/LoadAction' });
+  void dispatch({ action: 'users/PageAction', payload: 2 });
+  void dispatch({ action: 'users/SelectAction', payload: ['1', '2'] });
+  void dispatch({ action: 'users/OptionalAction' });
+  void dispatch({ action: 'users/FiltersAction' });
+  void dispatch({ action: 'users/UndefinedAction', payload: undefined });
+  // @ts-expect-error Object calls preserve the selected payload type.
+  void dispatch({ action: 'users/PageAction', payload: 'two' });
+  // @ts-expect-error Required data is still required in the object form.
+  void dispatch({ action: 'users/PageAction' });
+  // @ts-expect-error An action without data does not accept payload.
+  void dispatch({ action: 'users/LoadAction', payload: 2 });
+  // @ts-expect-error Object calls preserve namespace/action pairing.
+  void dispatch({ action: 'users/RunAction' });
+  // @ts-expect-error Required undefined still needs a payload property.
+  void dispatch({ action: 'users/UndefinedAction' });
+
+  const saved: DispatchAction<Action> = Math.random()
+    ? { action: 'users/PageAction', payload: 2 }
+    : { action: 'users/LoadAction' };
+
+  void dispatch(saved);
 };
 
 const checkOptionalObject = () => {
@@ -82,6 +105,18 @@ const checkOptionalObject = () => {
   });
 };
 
+const checkShortNames = (
+  dispatch: Dispatch<
+    ScopedActions<{
+      users: { type: 'setPage'; payload: number } | { type: 'load' };
+    }>
+  >,
+) => {
+  void dispatch('users/setPage', 2);
+  void dispatch({ action: 'users/setPage', payload: 2 });
+  void dispatch('users/load');
+};
+
 const checkInvalidDeclarations = (
   flat: Dispatch<{ type: 'SetAction'; count: number }>,
   paths: Dispatch<
@@ -93,7 +128,7 @@ const checkInvalidDeclarations = (
   // @ts-expect-error Data must be declared in payload before it can be dispatched.
   void flat('root/SetAction');
   // @ts-expect-error The adapter must not silently discard action data.
-  void forwardAction(flat, { type: 'SetAction', count: 41 });
+  void flat({ action: 'root/SetAction', payload: 41 });
   // @ts-expect-error Empty namespace cannot produce a valid dispatch path.
   void paths('/LoadAction');
   // @ts-expect-error A namespace cannot include the path separator.
@@ -106,4 +141,5 @@ test('dispatch checks namespaced paths and their payloads', () => {
   expect(checkDispatch).toBeTypeOf('function');
   expect(checkOptionalObject).toBeTypeOf('function');
   expect(checkInvalidDeclarations).toBeTypeOf('function');
+  expect(checkShortNames).toBeTypeOf('function');
 });

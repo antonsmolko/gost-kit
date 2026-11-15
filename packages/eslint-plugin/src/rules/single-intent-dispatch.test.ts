@@ -73,6 +73,7 @@ RuleTester.it = test;
 RuleTester.itOnly = test.only;
 
 const valid = [
+  fixture("const handle = () => { void send({ action: 'root/OneAction' }); };"),
   fixture(
     "const handle = (page: number) => { void send('root/PageAction', page); };",
   ),
@@ -167,6 +168,16 @@ const valid = [
   ),
 ];
 const invalid = [
+  [
+    'object calls',
+    "const handle = () => { void send({ action: 'root/OneAction' }); void send({ action: 'root/TwoAction' }); };",
+    'multipleDispatch',
+  ],
+  [
+    'object action choice',
+    "const handle = () => { void send({ action: ready ? 'root/OneAction' : 'root/TwoAction' }); };",
+    'conditionalDispatch',
+  ],
   [
     'optional outer call argument',
     "declare const maybe: ((value: Promise<void>) => unknown) | undefined; const handle = () => { void maybe?.(send('root/OneAction')); };",

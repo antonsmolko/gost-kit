@@ -54,7 +54,7 @@ component: await dispatch('users/LoadAction')
 → shared API client executes the injected synthetic fetch and normalizes the DTO result
 → operation.mapResponse converts DTO to the domain User
 → onSuccess/onError creates SuccessReceiveAction / ErrorReceiveAction with scope: 'users'
-→ await forwardAction(dispatch, callback action)
+→ await dispatch(callback action)
 → on failure: DispatchActionEffect sends global ShowAlertAction
 → the original dispatch completes after the nested actions/effects complete
 ```
@@ -88,8 +88,8 @@ Feature action declarations contain only local type names and payloads.
 `src/store/types/action.ts` passes the central scope map directly to `ScopedActions`:
 `RootAction = ScopedActions<{ users: UserAction; root: ShowAlertAction }>`. The helper
 builds the root union and adds scopes automatically. UI calls use typed paths
-such as `users/LoadAction`. API callbacks return objects with `scope: 'users'`
-and data in payload; application-level object actions may omit scope.
+such as `users/LoadAction`. API callbacks return objects with an `action` path such as
+`users/SuccessReceiveAction` and data in payload; application-level object actions may omit scope.
 `reducing` first selects the table by `action.scope ?? 'root'`, then selects
 the handler by `action.type`. Different namespaces can use the same action type
 with different payloads. Dispatch creates the object consumed by the reducer.

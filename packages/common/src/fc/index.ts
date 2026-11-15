@@ -1,5 +1,4 @@
 export { createDispatch } from './lib/dispatch';
-export { forwardAction } from './lib/forward-action';
 export { createReset } from './lib/create-reset';
 export type { Reset } from './types/reset';
 export type { ResetOptions } from './types/reset-options';

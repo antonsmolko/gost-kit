@@ -82,8 +82,7 @@ test('loading only describes a request and its success/error receivers', () => {
   }
 
   expect(effect.onSuccess(user)).toEqual({
-    scope: 'users',
-    type: 'SuccessReceiveAction',
+    action: 'users/SuccessReceiveAction',
     payload: { response: user },
   });
   expect(
@@ -92,8 +91,7 @@ test('loading only describes a request and its success/error receivers', () => {
       errors: [],
     }),
   ).toEqual({
-    scope: 'users',
-    type: 'ErrorReceiveAction',
+    action: 'users/ErrorReceiveAction',
     payload: { errors: [{ code: 'OFFLINE', message: 'Offline', path: [] }] },
   });
 });
@@ -112,7 +110,7 @@ test('API error describes a global alert action through an effect', () => {
     {
       type: 'DispatchActionEffect',
       action: {
-        type: 'ShowAlertAction',
+        action: 'root/ShowAlertAction',
         payload: { status: 'error', message: 'Offline' },
       },
     },

@@ -19,14 +19,10 @@ const effect: ApiEffect = createApiEffect(loadUser, {
     path: [],
   },
   onSuccess: (response) => {
-    return {
-      scope: 'users',
-      type: 'SuccessReceiveAction',
-      payload: { response },
-    };
+    return { action: 'users/SuccessReceiveAction', payload: { response } };
   },
   onError: (errors) => {
-    return { scope: 'users', type: 'ErrorReceiveAction', payload: { errors } };
+    return { action: 'users/ErrorReceiveAction', payload: { errors } };
   },
 });
 
@@ -45,7 +41,12 @@ test('request failure dispatches the configured default error', async () => {
   });
   expect(requests).toEqual([{ email: user.email }]);
   expect(actions).toEqual([
-    ['users/ErrorReceiveAction', { errors: [effect.defaultError] }],
+    [
+      {
+        action: 'users/ErrorReceiveAction',
+        payload: { errors: [effect.defaultError] },
+      },
+    ],
   ]);
 });
 
@@ -61,11 +62,7 @@ test('unknown request failures are normalized for the error receiver', async () 
     {
       ...effect,
       onError: (errors) => {
-        return {
-          scope: 'users',
-          type: 'ErrorReceiveAction',
-          payload: { errors },
-        };
+        return { action: 'users/ErrorReceiveAction', payload: { errors } };
       },
     },
     async (...args) => {
@@ -73,7 +70,12 @@ test('unknown request failures are normalized for the error receiver', async () 
     },
   );
   expect(actions).toEqual([
-    ['users/ErrorReceiveAction', { errors: [effect.defaultError] }],
+    [
+      {
+        action: 'users/ErrorReceiveAction',
+        payload: { errors: [effect.defaultError] },
+      },
+    ],
   ]);
 });
 
@@ -95,11 +97,7 @@ test('success receiver exceptions reject without calling the error receiver', as
         onError: (errors) => {
           errorCalls += 1;
 
-          return {
-            scope: 'users',
-            type: 'ErrorReceiveAction',
-            payload: { errors },
-          };
+          return { action: 'users/ErrorReceiveAction', payload: { errors } };
         },
       },
       async () => {},
@@ -123,11 +121,7 @@ test('dispatch failures reject without being reclassified as API failures', asyn
         onError: (errors) => {
           errorCalls += 1;
 
-          return {
-            scope: 'users',
-            type: 'ErrorReceiveAction',
-            payload: { errors },
-          };
+          return { action: 'users/ErrorReceiveAction', payload: { errors } };
         },
       },
       async () => {
@@ -169,7 +163,7 @@ test('DispatchActionEffect waits for the forwarded action', async () => {
   )(
     {
       type: 'DispatchActionEffect',
-      action: { scope: 'users', type: 'LoadAction' },
+      action: { action: 'users/LoadAction' },
     },
     async (...args) => {
       actions.push(args);
@@ -180,7 +174,7 @@ test('DispatchActionEffect waits for the forwarded action', async () => {
   });
 
   await Promise.resolve();
-  expect(actions).toEqual([['users/LoadAction']]);
+  expect(actions).toEqual([[{ action: 'users/LoadAction' }]]);
   expect(completed).toBe(false);
   completion.resolve();
   await pending;

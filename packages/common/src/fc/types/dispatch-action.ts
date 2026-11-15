@@ -1,15 +1,14 @@
 import type { Trigger } from './trigger';
 import type { DispatchPath } from './dispatch-path';
+import type { ActionInput } from './action-input';
 
 /**
- * Object action returned by API callbacks or passed to reducers.
- * Feature scopes are required; local root declarations may omit scope.
- * Public dispatch receives a path and payload, rather than this object.
+ * Object call accepted by dispatch and returned by API callbacks.
+ * Payload requirements are shared with string calls and reducer inputs.
  */
 export type DispatchAction<TAction extends Trigger> = TAction extends Trigger
-  ? [DispatchPath<TAction>] extends [never]
-    ? never
-    : TAction extends { scope: string }
-      ? TAction
-      : TAction & { scope?: 'root' }
+  ? { action: DispatchPath<TAction> } & Pick<
+      ActionInput<TAction>,
+      Extract<keyof ActionInput<TAction>, 'payload'>
+    >
   : never;
