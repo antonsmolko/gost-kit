@@ -424,3 +424,37 @@ policies. Review and presenter tests remain necessary.
 Known boundaries: selector diagnostics do not cover presenter inputs in snippet,
 each or await pattern defaults; select Store/raw scopes beforehand. A reported derived root suppresses duplicate diagnostics for its nested derived
 calls; independent derived bindings are still checked separately.
+
+## Common helpers
+
+Enable both rules in TypeScript projects that depend on `@gost-kit/common` with
+`createConfig({ tsconfigRootDir, common: true })`. The Svelte configuration
+accepts the same option for standalone TypeScript files, including `.svelte.ts`.
+
+### prefer-nullish-types
+
+`T | undefined`, `T | null` and `T | null | undefined` use `Ulx<T>`, `Nlx<T>`
+and `Nil<T>`. Remaining union members become the type argument. Unions with only
+null and undefined and unions in conditional type constraints are left as written.
+
+### prefer-guard
+
+The rule recognizes strict null, undefined and boolean comparisons,
+`typeof … === 'string'` and `typeof … === 'boolean'`, and checks against the
+global `Error` constructor. It combines explicit null and undefined checks
+when both read the same local variable. A repeated call or property read keeps
+its original evaluation count. Comparisons on member expressions are allowed
+because TypeScript can use them to narrow a discriminated union. The rule
+also leaves comparisons on destructured bindings and potential aliases of
+discriminants or narrowing conditions alone. Nullish comparisons require
+`strictNullChecks` when a TypeScript project is available.
+
+Defensive `typeof` on undeclared or ambient names is allowed. `guard.number`
+checks for finite values, and `guard.record` excludes arrays and null.
+Checks such as `Array.isArray` can narrow to a different type than the
+corresponding guard, so they are left as written.
+
+Both rules support `--fix` and reuse visible imports. They report without a
+fix where the replacement could discard a comment or introducing an import
+would turn a TypeScript script into a module. The guard rule does not add an
+ESM value import to a `.cts` file.

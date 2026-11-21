@@ -4,9 +4,10 @@ import globals from 'globals';
 
 export const createProjectConfig = async (
   root: string,
+  { common = false }: { common?: boolean } = {},
 ): Promise<Linter.Config[]> => {
   return [
-    ...(await createSvelteConfig({ tsconfigRootDir: root })),
+    ...(await createSvelteConfig({ tsconfigRootDir: root, common })),
     {
       files: ['src/**/*.svelte'],
       rules: {

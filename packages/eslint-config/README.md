@@ -59,6 +59,9 @@ JavaScript/JSX does not require a TypeScript project.
 
 ## Rules and overrides
 
+If the project depends on `@gost-kit/common`, pass `common: true` to
+`createConfig` to enable autofixable rules for nullish type aliases and guards.
+
 The complete rule list and options are in [RULES.md](RULES.md).
 Enabled rules are errors, including in tests. The configuration covers
 js/jsx/mjs/cjs and ts/tsx/mts/cts files, without imposing an application layout.

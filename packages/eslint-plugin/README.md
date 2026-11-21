@@ -72,8 +72,11 @@ The full contracts and examples are in [RULES.md](RULES.md).
 | ready-boolean-condition        | Reports computations and nullable truthiness in if/else-if; ready boolean reads and literals are allowed.   |
 | require-presenter              | Calculations in derived and template display slots; presenter bindings resolve *.presenter.ts declarations. |
 
-The selector supports conservative autofix for simple derived declarations.
-Template const diagnostics and the other rules have no autofix.
+The selector supports autofix for simple derived declarations.
+
+TypeScript projects that depend on `@gost-kit/common` can opt into
+`prefer-nullish-types` and `prefer-guard`. Both support autofix. See
+[RULES.md](RULES.md#common-helpers) for the supported patterns.
 
 ## Type information and limits
 

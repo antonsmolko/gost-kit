@@ -1,4 +1,3 @@
-import { plugin } from '@gost-kit/eslint-plugin';
 import type { Linter } from 'eslint';
 import {
   createConfig,
@@ -11,8 +10,9 @@ import { svelteRules } from './rules';
 
 export const createSvelteConfig = async ({
   tsconfigRootDir,
+  common,
 }: ConfigOptions): Promise<Linter.Config[]> => {
-  const shared = createConfig({ tsconfigRootDir });
+  const shared = createConfig({ tsconfigRootDir, common });
   const policy = createTypeScriptPolicy({ tsconfigRootDir });
 
   return [
@@ -47,7 +47,6 @@ export const createSvelteConfig = async ({
     {
       name: 'gost-svelte/architecture',
       files: ['**/*.svelte', '**/*.svelte.ts'],
-      plugins: { gost: plugin },
       rules: {
         'gost/require-feature-state-selector': 'error',
         'gost/require-presenter': 'off',

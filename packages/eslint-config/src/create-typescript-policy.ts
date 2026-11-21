@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import { plugin } from '@gost-kit/eslint-plugin';
 import stylistic from '@stylistic/eslint-plugin';
 import compatibility from 'eslint-config-prettier/flat';
 import { importX } from 'eslint-plugin-import-x';
@@ -13,6 +14,7 @@ import type { ConfigOptions } from './types/config-options';
 /** Fully composed TypeScript policy; framework adapters choose files and parser. */
 export const createTypeScriptPolicy = ({
   tsconfigRootDir,
+  common,
 }: ConfigOptions): Linter.Config => {
   if (!isAbsolute(tsconfigRootDir)) {
     throw new TypeError(
@@ -25,11 +27,18 @@ export const createTypeScriptPolicy = ({
     tseslint.configs.recommended,
     compatibility,
     {
-      plugins: { '@stylistic': stylistic, 'import-x': importX },
+      plugins: { '@stylistic': stylistic, 'import-x': importX, gost: plugin },
       languageOptions: {
         parserOptions: { projectService: true, tsconfigRootDir },
       },
-      rules: { ...sharedRules, ...typescriptRules },
+      rules: {
+        ...sharedRules,
+        ...typescriptRules,
+        ...(common && {
+          'gost/prefer-nullish-types': 'error',
+          'gost/prefer-guard': 'error',
+        }),
+      },
     },
   );
 

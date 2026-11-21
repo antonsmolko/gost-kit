@@ -941,3 +941,9 @@ are provided without React or other framework-specific policy. TSX uses the
 consumer's TypeScript project and JSX configuration. Framework adapters consume
 `createTypeScriptPolicy` from the public package entry point; policy composition
 preserves preset precedence without normalizing a synthetic filename through ESLint.
+
+## Common helpers
+
+Pass `common: true` to `createConfig` in projects that depend on
+`@gost-kit/common`. This enables `gost/prefer-nullish-types` and
+`gost/prefer-guard` as errors for TypeScript files. Both support `eslint --fix`.

@@ -6,6 +6,7 @@ import type { ApiMethod } from '../types/api-method';
 import type { ApiResult } from '../types/api-result';
 import type { TransportData } from '../types/transport-data';
 import type { TransportResponse } from '../types/transport-response';
+import type { Ulx } from '../../types';
 
 // HEAD has no response body, regardless of a schema's content declaration.
 export function readResult<
@@ -21,7 +22,7 @@ export function readResult<TData>(
   transport: TransportResponse<TData>,
   method: ApiMethod,
   mapErrors?: ApiClientOptions['mapErrors'],
-): ApiResult<TData | undefined> {
+): ApiResult<Ulx<TData>> {
   const { response } = transport;
 
   if (!response.ok) {

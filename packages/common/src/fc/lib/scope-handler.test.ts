@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 import { scopeHandler } from './scope-handler';
+import type { Nlx } from '../../types';
 
 type RootState = { user: { name: string }; auth: { name: string } };
 type Action = { type: 'LoadAction'; payload: { name: string } };
@@ -104,7 +105,7 @@ test.each([0, false, null])(
   'accepts an explicit falsy feature state: %j',
   (nextState) => {
     type ValueState = {
-      value: number | boolean | null;
+      value: Nlx<number | boolean>;
       other: { name: string };
     };
 

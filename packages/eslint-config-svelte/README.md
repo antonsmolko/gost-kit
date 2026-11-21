@@ -61,6 +61,9 @@ and TS/JS rune modules are supported. Ordinary JavaScript does not require a
 tsconfig. Scope Node/test globals and generated ignores in project overrides.
 Framework compiler options can be supplied through parserOptions.svelteConfig.
 
+Pass `common: true` to `createSvelteConfig` to enable the common helper rules
+for TypeScript files, including `.svelte.ts`.
+
 ## Rules
 
 [Svelte rules and options](RULES.md) are shipped with this package. Inherited
