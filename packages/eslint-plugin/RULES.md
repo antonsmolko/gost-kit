@@ -453,7 +453,8 @@ of discriminants or narrowing conditions alone. Nullish comparisons require
 Defensive `typeof` on undeclared or ambient names is allowed. `guard.number`
 checks for finite values, and `guard.record` excludes arrays and null.
 Checks such as `Array.isArray` can narrow to a different type than the
-corresponding guard, so they are left as written.
+corresponding guard, so they are left as written. Type predicates for
+collections do not validate their elements.
 
 Both rules support `--fix` and reuse visible imports. They report without a
 fix where the replacement could discard a comment or introducing an import
