@@ -16,6 +16,7 @@ import type { ConfigOptions } from './types/config-options';
 
 export const createConfig = ({
   tsconfigRootDir,
+  common,
 }: ConfigOptions): Linter.Config[] => {
   const plugins = {
     '@stylistic': stylistic,
@@ -36,7 +37,7 @@ export const createConfig = ({
       rules: sharedRules,
     },
     {
-      ...createTypeScriptPolicy({ tsconfigRootDir }),
+      ...createTypeScriptPolicy({ tsconfigRootDir, common }),
       name: 'gost/typescript',
       files: typescriptFiles,
     },

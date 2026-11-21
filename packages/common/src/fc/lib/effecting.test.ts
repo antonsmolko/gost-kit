@@ -4,6 +4,7 @@ import { effecting } from './effecting';
 import type { Dispatch } from '../types/dispatch';
 import type { Effector } from '../types/effector';
 import type { EffectorHandlers } from '../types/effector-handlers';
+import type { Ulx } from '../../types';
 
 type Action =
   { type: 'SetAction'; payload: { count: number } } | { type: 'IdleAction' };
@@ -64,7 +65,7 @@ test('requires coverage of every declared effect', () => {
   // @ts-expect-error Optional handlers cannot guarantee effect coverage.
   const uncertain: Effector<Action, Effect> = effecting(optional);
   const possiblyUndefined: {
-    OtherEffect: typeof handlers.OtherEffect | undefined;
+    OtherEffect: Ulx<typeof handlers.OtherEffect>;
   } = { OtherEffect: undefined };
   const undefinedEffector: Effector<
     Action,

@@ -2,6 +2,7 @@ import { expect, expectTypeOf, test, vi } from 'vitest';
 import { defineApiOperation } from './define-api-operation';
 import type { ApiOperationDefinition } from '../types/api-operation-definition';
 import type { TestPaths, TestUser } from '../types/api-client.test';
+import type { Nlx } from '../../types';
 
 const checkTypes = () => {
   const defineOperation = defineApiOperation<TestPaths>();
@@ -22,7 +23,7 @@ const checkTypes = () => {
 
   const identity = defineOperation({ method: 'get', url: '/users/{id}' });
 
-  expectTypeOf(identity.mapResponse(null)).toEqualTypeOf<TestUser | null>();
+  expectTypeOf(identity.mapResponse(null)).toEqualTypeOf<Nlx<TestUser>>();
 
   const head = defineOperation({ method: 'head', url: '/head-json' });
 

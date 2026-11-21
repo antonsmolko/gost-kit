@@ -1,4 +1,6 @@
 import type { ESLint } from 'eslint';
+import { preferGuard } from './rules/prefer-guard';
+import { preferNullishTypes } from './rules/prefer-nullish-types';
 import { requirePresenter } from './rules/require-presenter';
 import { readyBooleanCondition } from './rules/ready-boolean-condition';
 import { singleIntentDispatch } from './rules/single-intent-dispatch';
@@ -10,6 +12,12 @@ export const plugin: ESLint.Plugin = {
   // typescript-eslint still types the legacy context members removed in ESLint 10.
   // At this public boundary the implementation uses only the current APIs.
   rules: {
+    'prefer-guard': preferGuard as unknown as NonNullable<
+      ESLint.Plugin['rules']
+    >[string],
+    'prefer-nullish-types': preferNullishTypes as unknown as NonNullable<
+      ESLint.Plugin['rules']
+    >[string],
     'require-presenter': requirePresenter as unknown as NonNullable<
       ESLint.Plugin['rules']
     >[string],

@@ -1,5 +1,5 @@
 import { expectTypeOf, test } from 'vitest';
-import type { DeepReadonly } from '../../types';
+import type { DeepReadonly, Nlx } from '../../types';
 import type { ExactState } from './exact-state';
 import type { ExactStateStrict } from './exact-state-strict';
 
@@ -35,9 +35,9 @@ test('strict checking rejects undefined extra fields and deeper mixed variants',
 
 test('strict checking preserves declared nullable unions and checks variant-specific keys', () => {
   type Item = { kind: 'user'; id: string } | { kind: 'error'; message: string };
-  type State = { items: (Item | null)[] };
+  type State = { items: Nlx<Item>[] };
   type Extra = {
-    items: (Item | { kind: 'user'; id: string; message: string } | null)[];
+    items: Nlx<Item | { kind: 'user'; id: string; message: string }>[];
   };
 
   expectTypeOf<ExactStateStrict<State, State>>().toEqualTypeOf<State>();

@@ -59,6 +59,63 @@ const lint = async (
   return result;
 };
 
+test('opts into common helper diagnostics in plain TypeScript', async () => {
+  const code =
+    'export const isText = (value: string | null): boolean => {\n' +
+    "  return typeof value === 'string';\n" +
+    '};';
+  const enabled = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: createConfig({ tsconfigRootDir: root, common: true }),
+  });
+  const commonRules = (result: ESLint.LintResult) => {
+    return result.messages
+      .map(({ ruleId }) => {
+        return ruleId;
+      })
+      .filter((ruleId) => {
+        return ruleId?.startsWith('gost/prefer-');
+      });
+  };
+
+  expect(commonRules(await lint(code, 'common.ts'))).toEqual([]);
+  expect(commonRules(await lint(code, 'common.ts', enabled))).toEqual([
+    'gost/prefer-nullish-types',
+    'gost/prefer-guard',
+  ]);
+});
+
+test('keeps nullish comparisons without strictNullChecks', async () => {
+  const nonStrict = join(root, 'non-strict');
+
+  await mkdir(nonStrict);
+  await writeFile(
+    join(nonStrict, 'tsconfig.json'),
+    JSON.stringify({
+      extends: '../tsconfig.json',
+      compilerOptions: { strictNullChecks: false },
+    }),
+  );
+
+  const enabled = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: createConfig({ tsconfigRootDir: root, common: true }),
+  });
+  const result = await lint(
+    'export const read = (value: string | null): boolean => { return value === null; };',
+    'non-strict/case.ts',
+    enabled,
+  );
+
+  expect(
+    result.messages.map(({ ruleId }) => {
+      return ruleId;
+    }),
+  ).not.toContain('gost/prefer-guard');
+});
+
 const cases = [
   ['E01', 'no-debugger', 'debugger;', 'js'],
   [

@@ -1,5 +1,5 @@
 import { expectTypeOf, test } from 'vitest';
-import type { JSONObject, JSONValue } from '..';
+import type { JSONObject, JSONValue, Nlx } from '..';
 
 test('public JSON types accept recursive JSON data and exclude non-JSON values', () => {
   expectTypeOf<{
@@ -7,7 +7,7 @@ test('public JSON types accept recursive JSON data and exclude non-JSON values',
   }>().toExtend<JSONObject>();
   expectTypeOf<JSONObject>().toExtend<JSONValue>();
   expectTypeOf<
-    null | string | number | boolean | JSONValue[]
+    Nlx<string | number | boolean | JSONValue[]>
   >().toExtend<JSONValue>();
   expectTypeOf<undefined>().not.toExtend<JSONValue>();
   expectTypeOf<Date>().not.toExtend<JSONValue>();

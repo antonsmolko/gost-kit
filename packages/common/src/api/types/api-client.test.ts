@@ -1,5 +1,6 @@
 import { expect, expectTypeOf, test } from 'vitest';
 import { createApiClient } from '../lib/create-api-client';
+import type { Nlx } from '../../types';
 
 interface ReadUserOperation {
   responses: { 200: { content: { 'application/json': TestUser } } };
@@ -10,7 +11,7 @@ export type TestPaths = {
   '/users/{id}': {
     get: {
       parameters: { path: { id: number }; query?: { active?: boolean } };
-      responses: { 200: { content: { 'application/json': TestUser | null } } };
+      responses: { 200: { content: { 'application/json': Nlx<TestUser> } } };
     };
     post: {
       parameters: { path: { id: number } };
@@ -40,7 +41,7 @@ const checkRequestTypes = async () => {
   });
 
   if (result.type === 'ok') {
-    expectTypeOf(result.data).toEqualTypeOf<TestUser | null>();
+    expectTypeOf(result.data).toEqualTypeOf<Nlx<TestUser>>();
   }
 
   const byInterface = await api.request('get', '/interface');

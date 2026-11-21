@@ -3,7 +3,7 @@ import { createProjectConfig } from '../../tooling/eslint-config';
 import globals from 'globals';
 
 export default [
-  ...(await createProjectConfig(import.meta.dirname)),
+  ...(await createProjectConfig(import.meta.dirname, { common: true })),
   {
     files: ['src/**/*.ts', 'src/**/*.svelte'],
     languageOptions: { globals: globals.browser },

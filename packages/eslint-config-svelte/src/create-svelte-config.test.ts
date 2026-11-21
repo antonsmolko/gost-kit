@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { ESLint } from 'eslint';
+import { compile } from 'svelte/compiler';
 import { mkdtemp, mkdir, writeFile, symlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -58,6 +59,74 @@ const lint = async (source: string, file?: string, instance = eslint) => {
 
   return result;
 };
+
+test('fixes common helpers inside typed component scripts', async () => {
+  const enabled = new ESLint({
+    cwd: root,
+    fix: true,
+    overrideConfigFile: true,
+    overrideConfig: await createSvelteConfig({
+      tsconfigRootDir: root,
+      common: true,
+    }),
+  });
+  const component = [
+    '<script lang="ts" module>',
+    '  export type Name = string | undefined;',
+    '  export const canRead = (value: unknown) => {',
+    "    return typeof value === 'string';",
+    '  };',
+    '</script>',
+    '<script lang="ts">',
+    '  const label = (name: string | null) => {',
+    "    return typeof name === 'string' ? name : 'Unknown';",
+    '  };',
+    '</script>',
+    '<p>{label(null)}</p>',
+  ].join('\n');
+  const result = await lint(component, 'CommonHelpers.svelte', enabled);
+  const output = result.output ?? '';
+  const [moduleScript, instanceScript] = output.split('</script>');
+
+  expect(
+    result.messages.filter(({ ruleId }) => {
+      return ruleId?.startsWith('gost/prefer-');
+    }),
+  ).toEqual([]);
+  expect(moduleScript).toMatch(/<script[^>]*>\s*import[^;]+Ulx/u);
+  expect(moduleScript).toContain('Ulx<string>');
+  expect(moduleScript).toContain('guard.string(value)');
+  expect(instanceScript).toMatch(/<script[^>]*>\s*import[^;]+Nlx/u);
+  expect(instanceScript).not.toMatch(/import[^;]+guard/u);
+  expect(instanceScript).toContain('Nlx<string>');
+  expect(instanceScript).toContain('guard.string(name)');
+  compile(output, { filename: 'CommonHelpers.svelte' });
+});
+
+test('keeps markup and a JavaScript instance script outside the common rules', async () => {
+  const enabled = new ESLint({
+    cwd: root,
+    fix: true,
+    overrideConfigFile: true,
+    overrideConfig: await createSvelteConfig({
+      tsconfigRootDir: root,
+      common: true,
+    }),
+  });
+  const component = [
+    '<script lang="ts" module>export type Name = string | undefined;</script>',
+    '<script>',
+    "  const label = (name) => typeof name === 'string';",
+    '</script>',
+    "<p>{typeof label(null) === 'boolean'}</p>",
+  ].join('\n');
+  const result = await lint(component, 'MixedCommonHelpers.svelte', enabled);
+  const output = result.output ?? '';
+
+  expect(output).toContain('Ulx<string>');
+  expect(output).toContain("typeof name === 'string'");
+  expect(output).toContain("typeof label(null) === 'boolean'");
+});
 
 const cases = [
   [
