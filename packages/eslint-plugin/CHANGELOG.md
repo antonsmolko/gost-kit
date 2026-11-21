@@ -1,5 +1,12 @@
 # @gost-kit/eslint-plugin
 
+## 0.4.0
+
+### Minor Changes
+
+- 2ef62ee: Add autofixable rules for nullish type aliases and equivalent guard checks.
+  Projects using @gost-kit/common can enable both rules with the common option.
+
 ## 0.3.1
 
 ### Patch Changes

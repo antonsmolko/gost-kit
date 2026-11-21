@@ -1,5 +1,17 @@
 # @gost-kit/eslint-config-svelte
 
+## 0.3.0
+
+### Minor Changes
+
+- 2ef62ee: Add autofixable rules for nullish type aliases and equivalent guard checks.
+  Projects using @gost-kit/common can enable both rules with the common option.
+
+### Patch Changes
+
+- Updated dependencies [2ef62ee]
+  - @gost-kit/eslint-config@0.3.0
+
 ## 0.2.3
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@gost-kit/eslint-plugin",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "ESLint rules for reactive state selection, presenters and UI handlers.",
   "type": "module",
   "license": "MIT",
