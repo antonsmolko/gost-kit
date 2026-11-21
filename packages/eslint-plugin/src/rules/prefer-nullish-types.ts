@@ -49,17 +49,13 @@ export const preferNullishTypes = ESLintUtils.RuleCreator.withoutDocs<
     fixable: 'code',
     schema: [...commonRuleSchema],
     messages: {
-      preferAlias: 'Use {{name}} from @gost-kit/common for this union.',
+      preferAlias: 'Use {{name}} from {{source}} for this union.',
     },
   },
   defaultOptions: [{}],
   create(context, [options]) {
     const source = context.sourceCode;
-    const useImport = createCommonImport(
-      source,
-      commonImportSource(context.filename, options?.commonRoot, 'types'),
-      context.filename,
-    );
+    const importFor = createCommonImport(source, context.filename);
 
     return {
       TSUnionType(node) {
@@ -90,15 +86,26 @@ export const preferNullishTypes = ESLintUtils.RuleCreator.withoutDocs<
           return type.type === Node.TSUndefinedKeyword;
         });
         const name = hasNull && hasUndefined ? 'Nil' : hasNull ? 'Nlx' : 'Ulx';
+        const useImport = importFor(node);
+
+        if (!useImport) {
+          return;
+        }
+
+        const path = commonImportSource(
+          context.filename,
+          options?.commonRoot,
+          name,
+        );
         const canFix = source.getCommentsInside(node).length === 0;
 
         context.report({
           node,
           messageId: 'preferAlias',
-          data: { name },
+          data: { name, source: path },
           fix: canFix
             ? (fixer) => {
-                const binding = useImport(node, name, 'type');
+                const binding = useImport(path, name, 'type');
 
                 if (!binding) {
                   return null;
@@ -119,7 +126,7 @@ export const preferNullishTypes = ESLintUtils.RuleCreator.withoutDocs<
                 );
 
                 return binding.add
-                  ? [binding.add(fixer), replacement]
+                  ? [...binding.add(fixer), replacement]
                   : replacement;
               }
             : null,

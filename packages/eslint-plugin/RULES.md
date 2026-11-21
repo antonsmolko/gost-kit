@@ -429,7 +429,8 @@ calls; independent derived bindings are still checked separately.
 
 Enable both rules in TypeScript projects that depend on `@gost-kit/common` with
 `createConfig({ tsconfigRootDir, common: true })`. The Svelte configuration
-accepts the same option for standalone TypeScript files, including `.svelte.ts`.
+accepts the same option for TypeScript files and `<script lang="ts">` blocks.
+JavaScript scripts and component markup are outside these two rules.
 
 ### prefer-nullish-types
 
@@ -445,8 +446,8 @@ global `Error` constructor. It combines explicit null and undefined checks
 when both read the same local variable. A repeated call or property read keeps
 its original evaluation count. Comparisons on member expressions are allowed
 because TypeScript can use them to narrow a discriminated union. The rule
-also leaves comparisons on destructured bindings and potential aliases of
-discriminants or narrowing conditions alone. Nullish comparisons require
+also leaves comparisons on destructured bindings and potential `const` aliases
+of discriminants or narrowing conditions alone. Nullish comparisons require
 `strictNullChecks` when a TypeScript project is available.
 
 Defensive `typeof` on undeclared or ambient names is allowed. `guard.number`

@@ -115,8 +115,19 @@ describe('common conventions', () => {
     );
 
     expect(result.messages).toEqual([]);
-    expect(result.output).toContain("from '../types'");
+    expect(result.output).toContain("from '../types/nlx'");
     expect(result.output).toContain("from '../sharred/lib/guard'");
+  });
+
+  it('imports type definitions directly from a sibling file inside common/types', () => {
+    const result = lint(
+      'export type Failure = string | null;',
+      'packages/common/src/types/failure.ts',
+      { commonRoot: join(process.cwd(), 'packages/common') },
+    );
+
+    expect(result.messages).toEqual([]);
+    expect(result.output).toContain("import type { Nlx } from './nlx';");
   });
 
   it('reuses a namespace import for both kinds of helpers', () => {

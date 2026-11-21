@@ -1,20 +1,24 @@
 import { dirname, join, relative, sep } from 'node:path';
+import type { AST } from 'svelte-eslint-parser';
 import {
   AST_NODE_TYPES as Node,
   type TSESLint,
   type TSESTree,
 } from '@typescript-eslint/utils';
 import { findValueVariable } from './value-variable';
+import { inScript, scriptHasAttribute, svelteScripts } from './svelte-scripts';
 
 export const commonImportSource = (
   filename: string,
   commonRoot: string | undefined,
-  target: 'types' | 'sharred/lib/guard',
+  name: 'Nlx' | 'Ulx' | 'Nil' | 'guard',
 ): string => {
   if (commonRoot === undefined) {
     return '@gost-kit/common';
   }
 
+  const target =
+    name === 'guard' ? 'sharred/lib/guard' : `types/${name.toLowerCase()}`;
   const path = relative(dirname(filename), join(commonRoot, 'src', target))
     .split(sep)
     .join('/');
@@ -38,19 +42,27 @@ const findTypeVariable = (scope: TSESLint.Scope.Scope, name: string) => {
   return undefined;
 };
 
+const importDeclarations = (body: TSESTree.Program['body']) => {
+  return body.filter((node): node is TSESTree.ImportDeclaration => {
+    return node.type === Node.ImportDeclaration;
+  });
+};
+
+const scriptBody = (script: AST.SvelteScriptElement) => {
+  // Typed script statements have TypeScript ESTree nodes and ESLint parents.
+  return script.body as unknown as TSESTree.Program['body'];
+};
+
 export const createCommonImport = (
   source: TSESLint.SourceCode,
-  path: string,
   filename: string,
 ) => {
-  const imports = source.ast.body.filter(
-    (node): node is TSESTree.ImportDeclaration => {
-      return node.type === Node.ImportDeclaration;
-    },
-  );
-  const matching = imports.filter((node) => {
-    return node.source.value === path && node.attributes.length === 0;
-  });
+  const scripts = svelteScripts(source);
+  const allImports = scripts
+    ? scripts.flatMap((script) => {
+        return importDeclarations(scriptBody(script));
+      })
+    : importDeclarations(source.ast.body);
   // A new import must not capture references elsewhere in the module.
   const identifiers = new Set(
     source.ast.tokens
@@ -61,96 +73,115 @@ export const createCommonImport = (
         return token.value;
       }),
   );
-  const quotes = imports[0]?.source.raw.startsWith('"') ? '"' : "'";
 
-  return (node: TSESTree.Node, exported: string, kind: 'type' | 'value') => {
-    const scope = source.getScope(node);
-    const findVariable = kind === 'type' ? findTypeVariable : findValueVariable;
-    const declarations = matching.filter((declaration) => {
-      return kind === 'type' || declaration.importKind !== 'type';
+  return (node: TSESTree.Node) => {
+    const script = scripts?.find((candidate) => {
+      return inScript(node, [candidate]);
     });
 
-    const existing = declarations
-      .flatMap((declaration) => {
-        return declaration.specifiers;
-      })
-      .find((specifier) => {
-        const variable = findVariable(scope, specifier.local.name);
+    if (scripts && (!script || !scriptHasAttribute(script, 'lang', 'ts'))) {
+      return undefined;
+    }
 
-        if (
-          !variable?.defs.some((definition) => {
-            return definition.node === specifier;
-          })
-        ) {
-          return false;
-        }
+    const body = script ? scriptBody(script) : source.ast.body;
+    const imports = script ? importDeclarations(body) : allImports;
+    const quotes = imports[0]?.source.raw.startsWith('"') ? '"' : "'";
+    const scope = source.getScope(node);
 
-        if (specifier.type === Node.ImportNamespaceSpecifier) {
-          return true;
-        }
-
+    return (path: string, exported: string, kind: 'type' | 'value') => {
+      const findVariable =
+        kind === 'type' ? findTypeVariable : findValueVariable;
+      const declarations = allImports.filter((declaration) => {
         return (
-          specifier.type === Node.ImportSpecifier &&
-          (kind === 'type' || specifier.importKind !== 'type') &&
-          (specifier.imported.type === Node.Identifier
-            ? specifier.imported.name
-            : specifier.imported.value) === exported
+          declaration.source.value === path &&
+          declaration.attributes.length === 0 &&
+          (kind === 'type' || declaration.importKind !== 'type')
         );
       });
 
-    if (existing) {
-      const local = existing.local.name;
+      const existing = declarations
+        .flatMap((declaration) => {
+          return declaration.specifiers;
+        })
+        .find((specifier) => {
+          const variable = findVariable(scope, specifier.local.name);
 
-      return {
-        name:
-          existing.type === Node.ImportNamespaceSpecifier
-            ? `${local}.${exported}`
-            : local,
-      };
-    }
+          if (
+            !variable?.defs.some((definition) => {
+              return definition.node === specifier;
+            })
+          ) {
+            return false;
+          }
 
-    if (kind === 'value' && filename.endsWith('.cts')) {
-      return undefined;
-    }
+          if (specifier.type === Node.ImportNamespaceSpecifier) {
+            return true;
+          }
 
-    if (
-      !/\.[mc]ts$/u.test(filename) &&
-      !source.ast.body.some((statement) => {
-        return (
-          statement.type === Node.ImportDeclaration ||
-          statement.type === Node.ExportNamedDeclaration ||
-          statement.type === Node.ExportDefaultDeclaration ||
-          statement.type === Node.ExportAllDeclaration ||
-          statement.type === Node.TSExportAssignment ||
-          statement.type === Node.TSImportEqualsDeclaration
-        );
-      })
-    ) {
-      return undefined;
-    }
+          return (
+            specifier.type === Node.ImportSpecifier &&
+            (kind === 'type' || specifier.importKind !== 'type') &&
+            (specifier.imported.type === Node.Identifier
+              ? specifier.imported.name
+              : specifier.imported.value) === exported
+          );
+        });
 
-    let name = exported;
-    const alias = exported === 'guard' ? 'gostGuard' : `Gost${exported}`;
+      if (existing) {
+        const local = existing.local.name;
 
-    if (identifiers.has(name) || scope.set.has(name)) {
-      name = alias;
-
-      for (
-        let index = 2;
-        identifiers.has(name) || scope.set.has(name);
-        index += 1
-      ) {
-        name = `${alias}${index}`;
+        return {
+          name:
+            existing.type === Node.ImportNamespaceSpecifier
+              ? `${local}.${exported}`
+              : local,
+        };
       }
-    }
 
-    const specifier = name === exported ? exported : `${exported} as ${name}`;
+      if (kind === 'value' && filename.endsWith('.cts')) {
+        return undefined;
+      }
 
-    return {
-      name,
-      add: (fixer: TSESLint.RuleFixer): TSESLint.RuleFix => {
+      if (
+        !script &&
+        !/\.[mc]ts$/u.test(filename) &&
+        !body.some((statement) => {
+          return (
+            statement.type === Node.ImportDeclaration ||
+            statement.type === Node.ExportNamedDeclaration ||
+            statement.type === Node.ExportDefaultDeclaration ||
+            statement.type === Node.ExportAllDeclaration ||
+            statement.type === Node.TSExportAssignment ||
+            statement.type === Node.TSImportEqualsDeclaration
+          );
+        })
+      ) {
+        return undefined;
+      }
+
+      let name = exported;
+      const alias = exported === 'guard' ? 'gostGuard' : `Gost${exported}`;
+
+      if (identifiers.has(name) || scope.set.has(name)) {
+        name = alias;
+
+        for (
+          let index = 2;
+          identifiers.has(name) || scope.set.has(name);
+          index += 1
+        ) {
+          name = `${alias}${index}`;
+        }
+      }
+
+      const specifier = name === exported ? exported : `${exported} as ${name}`;
+
+      const addImport = (fixer: TSESLint.RuleFixer): TSESLint.RuleFix => {
         const declaration = declarations.find((item) => {
-          return item.specifiers.at(-1)?.type === Node.ImportSpecifier;
+          return (
+            imports.includes(item) &&
+            item.specifiers.at(-1)?.type === Node.ImportSpecifier
+          );
         });
         const last = declaration?.specifiers.at(-1);
 
@@ -178,7 +209,7 @@ export const createCommonImport = (
           );
         }
 
-        const firstStatement = source.ast.body.find((statement) => {
+        const firstStatement = body.find((statement) => {
           return (
             statement.type !== Node.ExpressionStatement || !statement.directive
           );
@@ -203,7 +234,20 @@ export const createCommonImport = (
         }
 
         return fixer.insertTextAfter(source.ast, `\n${statement}\n`);
-      },
+      };
+
+      return {
+        name,
+        add: (fixer: TSESLint.RuleFixer): TSESLint.RuleFix[] => {
+          const edit = addImport(fixer);
+
+          // Module and instance imports share component bindings. Let the next
+          // ESLint pass see the new import before another script adds a binding.
+          return scripts && scripts.length > 1
+            ? [edit, fixer.insertTextAfter(source.ast, '')]
+            : [edit];
+        },
+      };
     };
   };
 };

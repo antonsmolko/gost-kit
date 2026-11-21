@@ -13,7 +13,7 @@ export const createSvelteConfig = async ({
   common,
 }: ConfigOptions): Promise<Linter.Config[]> => {
   const shared = createConfig({ tsconfigRootDir, common });
-  const policy = createTypeScriptPolicy({ tsconfigRootDir });
+  const policy = createTypeScriptPolicy({ tsconfigRootDir, common });
 
   return [
     { name: 'gost-svelte/ignores', ignores: ['**/.svelte-kit/**'] },

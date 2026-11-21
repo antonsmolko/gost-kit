@@ -18,6 +18,7 @@ export default [
   ...(await createProjectConfig(import.meta.dirname)),
   {
     files: ['packages/common/src/**/*.ts'],
+    // These files define the primitives that the rules replace.
     ignores: [
       'packages/common/src/sharred/lib/guard{,.test}.ts',
       'packages/common/src/types/{nlx,ulx,nil}.ts',

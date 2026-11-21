@@ -62,7 +62,7 @@ tsconfig. Scope Node/test globals and generated ignores in project overrides.
 Framework compiler options can be supplied through parserOptions.svelteConfig.
 
 Pass `common: true` to `createSvelteConfig` to enable the common helper rules
-for TypeScript files, including `.svelte.ts`.
+for TypeScript files and `<script lang="ts">` blocks.
 
 ## Rules
 

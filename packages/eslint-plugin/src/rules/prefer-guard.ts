@@ -237,19 +237,16 @@ export const preferGuard = ESLintUtils.RuleCreator.withoutDocs<
     type: 'suggestion',
     fixable: 'code',
     schema: [...commonRuleSchema],
-    messages: { preferGuard: 'Use guard.{{method}} from @gost-kit/common.' },
+    messages: { preferGuard: 'Use guard.{{method}} from {{source}}.' },
   },
   defaultOptions: [{}],
   create(context, [options]) {
     const source = context.sourceCode;
-    const useImport = createCommonImport(
-      source,
-      commonImportSource(
-        context.filename,
-        options?.commonRoot,
-        'sharred/lib/guard',
-      ),
+    const importFor = createCommonImport(source, context.filename);
+    const path = commonImportSource(
       context.filename,
+      options?.commonRoot,
+      'guard',
     );
     const program = source.parserServices?.program;
     const compilerOptions = program?.getCompilerOptions();
@@ -269,15 +266,21 @@ export const preferGuard = ESLintUtils.RuleCreator.withoutDocs<
         return;
       }
 
+      const useImport = importFor(node);
+
+      if (!useImport) {
+        return;
+      }
+
       context.report({
         node,
         messageId: 'preferGuard',
-        data: { method: check.method },
+        data: { method: check.method, source: path },
         fix:
           source.getCommentsInside(node).length > 0
             ? null
             : (fixer) => {
-                const binding = useImport(node, 'guard', 'value');
+                const binding = useImport(path, 'guard', 'value');
 
                 if (!binding) {
                   return null;
@@ -295,7 +298,7 @@ export const preferGuard = ESLintUtils.RuleCreator.withoutDocs<
                 );
 
                 return binding.add
-                  ? [binding.add(fixer), replacement]
+                  ? [...binding.add(fixer), replacement]
                   : replacement;
               },
       });
