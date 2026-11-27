@@ -320,6 +320,40 @@ ApiResult is either `{ type: 'ok', data }` or `{ type: 'error', error }`:
 - Set mapErrors(body, response) once to convert parsed backend HTTP failures to
   AppError[]. Its default is an empty array. Validate its external input;
   exceptions from mapErrors propagate unchanged.
+- Set `onFailure(failure)` to observe normalized failures for one client.
+  It runs synchronously once per failed request, after `mapErrors` for HTTP
+  failures. The request returns its original `ApiResult`. A thrown exception
+  from `onFailure` is reported to `console.error`. If `mapErrors` throws,
+  the request rejects before there is a failure to pass to `onFailure`.
+
+For example, an application can connect session handling to its protected
+client. This example uses `Paths` from above and assumes `mapErrors` normalizes
+the backend's error code into `AppError.code`.
+
+```ts
+import { createApiClient, type ApiClientOptions } from '@gost-kit/common';
+
+const createProtectedApi = (
+  mapErrors: NonNullable<ApiClientOptions['mapErrors']>,
+  onSessionExpired: () => void,
+) => {
+  return createApiClient<Paths>({
+    baseUrl: 'https://api.example.test',
+    mapErrors,
+    onFailure: ({ kind, status, errors }) => {
+      if (
+        kind === 'http' &&
+        status === 401 &&
+        errors.some(({ code }) => {
+          return code === 'invalid_session';
+        })
+      ) {
+        onSessionExpired();
+      }
+    },
+  });
+};
+```
 
 Only JSON parsing is supported. parseAs text/blob and automatic response-shape
 validation are not included. OpenAPI types alone do not validate runtime DTOs.

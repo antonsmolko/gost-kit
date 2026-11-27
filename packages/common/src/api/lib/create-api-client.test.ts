@@ -103,8 +103,97 @@ test('custom error mapping runs once centrally with parsed error and response', 
   );
 });
 
+test('onFailure sees mapped HTTP errors and the request returns the same failure', async () => {
+  const errors = [
+    { code: 'invalid_session', message: 'Session expired', path: [] },
+  ];
+  const onFailure = vi.fn();
+  const api = createApiClient<TestPaths>({
+    baseUrl: 'https://example.test',
+    fetch: async () => {
+      return Response.json({ code: 'invalid_session' }, { status: 401 });
+    },
+    mapErrors: () => {
+      return errors;
+    },
+    onFailure,
+  });
+
+  const result = await api.request(...get);
+
+  expect(result).toEqual({
+    type: 'error',
+    error: { kind: 'http', status: 401, errors },
+  });
+  expect(onFailure).toHaveBeenCalledExactlyOnceWith({
+    kind: 'http',
+    status: 401,
+    errors,
+  });
+});
+
+test('onFailure is isolated per client and runs only for failed requests', async () => {
+  const observeFirst = vi.fn();
+  const observeSecond = vi.fn();
+  const first = createApiClient<TestPaths>({
+    baseUrl: 'https://example.test',
+    fetch: async () => {
+      throw new TypeError('Failed to fetch');
+    },
+    onFailure: observeFirst,
+  });
+  const second = createApiClient<TestPaths>({
+    baseUrl: 'https://example.test',
+    fetch: async () => {
+      return Response.json(user);
+    },
+    onFailure: observeSecond,
+  });
+
+  expect(await first.request(...get)).toEqual({
+    type: 'error',
+    error: { kind: 'network', errors: [] },
+  });
+  expect(await second.request(...get)).toEqual({ type: 'ok', data: user });
+  expect(observeFirst).toHaveBeenCalledExactlyOnceWith({
+    kind: 'network',
+    errors: [],
+  });
+  expect(observeSecond).not.toHaveBeenCalled();
+});
+
+test('an exception in onFailure is reported and preserves the request failure', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const error = new Error('Handler bug');
+  const api = createApiClient<TestPaths>({
+    baseUrl: 'https://example.test',
+    fetch: async () => {
+      return new Response('{}', { headers: { 'Content-Type': 'text/plain' } });
+    },
+    onFailure: () => {
+      throw error;
+    },
+  });
+
+  try {
+    const failure = { kind: 'contract', status: 200, errors: [] };
+
+    expect(await api.request(...get)).toEqual({
+      type: 'error',
+      error: failure,
+    });
+    expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+      'Error handler failed',
+      { failure, error },
+    );
+  } finally {
+    consoleError.mockRestore();
+  }
+});
+
 test('error mapper exceptions propagate without becoming network failures', async () => {
   const error = new Error('Mapper bug');
+  const onFailure = vi.fn();
   const api = createApiClient<TestPaths>({
     baseUrl: 'https://example.test',
     fetch: async () => {
@@ -113,9 +202,11 @@ test('error mapper exceptions propagate without becoming network failures', asyn
     mapErrors: () => {
       throw error;
     },
+    onFailure,
   });
 
   await expect(api.request(...get)).rejects.toBe(error);
+  expect(onFailure).not.toHaveBeenCalled();
 });
 
 test.each([
