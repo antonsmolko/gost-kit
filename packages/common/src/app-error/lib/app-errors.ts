@@ -10,12 +10,12 @@ type Params = {
   match?: AppErrorPathMatch;
 };
 
-export const takeAppErrors = {
+export const appErrors = {
   at: ({ errors, path, match }: Params): AppError[] => {
     return errors.filter(matchAppErrorPath(path, match));
   },
   messages: (params: Params): string[] => {
-    return takeAppErrors.at(params).map(({ message }) => {
+    return appErrors.at(params).map(({ message }) => {
       return message;
     });
   },

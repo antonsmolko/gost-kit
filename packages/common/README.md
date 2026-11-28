@@ -72,8 +72,8 @@ Error instances and wrap other values in Error with the original value as cause.
 `undefined` when no error matches. Paths match by length and by each string
 segment. Use string indices for array entries and `[]` for a form-level error.
 
-`takeAppErrors.at({ errors, path })` returns all matching errors in list order.
-`takeAppErrors.messages({ errors, path })` returns their messages. Both return
+`appErrors.at({ errors, path })` returns all matching errors in list order.
+`appErrors.messages({ errors, path })` returns their messages. Both return
 an empty array if no error matches. Pass `match: 'prefix'` to include descendants
 of the path. In prefix mode `[]` selects all errors.
 
@@ -82,7 +82,7 @@ import {
   appError,
   findAppError,
   findAppErrorMessage,
-  takeAppErrors,
+  appErrors,
 } from '@gost-kit/common';
 
 const namePath = ['items', '0', 'name'] as const;
@@ -94,7 +94,7 @@ const errors = [
 const nameError = findAppError(errors, namePath);
 const nameMessage = findAppErrorMessage(errors, namePath);
 const formMessage = findAppErrorMessage(errors, []);
-const rowMessages = takeAppErrors.messages({
+const rowMessages = appErrors.messages({
   errors,
   path: ['items', '0'],
   match: 'prefix',
