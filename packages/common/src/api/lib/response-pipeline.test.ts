@@ -12,16 +12,16 @@ const checkPipelineTypes = async () => {
     };
   });
 
-  if (result.type === 'ok') {
-    expectTypeOf(result.data.data).toEqualTypeOf<TestUser>();
+  if (result.isOk) {
+    expectTypeOf(result.value.data).toEqualTypeOf<TestUser>();
 
-    const apiResult = readResult(result.data, 'get');
+    const apiResult = readResult(result.value, 'get');
 
     if (apiResult.type === 'ok') {
       expectTypeOf(apiResult.data).toEqualTypeOf<TestUser>();
     }
 
-    const head = readResult(result.data, 'head');
+    const head = readResult(result.value, 'head');
 
     if (head.type === 'ok') {
       expectTypeOf(head.data).toEqualTypeOf<undefined>();

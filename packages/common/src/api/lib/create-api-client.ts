@@ -6,6 +6,7 @@ import { readResult } from './read-result';
 import type { ApiClientOptions } from '../types/api-client-options';
 import type { ApiInit } from '../types/api-init';
 import type { ApiMethod } from '../types/api-method';
+import type { ApiResult } from '../types/api-result';
 
 export const createApiClient = <TPaths extends object>({
   mapErrors,
@@ -31,10 +32,14 @@ export const createApiClient = <TPaths extends object>({
       }, requestOptions?.signal);
 
       // openapi-fetch owns decoding; schema-derived types are not runtime validators.
-      const apiResult =
-        result.type === 'error'
-          ? result
-          : readResult(result.data, method, mapErrors);
+      const apiResult = result.match({
+        Ok: (response) => {
+          return readResult(response, method, mapErrors);
+        },
+        Err: (error): ApiResult<never> => {
+          return { type: 'error', error };
+        },
+      });
 
       if (apiResult.type === 'error' && onFailure) {
         report(apiResult.error, onFailure);
