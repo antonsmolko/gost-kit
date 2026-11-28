@@ -321,10 +321,12 @@ ApiResult is either `{ type: 'ok', data }` or `{ type: 'error', error }`:
   AppError[]. Its default is an empty array. Validate its external input;
   exceptions from mapErrors propagate unchanged.
 - Set `onFailure(failure)` to observe normalized failures for one client.
-  It runs synchronously once per failed request, after `mapErrors` for HTTP
-  failures. The request returns its original `ApiResult`. A thrown exception
-  from `onFailure` is reported to `console.error`. If `mapErrors` throws,
-  the request rejects before there is a failure to pass to `onFailure`.
+  It runs synchronously once per failed request for all four kinds (`http`,
+  `network`, `contract`, and `aborted`), after `mapErrors` for HTTP failures.
+  The callback receives the same `ApiFailure` that `request()` returns in its
+  `ApiResult`. Treat the failure and its nested errors as read-only.
+  A thrown exception from `onFailure` is reported to `console.error`. If
+  `mapErrors` throws, the request rejects before there is a failure to observe.
 
 For example, an application can connect session handling to its protected
 client. This example uses `Paths` from above and assumes `mapErrors` normalizes

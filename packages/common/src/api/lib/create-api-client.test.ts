@@ -162,6 +162,28 @@ test('onFailure is isolated per client and runs only for failed requests', async
   expect(observeSecond).not.toHaveBeenCalled();
 });
 
+test('onFailure observes each failed request once, including contract failures and cancellations', async () => {
+  const onFailure = vi.fn();
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(
+      new Response('{}', { headers: { 'Content-Type': 'text/plain' } }),
+    )
+    .mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
+  const api = createApiClient<TestPaths>({
+    baseUrl: 'https://example.test',
+    fetch,
+    onFailure,
+  });
+  const contract = { kind: 'contract', status: 200, errors: [] };
+  const aborted = { kind: 'aborted', errors: [] };
+
+  expect(await api.request(...get)).toEqual({ type: 'error', error: contract });
+  expect(onFailure).toHaveBeenCalledExactlyOnceWith(contract);
+  expect(await api.request(...get)).toEqual({ type: 'error', error: aborted });
+  expect(onFailure.mock.calls).toEqual([[contract], [aborted]]);
+});
+
 test('an exception in onFailure is reported and preserves the request failure', async () => {
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
   const error = new Error('Handler bug');
