@@ -1,6 +1,7 @@
 import { expect, expectTypeOf, test } from 'vitest';
 import { createApiClient } from '../lib/create-api-client';
 import type { Nlx } from '../../types';
+import type { ApiFailure } from './api-failure';
 
 interface ReadUserOperation {
   responses: { 200: { content: { 'application/json': TestUser } } };
@@ -35,7 +36,21 @@ export type TestPaths = {
 };
 
 const checkRequestTypes = async () => {
-  const api = createApiClient<TestPaths>({ baseUrl: 'https://example.test' });
+  const api = createApiClient<TestPaths>({
+    baseUrl: 'https://example.test',
+    onFailure: (failure) => {
+      expectTypeOf(failure).toEqualTypeOf<ApiFailure>();
+    },
+  });
+
+  createApiClient<TestPaths>({
+    baseUrl: 'https://example.test',
+    // @ts-expect-error The callback must accept non-HTTP failures too.
+    onFailure: (failure: ApiFailure & { kind: 'http' }) => {
+      void failure;
+    },
+  });
+
   const result = await api.request('get', '/users/{id}', {
     params: { path: { id: 1 } },
   });
