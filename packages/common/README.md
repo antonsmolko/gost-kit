@@ -67,23 +67,19 @@ Error instances and wrap other values in Error with the original value as cause.
 
 ## Find validation errors by path
 
-`findAppError(errors, path)` returns the first matching error in list order.
-`findAppErrorMessage(errors, path)` returns its message. Both return
-`undefined` when no error matches. Paths match by length and by each string
-segment. Use string indices for array entries and `[]` for a form-level error.
+Pass `{ errors, path, match? }` to any `appErrors` method:
 
-`appErrors.at({ errors, path })` returns all matching errors in list order.
-`appErrors.messages({ errors, path })` returns their messages. Both return
-an empty array if no error matches. Pass `match: 'prefix'` to include descendants
-of the path. In prefix mode `[]` selects all errors.
+- `get` returns all matching errors. `getMessages` returns their messages.
+  Both preserve list order and return `[]` when no errors match.
+- `getOne` returns the first error. `getMessage` returns its message.
+  Both return `undefined` when no error matches.
+
+Exact matching compares every string segment. Use string indices for array
+entries and `[]` for form-level errors. Set `match: 'prefix'` to include
+descendants of the path. In prefix mode `[]` selects all errors.
 
 ```ts
-import {
-  appError,
-  findAppError,
-  findAppErrorMessage,
-  appErrors,
-} from '@gost-kit/common';
+import { appError, appErrors } from '@gost-kit/common';
 
 const namePath = ['items', '0', 'name'] as const;
 const errors = [
@@ -91,10 +87,10 @@ const errors = [
   appError({ message: 'Check the form' }),
 ];
 
-const nameError = findAppError(errors, namePath);
-const nameMessage = findAppErrorMessage(errors, namePath);
-const formMessage = findAppErrorMessage(errors, []);
-const rowMessages = appErrors.messages({
+const nameError = appErrors.getOne({ errors, path: namePath });
+const nameMessage = appErrors.getMessage({ errors, path: namePath });
+const formErrors = appErrors.get({ errors, path: [] });
+const rowMessages = appErrors.getMessages({
   errors,
   path: ['items', '0'],
   match: 'prefix',

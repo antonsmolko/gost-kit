@@ -1,3 +1,4 @@
+import type { Ulx } from '../../types';
 import type { AppError } from '../types/app-error';
 import {
   matchAppErrorPath,
@@ -11,12 +12,18 @@ type Params = {
 };
 
 export const appErrors = {
-  at: ({ errors, path, match }: Params): AppError[] => {
+  get: ({ errors, path, match }: Params): AppError[] => {
     return errors.filter(matchAppErrorPath(path, match));
   },
-  messages: (params: Params): string[] => {
-    return appErrors.at(params).map(({ message }) => {
+  getOne: ({ errors, path, match }: Params): Ulx<AppError> => {
+    return errors.find(matchAppErrorPath(path, match));
+  },
+  getMessages: (params: Params): string[] => {
+    return appErrors.get(params).map(({ message }) => {
       return message;
     });
+  },
+  getMessage: (params: Params): Ulx<string> => {
+    return appErrors.getOne(params)?.message;
   },
 };
