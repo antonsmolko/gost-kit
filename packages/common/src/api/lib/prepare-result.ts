@@ -9,20 +9,26 @@ import type { TransportResponse } from '../types/transport-response';
 import type { Ulx } from '../../types';
 
 // HEAD has no response body, regardless of a schema's content declaration.
-export function readResult<
+export function prepareResult<
   TResponse extends TransportResponse<unknown>,
   TMethod extends ApiMethod,
 >(
-  transport: TResponse,
+  result: ApiResult<TResponse>,
   method: TMethod,
   mapErrors?: ApiClientOptions['mapErrors'],
 ): ApiResult<TMethod extends 'head' ? undefined : TransportData<TResponse>>;
 
-export function readResult<TData>(
-  transport: TransportResponse<TData>,
+export function prepareResult<TData>(
+  result: ApiResult<TransportResponse<TData>>,
   method: ApiMethod,
   mapErrors?: ApiClientOptions['mapErrors'],
 ): ApiResult<Ulx<TData>> {
+  if (result.type === 'error') {
+    return result;
+  }
+
+  // openapi-fetch owns decoding; schema-derived types are not runtime validators.
+  const { data: transport } = result;
   const { response } = transport;
 
   if (!response.ok) {

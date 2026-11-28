@@ -1,6 +1,6 @@
 import { expect, expectTypeOf, test } from 'vitest';
 import { captureRequest } from './capture-request';
-import { readResult } from './read-result';
+import { prepareResult } from './prepare-result';
 import type { TestUser } from '../types/api-client.test';
 
 const checkPipelineTypes = async () => {
@@ -14,18 +14,18 @@ const checkPipelineTypes = async () => {
 
   if (result.type === 'ok') {
     expectTypeOf(result.data.data).toEqualTypeOf<TestUser>();
+  }
 
-    const apiResult = readResult(result.data, 'get');
+  const apiResult = prepareResult(result, 'get');
 
-    if (apiResult.type === 'ok') {
-      expectTypeOf(apiResult.data).toEqualTypeOf<TestUser>();
-    }
+  if (apiResult.type === 'ok') {
+    expectTypeOf(apiResult.data).toEqualTypeOf<TestUser>();
+  }
 
-    const head = readResult(result.data, 'head');
+  const head = prepareResult(result, 'head');
 
-    if (head.type === 'ok') {
-      expectTypeOf(head.data).toEqualTypeOf<undefined>();
-    }
+  if (head.type === 'ok') {
+    expectTypeOf(head.data).toEqualTypeOf<undefined>();
   }
 };
 
