@@ -1,16 +1,10 @@
 import type { Ulx } from '../../types';
 import type { AppError } from '../types/app-error';
+import { matchAppErrorPath } from './match-app-error-path';
 
 export const findAppError = (
   errors: readonly AppError[],
   path: AppError['path'],
 ): Ulx<AppError> => {
-  return errors.find(({ path: errorPath }) => {
-    return (
-      errorPath.length === path.length &&
-      path.every((segment, index) => {
-        return segment === errorPath[index];
-      })
-    );
-  });
+  return errors.find(matchAppErrorPath(path));
 };
