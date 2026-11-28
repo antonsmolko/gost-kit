@@ -1,6 +1,5 @@
 import type { AppError } from '../types/app-error';
-
-export type AppErrorPathMatch = 'exact' | 'prefix';
+import type { AppErrorPathMatch } from '../types/app-error-path-match';
 
 export const matchAppErrorPath = (
   path: AppError['path'],

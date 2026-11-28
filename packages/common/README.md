@@ -72,11 +72,12 @@ Pass `{ errors, path, match? }` to any `appErrors` method:
 - `get` returns all matching errors. `getMessages` returns their messages.
   Both preserve list order and return `[]` when no errors match.
 - `getOne` returns the first error. `getMessage` returns its message.
-  Both return `undefined` when no error matches.
+  Both return `undefined` when no error matches. `getMessage` returns `''`
+  when the matching error has an empty message.
 
 Exact matching compares every string segment. Use string indices for array
 entries and `[]` for form-level errors. Set `match: 'prefix'` to include
-descendants of the path. In prefix mode `[]` selects all errors.
+the path itself and its descendants. In prefix mode `[]` selects all errors.
 
 ```ts
 import { appError, appErrors } from '@gost-kit/common';
