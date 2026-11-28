@@ -1,5 +1,14 @@
 # @gost-kit/common
 
+## 0.5.0
+
+### Minor Changes
+
+- f83c627: Add an optional onFailure callback to createApiClient for observing normalized
+  request failures. Request results and API effect callbacks keep their contracts.
+- a41f98e: Add appErrors methods for finding the first or all errors and messages by
+  exact validation path or prefix.
+
 ## 0.4.0
 
 ### Minor Changes
