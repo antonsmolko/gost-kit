@@ -1,5 +1,13 @@
 # @gost-kit/svelte
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [f83c627]
+- Updated dependencies [a41f98e]
+  - @gost-kit/common@0.5.0
+
 ## 0.3.0
 
 ### Minor Changes
