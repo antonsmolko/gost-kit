@@ -65,6 +65,27 @@ elements; validate the full contract before using external data. `guard.number`
 excludes NaN and Infinity. `safeRun.sync` and `safeRun.async` preserve thrown
 Error instances and wrap other values in Error with the original value as cause.
 
+## Find a validation error by path
+
+`findAppError(errors, path)` returns the first matching error in list order.
+`findAppErrorMessage(errors, path)` returns its message. Both return
+`undefined` when no error matches. Paths match by length and by each string
+segment. Use string indices for array entries and `[]` for a form-level error.
+
+```ts
+import { appError, findAppError, findAppErrorMessage } from '@gost-kit/common';
+
+const namePath = ['items', '0', 'name'] as const;
+const errors = [
+  appError({ path: namePath, message: 'Enter a name' }),
+  appError({ message: 'Check the form' }),
+];
+
+const nameError = findAppError(errors, namePath);
+const nameMessage = findAppErrorMessage(errors, namePath);
+const formMessage = findAppErrorMessage(errors, []);
+```
+
 ## State factories
 
 Use a factory for each scope and compose them in the root factory. Allocate
