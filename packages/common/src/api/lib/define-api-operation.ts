@@ -5,12 +5,16 @@ export const defineApiOperation = <TPaths extends object>() => {
   return <const TDefinition extends ApiOperationDefinition<TPaths>>(
     definition: TDefinition,
   ): DefinedApiOperation<TPaths, TDefinition> => {
+    const pipeline = definition.response;
+
     // The conditional return type selects either the supplied mapper or identity.
     // The runtime branches preserve precisely that relationship.
     return {
       method: definition.method,
       url: definition.url,
+      ...(pipeline && { validateResponse: pipeline.validate }),
       mapResponse:
+        pipeline?.map ??
         definition.mapResponse ??
         ((dto: unknown) => {
           return dto;

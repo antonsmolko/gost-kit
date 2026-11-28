@@ -2,6 +2,7 @@ import { expect, expectTypeOf, test, vi } from 'vitest';
 import {
   createApiClient,
   defineApiOperation,
+  response,
   type ApiFailure,
 } from '../../api';
 import type { AppError } from '../../app-error';
@@ -108,6 +109,74 @@ test('shared effector maps DTO and dispatches a domain action without leaking ef
   expect(await seen[0].json()).toEqual({ name: 'Ada' });
 });
 
+test('dispatches all validation errors and skips mapping and success', async () => {
+  const errors: AppError[] = [
+    { code: 'TYPE', message: 'Expected number', path: ['id'] },
+    { code: 'TYPE', message: 'Expected string', path: ['name'] },
+  ];
+  const validate = vi.fn(() => {
+    return errors;
+  });
+  const map = vi.fn(async (dto: TestUser) => {
+    return { label: dto.name };
+  });
+  const operation = defineApiOperation<TestPaths>()({
+    method: 'post',
+    url: '/users/{id}',
+    response: response.validate(validate).map(map),
+  });
+  const onFailure = vi.fn();
+  const api = createApiClient<TestPaths>({
+    baseUrl: 'https://example.test',
+    fetch: async () => {
+      return Response.json({ id: 'invalid', name: 42 });
+    },
+    onFailure,
+  });
+  const handler = createApiEffector<TestPaths, Action, typeof operation>(api);
+  const dispatch = vi.fn(async () => {});
+  const success = vi.fn((data: Awaited<ReturnType<typeof map>>) => {
+    return {
+      action: 'root/LoadedAction' as const,
+      payload: { label: data.label },
+    };
+  });
+  const observe = vi.fn(onError);
+  const failure = { kind: 'contract', errors };
+
+  await handler.ApiEffect({
+    effect: createApiEffect(operation, {
+      ...request,
+      onSuccess: (data) => {
+        expectTypeOf(data).toEqualTypeOf<{ label: string }>();
+
+        return success(data);
+      },
+      onError: observe,
+    }),
+    dispatch,
+  });
+
+  expect(validate).toHaveBeenCalledExactlyOnceWith({ id: 'invalid', name: 42 });
+  expect(observe).toHaveBeenCalledExactlyOnceWith(errors, failure);
+  expect(observe.mock.calls[0][0]).toBe(errors);
+  expect(dispatch).toHaveBeenCalledExactlyOnceWith({
+    action: 'root/FailedAction',
+    payload: { errors, failure },
+  });
+  expect(map).not.toHaveBeenCalled();
+  expect(success).not.toHaveBeenCalled();
+  expect(onFailure).not.toHaveBeenCalled();
+
+  await expect(
+    handler.ApiEffect({
+      effect: createApiEffect(operation, request),
+      dispatch,
+    }),
+  ).rejects.toEqual(failure);
+  expect(dispatch).toHaveBeenCalledTimes(1);
+});
+
 test.each(['sync', 'async'] as const)(
   '%s mapper failure reaches onError with contract kind and defaultError',
   async (mode) => {
@@ -175,34 +244,47 @@ test('mapper executes without onSuccess and rejects failure without onError', as
 });
 
 test.each(['http', 'network', 'aborted', 'contract'] as const)(
-  '%s transport failure skips mapper and preserves classification',
+  '%s client failure skips the response pipeline and preserves classification',
   async (kind) => {
     const mapper = vi.fn((dto: TestUser) => {
       return dto;
     });
-    const { operation, handler } = setup(mapper, async () => {
-      if (kind === 'network') {
-        throw new TypeError('Offline');
-      }
-
-      if (kind === 'aborted') {
-        throw new DOMException('Cancelled', 'AbortError');
-      }
-
-      if (kind === 'contract') {
-        return new Response('null', {
-          headers: { 'Content-Type': 'text/plain' },
-        });
-      }
-
-      return new Response(null, { status: 503 });
+    const validate = vi.fn(() => {
+      return [fallback];
     });
+    const operation = defineApiOperation<TestPaths>()({
+      method: 'post',
+      url: '/users/{id}',
+      response: response.validate(validate).map(mapper),
+    });
+    const api = createApiClient<TestPaths>({
+      baseUrl: 'https://example.test',
+      fetch: async () => {
+        if (kind === 'network') {
+          throw new TypeError('Offline');
+        }
+
+        if (kind === 'aborted') {
+          throw new DOMException('Cancelled', 'AbortError');
+        }
+
+        if (kind === 'contract') {
+          return new Response('null', {
+            headers: { 'Content-Type': 'text/plain' },
+          });
+        }
+
+        return new Response(null, { status: 401 });
+      },
+    });
+    const handler = createApiEffector<TestPaths, Action, typeof operation>(api);
     const dispatch = vi.fn(async () => {});
 
     await handler.ApiEffect({
       effect: createApiEffect(operation, { ...request, onError }),
       dispatch,
     });
+    expect(validate).not.toHaveBeenCalled();
     expect(mapper).not.toHaveBeenCalled();
     expect(dispatch).toHaveBeenCalledExactlyOnceWith({
       action: 'root/FailedAction',
@@ -211,7 +293,7 @@ test.each(['http', 'network', 'aborted', 'contract'] as const)(
         failure: {
           kind,
           ...(kind === 'http'
-            ? { status: 503 }
+            ? { status: 401 }
             : kind === 'contract'
               ? { status: 200 }
               : {}),
