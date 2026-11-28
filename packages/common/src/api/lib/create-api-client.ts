@@ -26,21 +26,21 @@ export const createApiClient = <TPaths extends object>({
     ) => {
       const [requestOptions] = init;
 
-      const execution = await captureRequestResult(() => {
+      const result = await captureRequestResult(() => {
         return client.request<TMethod, TPath, TInit>(method, url, ...init);
       }, requestOptions?.signal);
 
       // openapi-fetch owns decoding; schema-derived types are not runtime validators.
-      const result =
-        execution.type === 'error'
-          ? execution
-          : readResult(execution.data, method, mapErrors);
+      const apiResult =
+        result.type === 'error'
+          ? result
+          : readResult(result.data, method, mapErrors);
 
-      if (result.type === 'error' && onFailure) {
-        report(result.error, onFailure);
+      if (apiResult.type === 'error' && onFailure) {
+        report(apiResult.error, onFailure);
       }
 
-      return result;
+      return apiResult;
     },
   };
 };

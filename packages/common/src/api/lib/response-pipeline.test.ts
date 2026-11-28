@@ -5,23 +5,23 @@ import type { TestUser } from '../types/api-client.test';
 
 const checkPipelineTypes = async () => {
   const data: TestUser = { id: 1, name: 'Ada' };
-  const execution = await captureRequestResult(async () => {
+  const result = await captureRequestResult(async () => {
     return {
       data,
       response: Response.json(data),
     };
   });
 
-  if (execution.type === 'ok') {
-    expectTypeOf(execution.data.data).toEqualTypeOf<TestUser>();
+  if (result.type === 'ok') {
+    expectTypeOf(result.data.data).toEqualTypeOf<TestUser>();
 
-    const result = readResult(execution.data, 'get');
+    const apiResult = readResult(result.data, 'get');
 
-    if (result.type === 'ok') {
-      expectTypeOf(result.data).toEqualTypeOf<TestUser>();
+    if (apiResult.type === 'ok') {
+      expectTypeOf(apiResult.data).toEqualTypeOf<TestUser>();
     }
 
-    const head = readResult(execution.data, 'head');
+    const head = readResult(result.data, 'head');
 
     if (head.type === 'ok') {
       expectTypeOf(head.data).toEqualTypeOf<undefined>();
