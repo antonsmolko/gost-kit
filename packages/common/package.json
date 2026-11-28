@@ -44,7 +44,6 @@
   },
   "dependencies": {
     "openapi-fetch": "0.17.0",
-    "openapi-typescript-helpers": "0.1.0",
-    "true-myth": "9.4.0"
+    "openapi-typescript-helpers": "0.1.0"
   }
 }

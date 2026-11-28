@@ -1,12 +1,11 @@
 import createClient, { type MaybeOptionalInit } from 'openapi-fetch';
 import type { PathsWithMethod } from 'openapi-typescript-helpers';
 import { report } from '../../sharred';
-import { captureRequestResult } from './capture-request-result';
+import { captureRequest } from './capture-request';
 import { readResult } from './read-result';
 import type { ApiClientOptions } from '../types/api-client-options';
 import type { ApiInit } from '../types/api-init';
 import type { ApiMethod } from '../types/api-method';
-import type { ApiResult } from '../types/api-result';
 
 export const createApiClient = <TPaths extends object>({
   mapErrors,
@@ -27,19 +26,15 @@ export const createApiClient = <TPaths extends object>({
     ) => {
       const [requestOptions] = init;
 
-      const result = await captureRequestResult(() => {
+      const result = await captureRequest(() => {
         return client.request<TMethod, TPath, TInit>(method, url, ...init);
       }, requestOptions?.signal);
 
       // openapi-fetch owns decoding; schema-derived types are not runtime validators.
-      const apiResult = result.match({
-        Ok: (response) => {
-          return readResult(response, method, mapErrors);
-        },
-        Err: (error): ApiResult<never> => {
-          return { type: 'error', error };
-        },
-      });
+      const apiResult =
+        result.type === 'error'
+          ? result
+          : readResult(result.data, method, mapErrors);
 
       if (apiResult.type === 'error' && onFailure) {
         report(apiResult.error, onFailure);
