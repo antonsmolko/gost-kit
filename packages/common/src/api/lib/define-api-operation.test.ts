@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test, vi } from 'vitest';
-import { defineApiOperation } from './define-api-operation';
+import { defineApiOperation, response } from '..';
 import type { ApiOperationDefinition } from '../types/api-operation-definition';
 import type { TestPaths, TestUser } from '../types/api-client.test';
 import type { Nlx } from '../../types';
@@ -57,6 +57,83 @@ const checkTypes = () => {
     unknownResult.mapResponse({ id: 1, name: 'Ada' }),
   ).toEqualTypeOf<unknown>();
 
+  const pipeline = defineOperation({
+    method: 'post',
+    url: '/users/{id}',
+    response: response
+      .validate((dto) => {
+        expectTypeOf(dto).toEqualTypeOf<unknown>();
+
+        return [];
+      })
+      .map(async (dto) => {
+        expectTypeOf(dto).toEqualTypeOf<TestUser>();
+
+        return { label: dto.name };
+      }),
+  });
+
+  expectTypeOf(pipeline.mapResponse({ id: 1, name: 'Ada' })).toEqualTypeOf<
+    Promise<{ label: string }>
+  >();
+
+  const optionalPipeline = (enabled: boolean) => {
+    return {
+      method: 'post' as const,
+      url: '/users/{id}' as const,
+      ...(enabled && {
+        response: response
+          .validate(() => {
+            return [];
+          })
+          .map((dto: TestUser) => {
+            return dto.id;
+          }),
+      }),
+    };
+  };
+  const conditional = defineOperation(optionalPipeline(true));
+
+  expectTypeOf(conditional.mapResponse({ id: 1, name: 'Ada' })).toEqualTypeOf<
+    TestUser | number
+  >();
+
+  const wrongMapper = response
+    .validate(() => {
+      return [];
+    })
+    .map((dto: string) => {
+      return dto.toUpperCase();
+    });
+
+  defineOperation({
+    method: 'post',
+    url: '/users/{id}',
+    // @ts-expect-error the pipeline mapper must accept the endpoint DTO
+    response: wrongMapper,
+  });
+
+  // @ts-expect-error the validator must accept unknown
+  response.validate((_dto: TestUser) => {
+    return [];
+  });
+
+  // @ts-expect-error configure a pipeline or a standalone mapper
+  defineOperation({
+    method: 'post',
+    url: '/users/{id}',
+    response: response
+      .validate(() => {
+        return [];
+      })
+      .map((dto: TestUser) => {
+        return dto.name;
+      }),
+    mapResponse: (dto: TestUser) => {
+      return dto.name;
+    },
+  });
+
   // @ts-expect-error unknown route
   defineOperation({ method: 'get', url: '/missing' });
   // @ts-expect-error invalid method for route
@@ -103,6 +180,25 @@ test('omitted mapper preserves null and DTO identity', () => {
 
   expect(operation.mapResponse(dto)).toBe(dto);
   expect(operation.mapResponse(null)).toBeNull();
+});
+
+test('response pipeline construction preserves callbacks without running them', () => {
+  const validate = vi.fn((_dto: unknown) => {
+    return [];
+  });
+  const map = vi.fn((dto: TestUser) => {
+    return dto.name;
+  });
+  const operation = defineApiOperation<TestPaths>()({
+    method: 'post',
+    url: '/users/{id}',
+    response: response.validate(validate).map(map),
+  });
+
+  expect(operation.validateResponse).toBe(validate);
+  expect(operation.mapResponse).toBe(map);
+  expect(validate).not.toHaveBeenCalled();
+  expect(map).not.toHaveBeenCalled();
 });
 
 test('type assertions are checked by tsc', () => {

@@ -1,7 +1,7 @@
 import type { ApiOperation, ApiResult } from '../../api';
 import type { AnyFn } from '../../types';
 
-/** Catch only response mapping; callbacks and dispatch retain their own errors. */
+/** Run response validation and mapping before effect callbacks. */
 export const mapApiResult = async (
   result: ApiResult<unknown>,
   operation: ApiOperation,
@@ -15,6 +15,12 @@ export const mapApiResult = async (
   const mapResponse = operation.mapResponse as AnyFn<[unknown]>;
 
   try {
+    const errors = operation.validateResponse?.(result.data);
+
+    if (errors?.length) {
+      return { type: 'error', error: { kind: 'contract', errors } };
+    }
+
     return { type: 'ok', data: await mapResponse(result.data) };
   } catch {
     return { type: 'error', error: { kind: 'contract', errors: [] } };

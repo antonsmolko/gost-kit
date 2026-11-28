@@ -483,6 +483,50 @@ See the [working operation](https://github.com/antonsmolko/gost-kit/blob/main/ex
 and [mapper](https://github.com/antonsmolko/gost-kit/blob/main/examples/functional-core/src/features/user/data/mappers/map-user.ts)
 for a complete application example.
 
+### Validate a response before mapping
+
+Use a response pipeline when an operation must report detailed validation
+errors. For example, using `Paths` from above:
+
+```ts
+import {
+  appError,
+  defineApiOperation,
+  guard,
+  response,
+} from '@gost-kit/common';
+
+const loadValidatedUser = defineApiOperation<Paths>()({
+  method: 'get',
+  url: '/users/{id}',
+  response: response
+    .validate((value) => {
+      if (
+        guard.record(value) &&
+        guard.number(value.id) &&
+        guard.string(value.full_name)
+      ) {
+        return [];
+      }
+
+      return [appError({ code: 'INVALID_USER', message: 'Invalid user data' })];
+    })
+    .map((dto) => {
+      return { id: dto.id, name: dto.full_name };
+    }),
+});
+```
+
+The validator receives `unknown` and returns `AppError[]` synchronously.
+An empty array passes the original DTO to the mapper. A nonempty array reaches
+`onError(errors, failure)` with `kind: 'contract'` and skips mapping and success.
+An exception in either stage uses the existing contract failure and default
+error path. The mapper's awaited output determines the `onSuccess` argument.
+
+Set either `response` or `mapResponse` on an operation. The pipeline runs in
+the effect after a successful request. HTTP and transport failures pass
+straight to the effect's error path. Direct `api.request()` returns the DTO.
+
 ## Migrating dispatch calls
 
 Replace `dispatch({ scope: 'users', type: 'SetPageAction', page: 2 })` with
