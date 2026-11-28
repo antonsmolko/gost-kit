@@ -1,11 +1,11 @@
 import { expect, expectTypeOf, test } from 'vitest';
-import { executeRequest } from './execute-request';
+import { captureRequestResult } from './capture-request-result';
 import { readResult } from './read-result';
 import type { TestUser } from '../types/api-client.test';
 
 const checkPipelineTypes = async () => {
   const data: TestUser = { id: 1, name: 'Ada' };
-  const execution = await executeRequest(async () => {
+  const execution = await captureRequestResult(async () => {
     return {
       data,
       response: Response.json(data),

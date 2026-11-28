@@ -2,7 +2,7 @@ import { normalizeError } from './normalize-error';
 import type { AsyncFn, Nlx } from '../../types';
 import type { ApiResult } from '../types/api-result';
 
-export const executeRequest = async <TResponse>(
+export const captureRequestResult = async <TResponse>(
   operation: AsyncFn<[], TResponse>,
   signal?: Nlx<AbortSignal>,
 ): Promise<ApiResult<TResponse>> => {

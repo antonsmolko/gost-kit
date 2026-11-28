@@ -1,7 +1,7 @@
 import createClient, { type MaybeOptionalInit } from 'openapi-fetch';
 import type { PathsWithMethod } from 'openapi-typescript-helpers';
 import { report } from '../../sharred';
-import { executeRequest } from './execute-request';
+import { captureRequestResult } from './capture-request-result';
 import { readResult } from './read-result';
 import type { ApiClientOptions } from '../types/api-client-options';
 import type { ApiInit } from '../types/api-init';
@@ -26,7 +26,7 @@ export const createApiClient = <TPaths extends object>({
     ) => {
       const [requestOptions] = init;
 
-      const execution = await executeRequest(() => {
+      const execution = await captureRequestResult(() => {
         return client.request<TMethod, TPath, TInit>(method, url, ...init);
       }, requestOptions?.signal);
 
